@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LitioX - Plataforma de Inversión en Litio & Yield Protocol</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        lithium: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            900: '#134e4a',
+                        },
+                        neon: {
+                            blue: '#00f2fe',
+                            cyan: '#4facfe',
+                            green: '#10b981',
+                        },
+                        darkbg: '#080c14',
+                        cardbg: '#0f172a',
+                        cardborder: '#1e293b'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Font Inter & FontAwesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #060911;
+            color: #f1f5f9;
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card-hover:hover {
+            border-color: rgba(0, 242, 254, 0.4);
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .glow-button {
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glow-button:hover {
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.6);
+            transform: translateY(-1px);
+        }
+
+        .pulse-dot {
+            animation: pulse-animation 2s infinite;
+        }
+
+        @keyframes pulse-animation {
+            0% { box-shadow: 0 0 0 0px rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0px rgba(16, 185, 129, 0); }
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b1120;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-black">
+
+    <!-- ==================== VISTA 1: AUTENTICACIÓN (LOGIN / REGISTRO) ==================== -->
+    <div id="auth-view" class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+        <!-- Glow background effects -->
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-10 right-10 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="w-full max-w-md glass-card rounded-3xl p-8 border border-slate-800 relative z-10 shadow-2xl">
+            <!-- Brand Logo Header -->
+            <div class="text-center space-y-3 mb-8">
+                <div class="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 via-teal-400 to-emerald-400 p-0.5 shadow-xl shadow-cyan-500/20">
+                    <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
+                        <i class="fa-solid fa-bolt text-cyan-400 text-2xl"></i>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black tracking-wider text-white">LITIO<span class="text-cyan-400">X</span></h1>
+                    <p class="text-xs text-slate-400">Protocolo Descentralizado de Rendimiento Minero</p>
+                </div>
+            </div>
+
+            <!-- Form Switcher Tabs -->
+            <div class="flex bg-slate-900/90 p-1 rounded-xl border border-slate-800 mb-6 text-xs font-semibold">
+                <button id="tab-login-btn" onclick="toggleAuthMode('login')" class="flex-1 py-2.5 rounded-lg text-cyan-400 bg-slate-800 transition">Iniciar Sesión</button>
+                <button id="tab-register-btn" onclick="toggleAuthMode('register')" class="flex-1 py-2.5 rounded-lg text-slate-400 hover:text-white transition">Registrarse</button>
+            </div>
+
+            <!-- LOGIN FORM -->
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-400 font-medium mb-1">Correo Electrónico</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-envelope absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
+                        <input type="email" id="login-email" required placeholder="tu@email.com" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 font-medium mb-1">Contraseña</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
+                        <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                    </div>
+                </div>
+
+                <button type="submit" id="login-btn-submit" class="w-full glow-button text-slate-950 font-black py-3 rounded-xl text-xs flex items-center justify-center space-x-2">
+                    <span>Ingresar a la Plataforma</span>
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                </button>
+            </form>
+
+            <!-- REGISTER FORM -->
+            <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs text-slate-400 font-medium mb-1">Nombre Completo</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
+                        <input type="text" id="reg-fullname" required placeholder="Ej. Juan Pérez" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 font-medium mb-1">Correo Electrónico</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-envelope absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
+                        <input type="email" id="reg-email" required placeholder="tu@email.com" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 font-medium mb-1">Contraseña</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
+                        <input type="password" id="reg-password" minlength="6" required placeholder="Mínimo 6 caracteres" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                    </div>
+                </div>
+
+                <button type="submit" id="reg-btn-submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl text-xs transition flex items-center justify-center space-x-2">
+                    <span>Crear Cuenta Gratis</span>
+                    <i class="fa-solid fa-user-plus"></i>
+                </button>
+            </form>
+
+            <!-- Quick Demo Mode Divider -->
+            <div class="relative my-6 text-center">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-800"></div></div>
+                <span class="relative bg-slate-950 px-3 text-[10px] text-slate-500 uppercase font-mono tracking-wider">o prueba rápida</span>
+            </div>
+
+            <button onclick="enterDemoMode()" class="w-full bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-flask text-cyan-400"></i>
+                <span>Ingresar como Invitado (Modo Demo)</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== VISTA 2: PANEL PRINCIPAL (DASHBOARD) ==================== -->
+    <div id="dashboard-view" class="hidden flex-col min-h-screen">
+        
+        <!-- Top Live Ticker Bar -->
+        <div class="bg-slate-950 border-b border-slate-800 text-xs py-2 px-4 overflow-hidden whitespace-nowrap flex items-center justify-between text-slate-400">
+            <div class="flex items-center space-x-6 animate-marquee">
+                <span class="flex items-center"><i class="fa-solid fa-circle text-[8px] text-emerald-400 mr-2 pulse-dot"></i> RED $LITH MAINNET: <span class="text-white font-semibold ml-1">$1.00 USDT</span></span>
+                <span class="text-slate-500">|</span>
+                <span>PRECIO LITIO C2/N3 (Salar de Olaroz): <span class="text-emerald-400 font-medium">$24,850 USD/Ton (+3.4%)</span></span>
+                <span class="text-slate-500">|</span>
+                <span>CAPACIDAD DE EXTRACCIÓN ACTIVA: <span class="text-cyan-400 font-medium">18,450 Ton/Año</span></span>
+                <span class="text-slate-500">|</span>
+                <span>RESERVA RESPALDADA EN PUNA: <span class="text-amber-400 font-medium">1.2M Ton LCE</span></span>
+            </div>
+            <div class="hidden md:flex items-center space-x-4 text-xs">
+                <span class="bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded-full"><i class="fa-solid fa-shield-halved mr-1"></i> Auditoría CertiK & ESG ISO 14001</span>
+                <span class="text-slate-300"><i class="fa-solid fa-clock mr-1"></i> PAGO DIARIO PROGRAMADO: <span id="time-to-payout" class="font-mono text-cyan-400">08:42:15</span></span>
+            </div>
+        </div>
+
+        <!-- Main Navigation Header -->
+        <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 lg:px-8 py-3.5">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <!-- Brand Logo -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('dashboard')">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-teal-400 to-emerald-400 p-0.5 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                        <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                            <i class="fa-solid fa-bolt text-cyan-400 text-lg"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-1.5">
+                            <span class="text-xl font-black tracking-wider text-white">LITIO<span class="text-cyan-400">X</span></span>
+                            <span class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-[10px] font-bold px-1.5 py-0.5 rounded">PRO PROTOCOL</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 tracking-tight" id="user-welcome-label">Hola, Usuario</p>
+                    </div>
+                </div>
+
+                <!-- Desktop Navigation Links -->
+                <nav class="hidden md:flex items-center space-x-1 bg-slate-950/60 p-1.5 rounded-xl border border-slate-800">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn active px-4 py-2 rounded-lg text-xs font-semibold transition-all text-cyan-400 bg-slate-800/80">
+                        <i class="fa-solid fa-chart-line mr-1.5"></i> Panel Principal
+                    </button>
+                    <button onclick="switchTab('packages')" id="nav-packages" class="nav-btn px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
+                        <i class="fa-solid fa-cubes-stacked mr-1.5"></i> Planes 50% ROI
+                    </button>
+                    <button onclick="switchTab('telemetry')" id="nav-telemetry" class="nav-btn px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
+                        <i class="fa-solid fa-map-location-dot mr-1.5"></i> Telemetría Salares
+                    </button>
+                    <button onclick="switchTab('referrals')" id="nav-referrals" class="nav-btn px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
+                        <i class="fa-solid fa-users-rays mr-1.5"></i> Red de Afiliados
+                    </button>
+                    <button onclick="switchTab('whitepaper')" id="nav-whitepaper" class="nav-btn px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
+                        <i class="fa-solid fa-file-contract mr-1.5"></i> Respaldo & Audit
+                    </button>
+                </nav>
+
+                <!-- User Quick Balance & Actions -->
+                <div class="flex items-center space-x-3">
+                    <div class="hidden sm:flex flex-col items-end mr-2">
+                        <span class="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Saldo Disponible</span>
+                        <span class="text-sm font-extrabold text-white font-mono" id="header-balance-display">$1,250.00 USDT</span>
+                    </div>
+                    <button onclick="openDepositModal()" class="glow-button px-4 py-2 rounded-xl text-xs font-bold text-slate-950 flex items-center space-x-2">
+                        <i class="fa-solid fa-wallet"></i>
+                        <span>Depositar</span>
+                    </button>
+                    <button onclick="openWithdrawModal()" class="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold transition">
+                        Retirar
+                    </button>
+                    <button onclick="handleLogout()" class="text-slate-400 hover:text-rose-400 p-2 text-sm transition ml-1" title="Cerrar Sesión">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Mobile Bottom Navigation Bar -->
+        <div class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 border-t border-slate-800 py-2 px-3 backdrop-blur-lg flex justify-around items-center">
+            <button onclick="switchTab('dashboard')" class="mobile-nav-btn flex flex-col items-center text-cyan-400 text-[10px] font-medium">
+                <i class="fa-solid fa-chart-line text-lg mb-0.5"></i>
+                <span>Inicio</span>
+            </button>
+            <button onclick="switchTab('packages')" class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px] font-medium">
+                <i class="fa-solid fa-cubes-stacked text-lg mb-0.5"></i>
+                <span>Invertir</span>
+            </button>
+            <button onclick="switchTab('telemetry')" class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px] font-medium">
+                <i class="fa-solid fa-map-location-dot text-lg mb-0.5"></i>
+                <span>Salares</span>
+            </button>
+            <button onclick="switchTab('referrals')" class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px] font-medium">
+                <i class="fa-solid fa-users text-lg mb-0.5"></i>
+                <span>Equipo</span>
+            </button>
+        </div>
+
+        <!-- MAIN CONTAINER -->
+        <main class="max-w-7xl mx-auto px-4 lg:px-8 py-6 w-full flex-grow mb-16 md:mb-0">
+
+            <!-- TAB 1: DASHBOARD OVERVIEW -->
+            <div id="tab-dashboard" class="tab-content space-y-6">
+                
+                <!-- Hero Banner -->
+                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-teal-950/60 border border-slate-800 p-6 md:p-8">
+                    <div class="absolute -right-12 -bottom-12 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                        
+                        <div class="lg:col-span-7 space-y-4">
+                            <div class="inline-flex items-center space-x-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 px-3 py-1 rounded-full text-xs font-semibold">
+                                <i class="fa-solid fa-bolt text-amber-400"></i>
+                                <span>Rendimiento Fijo Garantizado por Producción Minera</span>
+                            </div>
+                            <h1 class="text-2xl md:text-4xl font-extrabold text-white tracking-tight leading-tight">
+                                Genera hasta <span class="bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent">50% Mensual</span> respaldado por Litio del Norte Argentino
+                            </h1>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                LitioX monetiza la extracción directa en los salares de Jujuy, Salta y Catamarca. Cada token representa cuotas de producción con distribución diaria automatizada de utilidades en USDT.
+                            </p>
+                            <div class="flex flex-wrap gap-3 pt-2">
+                                <button onclick="switchTab('packages')" class="glow-button px-6 py-3 rounded-xl font-bold text-slate-950 text-sm flex items-center space-x-2">
+                                    <span>Activar Pool de Minería (50% ROI)</span>
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                                <button onclick="switchTab('telemetry')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-5 py-3 rounded-xl text-sm font-semibold flex items-center space-x-2 transition">
+                                    <i class="fa-solid fa-video text-cyan-400"></i>
+                                    <span>Ver Operación en Tiempo Real</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Live Yield Ticker Display Box -->
+                        <div class="lg:col-span-5 bg-slate-950/80 border border-slate-800 rounded-2xl p-5 shadow-2xl relative">
+                            <div class="flex justify-between items-center mb-3 border-b border-slate-800/80 pb-2">
+                                <span class="text-xs text-slate-400 font-semibold uppercase flex items-center">
+                                    <i class="fa-solid fa-microchip text-emerald-400 mr-2"></i> Generador de Ganancia Diaria
+                                </span>
+                                <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono">ACTIVO 1.66%/DÍA</span>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div>
+                                    <span class="text-xs text-slate-400">Ganancia Acumulada Hoy (USDT)</span>
+                                    <div class="text-3xl font-black text-emerald-400 font-mono flex items-baseline space-x-1 mt-1">
+                                        <span id="live-accumulated-yield">$20.7834</span>
+                                        <span class="text-xs font-normal text-slate-400">USDT</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between text-xs text-slate-400 mb-1">
+                                        <span>Ciclo diario actual (24h)</span>
+                                        <span class="text-cyan-400 font-mono">64.2%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden p-0.5">
+                                        <div class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full rounded-full transition-all duration-500" style="width: 64.2%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-2 pt-2 text-xs">
+                                    <div class="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl">
+                                        <span class="text-slate-400 block text-[10px]">Tasa Mensual</span>
+                                        <span class="text-white font-bold text-sm">50.00%</span>
+                                    </div>
+                                    <div class="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl">
+                                        <span class="text-slate-400 block text-[10px]">Depósito Staked</span>
+                                        <span class="text-cyan-400 font-bold text-sm font-mono" id="hero-staked-amount">$1,250.00</span>
+                                    </div>
+                                </div>
+
+                                <button onclick="claimDailyEarnings()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                                    <span>Reclamar Ganancia al Saldo</span>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Key Financial Metrics Bar -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass-card glass-card-hover p-4 rounded-2xl relative overflow-hidden">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-medium text-slate-400">Portafolio Total</p>
+                                <h3 class="text-xl md:text-2xl font-black text-white mt-1 font-mono" id="metric-total-portfolio">$2,840.50</h3>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 border border-cyan-500/20">
+                                <i class="fa-solid fa-wallet text-lg"></i>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-emerald-400 mt-2 font-medium flex items-center">
+                            <i class="fa-solid fa-arrow-trend-up mr-1"></i> +$20.83 acreditado hoy
+                        </p>
+                    </div>
+
+                    <div class="glass-card glass-card-hover p-4 rounded-2xl relative overflow-hidden">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-medium text-slate-400">Ganancias Retiradas</p>
+                                <h3 class="text-xl md:text-2xl font-black text-emerald-400 mt-1 font-mono" id="metric-total-withdrawn">$1,590.50</h3>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
+                                <i class="fa-solid fa-money-bill-transfer text-lg"></i>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-2">100% Pagado a tiempo</p>
+                    </div>
+
+                    <div class="glass-card glass-card-hover p-4 rounded-2xl relative overflow-hidden">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-medium text-slate-400">Pools Activos</p>
+                                <h3 class="text-xl md:text-2xl font-black text-white mt-1">2 Nodos</h3>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 border border-purple-500/20">
+                                <i class="fa-solid fa-cubes text-lg"></i>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-cyan-400 mt-2">Salar de Olaroz & Caucharí</p>
+                    </div>
+
+                    <div class="glass-card glass-card-hover p-4 rounded-2xl relative overflow-hidden">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-medium text-slate-400">Comisiones Red</p>
+                                <h3 class="text-xl md:text-2xl font-black text-amber-400 mt-1 font-mono" id="metric-affiliate-earnings">$340.00</h3>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 border border-amber-500/20">
+                                <i class="fa-solid fa-users text-lg"></i>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-2">12 Inversores en equipo</p>
+                    </div>
+                </div>
+
+                <!-- Chart & Active Contracts Split -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-8 glass-card p-5 rounded-2xl border border-slate-800">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <div>
+                                <h2 class="text-base font-bold text-white flex items-center">
+                                    <i class="fa-solid fa-chart-area text-cyan-400 mr-2"></i> Rendimiento de Producción (USDT)
+                                </h2>
+                                <p class="text-xs text-slate-400">Crecimiento de rendimientos diarios depositados</p>
+                            </div>
+                            <div class="flex space-x-1 bg-slate-900 p-1 rounded-lg border border-slate-800 text-xs">
+                                <button class="px-2.5 py-1 rounded bg-slate-800 text-white font-medium">7 Días</button>
+                                <button class="px-2.5 py-1 rounded text-slate-400 hover:text-white">30 Días</button>
+                            </div>
+                        </div>
+                        <div class="h-64 w-full">
+                            <canvas id="yieldChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-4 glass-card p-5 rounded-2xl border border-slate-800 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-sm font-bold text-white flex items-center">
+                                    <i class="fa-solid fa-circle-check text-emerald-400 mr-2"></i> Mis Contratos Activos
+                                </h3>
+                                <button onclick="switchTab('packages')" class="text-xs text-cyan-400 hover:underline">Ver Todos</button>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div class="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl space-y-2">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs font-bold text-white flex items-center">
+                                            <i class="fa-solid fa-gem text-cyan-400 mr-1.5"></i> Salar Apex Pro
+                                        </span>
+                                        <span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-bold">50% Mensual</span>
+                                    </div>
+                                    <div class="flex justify-between text-xs text-slate-400">
+                                        <span>Invertido: <strong class="text-white font-mono">$1,000 USDT</strong></span>
+                                        <span>Diario: <strong class="text-emerald-400 font-mono">$16.66</strong></span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                        <div class="bg-cyan-400 h-full rounded-full" style="width: 45%"></div>
+                                    </div>
+                                    <div class="flex justify-between text-[10px] text-slate-500">
+                                        <span>Día 13.5 de 30</span>
+                                        <span>Vence en: 16d 10h</span>
+                                    </div>
+                                </div>
+
+                                <div class="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl space-y-2">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs font-bold text-white flex items-center">
+                                            <i class="fa-solid fa-mountain text-teal-400 mr-1.5"></i> Puna Starter Node
+                                        </span>
+                                        <span class="text-[10px] bg-teal-500/10 text-teal-400 px-2 py-0.5 rounded-full font-bold">40% Mensual</span>
+                                    </div>
+                                    <div class="flex justify-between text-xs text-slate-400">
+                                        <span>Invertido: <strong class="text-white font-mono">$250 USDT</strong></span>
+                                        <span>Diario: <strong class="text-emerald-400 font-mono">$3.33</strong></span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                        <div class="bg-teal-400 h-full rounded-full" style="width: 80%"></div>
+                                    </div>
+                                    <div class="flex justify-between text-[10px] text-slate-500">
+                                        <span>Día 24 de 30</span>
+                                        <span>Vence en: 6d 04h</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="switchTab('packages')" class="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-plus-circle"></i>
+                            <span>Activar Nuevo Contrato</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Live Transaction Feed -->
+                <div class="glass-card p-5 rounded-2xl border border-slate-800">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-white flex items-center">
+                                <i class="fa-solid fa-list-check text-cyan-400 mr-2"></i> Registro de Pagos Diarios en Blockchain
+                            </h3>
+                            <p class="text-xs text-slate-400">Auditoría en tiempo real de acreditaciones automatizadas</p>
+                        </div>
+                        <span class="text-[10px] bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-lg font-mono">
+                            <i class="fa-solid fa-network-wired text-cyan-400 mr-1"></i> Polygon / BEP-20
+                        </span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead>
+                                <tr class="text-slate-400 border-b border-slate-800 bg-slate-950/50">
+                                    <th class="p-3">Usuario / Wallet</th>
+                                    <th class="p-3">Plan de Litio</th>
+                                    <th class="p-3">Monto Acreditado</th>
+                                    <th class="p-3">Hash de Transacción</th>
+                                    <th class="p-3 text-right">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="live-payouts-body" class="divide-y divide-slate-800/50">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- TAB 2: PACKAGES -->
+            <div id="tab-packages" class="tab-content hidden space-y-8">
+                <div class="text-center max-w-2xl mx-auto space-y-2">
+                    <span class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                        Planes de Inversión Respaldados por Mineral
+                    </span>
+                    <h2 class="text-3xl font-black text-white">Elige tu Nodo de Producción de Litio</h2>
+                    <p class="text-slate-400 text-sm">
+                        Los retornos se pagan diariamente en USDT a tu balance retirable.
+                    </p>
+                </div>
+
+                <!-- Calculator -->
+                <div class="glass-card p-6 rounded-2xl border border-cyan-500/30 bg-gradient-to-r from-slate-900 via-slate-900 to-cyan-950/40">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                        <div class="md:col-span-6 space-y-4">
+                            <h3 class="text-lg font-bold text-white flex items-center">
+                                <i class="fa-solid fa-calculator text-cyan-400 mr-2"></i> Calculadora de Ganancia (50% ROI Mensual)
+                            </h3>
+                            <p class="text-xs text-slate-300">
+                                Mueve el deslizador para simular tus ingresos con el Plan Apex 50%.
+                            </p>
+                            <div>
+                                <div class="flex justify-between text-xs text-slate-300 mb-2 font-semibold">
+                                    <span>Monto a Invertir:</span>
+                                    <span class="text-cyan-400 font-mono text-base" id="calc-amount-label">$1,000 USDT</span>
+                                </div>
+                                <input type="range" id="calc-slider" min="50" max="10000" step="50" value="1000" 
+                                    class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                                    oninput="updateCalculator(this.value)">
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-6 bg-slate-950/80 border border-slate-800 rounded-xl p-4 grid grid-cols-3 gap-3 text-center">
+                            <div class="bg-slate-900 p-3 rounded-lg border border-slate-800">
+                                <span class="text-[10px] text-slate-400 uppercase block">Diario (1.66%)</span>
+                                <span class="text-base font-extrabold text-emerald-400 font-mono" id="calc-daily">$16.66</span>
+                            </div>
+                            <div class="bg-slate-900 p-3 rounded-lg border border-slate-800">
+                                <span class="text-[10px] text-slate-400 uppercase block">Semanal</span>
+                                <span class="text-base font-extrabold text-cyan-400 font-mono" id="calc-weekly">$116.62</span>
+                            </div>
+                            <div class="bg-slate-900 p-3 rounded-lg border border-slate-800">
+                                <span class="text-[10px] text-slate-400 uppercase block">30 Días (50%)</span>
+                                <span class="text-lg font-black text-amber-400 font-mono" id="calc-monthly">$500.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="glass-card glass-card-hover rounded-2xl p-6 flex flex-col justify-between relative border-slate-800">
+                        <div class="space-y-4">
+                            <span class="text-xs font-bold uppercase text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-full">Nivel Inicial</span>
+                            <h3 class="text-xl font-bold text-white">Puna Lithium Starter</h3>
+                            <p class="text-xs text-slate-400">Cuotas iniciales de extracción en Jujuy.</p>
+                            <div class="py-2 border-y border-slate-800/80 space-y-2">
+                                <div class="flex justify-between text-xs"><span class="text-slate-400">Retorno Mensual:</span><span class="text-emerald-400 font-bold">40.0%</span></div>
+                                <div class="flex justify-between text-xs"><span class="text-slate-400">Rango:</span><span class="text-cyan-400 font-mono">$50 - $299 USDT</span></div>
+                            </div>
+                        </div>
+                        <button onclick="investInPackage('Puna Lithium Starter', 50, 0.40)" class="w-full mt-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold py-3 rounded-xl text-xs transition">
+                            Activar Plan $50 - $299
+                        </button>
+                    </div>
+
+                    <div class="glass-card glass-card-hover rounded-2xl p-6 flex flex-col justify-between relative border-cyan-500/50 bg-slate-900/90 shadow-2xl shadow-cyan-500/10">
+                        <div class="space-y-4">
+                            <span class="text-xs font-bold uppercase text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-full">Nodo Salar Apex</span>
+                            <h3 class="text-xl font-bold text-white">Salar Apex Extraction</h3>
+                            <p class="text-xs text-slate-300">Cuota preferencial de producción. Rendimiento máximo.</p>
+                            <div class="py-2 border-y border-slate-800/80 space-y-2">
+                                <div class="flex justify-between text-xs"><span class="text-slate-400">Retorno Mensual:</span><span class="text-emerald-400 font-extrabold text-base">50.0%</span></div>
+                                <div class="flex justify-between text-xs"><span class="text-slate-400">Rango:</span><span class="text-cyan-400 font-mono">$300 - $2,499 USDT</span></div>
+                            </div>
+                        </div>
+                        <button onclick="investInPackage('Salar Apex Extraction', 300, 0.50)" class="w-full mt-6 glow-button text-slate-950 font-black py-3 rounded-xl text-xs transition">
+                            Activar Plan Apex (50% ROI)
+                        </button>
+                    </div>
+
+                    <div class="glass-card glass-card-hover rounded-2xl p-6 flex flex-col justify-between relative border-slate-800">
+                        <div class="space-y-4">
+                            <span class="text-xs font-bold uppercase text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full">Inversor Institucional</span>
+                            <h3 class="text-xl font-bold text-white">GigaFactory Reserve</h3>
+                            <p class="text-xs text-slate-400">Para gran volumen corporativo.</p>
+                            <div class="py-2 border-y border-slate-800/80 space-y-2">
+                                <div class="flex justify-between text-xs"><span class="text-slate-400">Retorno Mensual:</span><span class="text-emerald-400 font-bold">60.0%</span></div>
+                                <div class="flex justify-between text-xs"><span class="text-slate-400">Rango:</span><span class="text-cyan-400 font-mono">$2,500 - $50,000 USDT</span></div>
+                            </div>
+                        </div>
+                        <button onclick="investInPackage('GigaFactory Reserve', 2500, 0.60)" class="w-full mt-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-400 font-bold py-3 rounded-xl text-xs transition">
+                            Activar Plan $2,500+ USDT
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: TELEMETRY -->
+            <div id="tab-telemetry" class="tab-content hidden space-y-6">
+                <h2 class="text-2xl font-black text-white"><i class="fa-solid fa-satellite-dish text-cyan-400 mr-2"></i> Telemetría en Vivo de Salares</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-8 glass-card p-5 rounded-2xl border border-slate-800 h-80 flex items-center justify-center bg-slate-950 relative">
+                        <p class="text-slate-400 text-xs"><i class="fa-solid fa-location-dot text-cyan-400 mr-2"></i> Jujuy - Salar de Olaroz (-23.512, -66.589) [Sensores Activos]</p>
+                    </div>
+                    <div class="lg:col-span-4 glass-card p-5 rounded-2xl border border-slate-800 space-y-3">
+                        <h3 class="font-bold text-white text-base">Salar de Olaroz</h3>
+                        <div class="bg-slate-900 p-3 rounded-xl flex justify-between text-xs"><span class="text-slate-400">Pureza Litio:</span><span class="text-emerald-400 font-bold">99.5%</span></div>
+                        <div class="bg-slate-900 p-3 rounded-xl flex justify-between text-xs"><span class="text-slate-400">Capacidad Diaria:</span><span class="text-white font-bold">34.2 Tons</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: REFERRALS -->
+            <div id="tab-referrals" class="tab-content hidden space-y-6">
+                <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-3">
+                    <h2 class="text-2xl font-black text-white">Programa de Afiliados (10% - 3% - 1%)</h2>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="referral-link-input" readonly value="https://litiox.protocol/ref?user=INV_8829" class="bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-lg p-2.5 font-mono w-full">
+                        <button onclick="copyReferralLink()" class="bg-cyan-500 text-slate-950 font-bold p-2.5 rounded-lg text-xs"><i class="fa-solid fa-copy"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: WHITEPAPER -->
+            <div id="tab-whitepaper" class="tab-content hidden space-y-6">
+                <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <h2 class="text-2xl font-black text-white">Respaldo Legal & Certificaciones CertiK</h2>
+                    <p class="text-xs text-slate-400">Contratos verificados y reservas auditadas.</p>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- MODALS & TOAST -->
+        <div id="deposit-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+            <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-slate-800 space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <h3 class="font-bold text-white text-sm">Depositar FONDOS (USDT)</h3>
+                    <button onclick="closeDepositModal()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <input type="number" id="deposit-sim-amount" placeholder="Monto" value="500" class="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-xl p-3 font-mono">
+                <button onclick="confirmSimulatedDeposit()" class="w-full glow-button text-slate-950 font-black py-3 rounded-xl text-xs">Confirmar Depósito Simulado</button>
+            </div>
+        </div>
+
+        <div id="withdraw-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+            <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-slate-800 space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <h3 class="font-bold text-white text-sm">Retirar Ganancias (USDT)</h3>
+                    <button onclick="closeWithdrawModal()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <input type="number" id="withdraw-amount-input" value="100" class="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-xl p-3 font-mono">
+                <button onclick="executeWithdrawal()" class="w-full bg-emerald-500 text-slate-950 font-extrabold py-3 rounded-xl text-xs">Solicitar Retiro</button>
+            </div>
+        </div>
+
+        <footer class="bg-slate-950 border-t border-slate-800 py-4 text-center text-xs text-slate-500">
+            LitioX Mining Yield Protocol &copy; 2026
+        </footer>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+    <!-- MAIN JAVASCRIPT & SUPABASE INTEGRATION -->
+    <script>
+        // CONFIGURACIÓN DE SUPABASE (Reemplaza con tus claves de Project Settings > API)
+        const SUPABASE_URL = 'https://tu-proyecto.supabase.co';
+        const SUPABASE_ANON_KEY = 'tu-anon-key-aqui';
+        let supabaseClient = null;
+
+        // Intentar inicializar Supabase de forma segura
+        try {
+            if (SUPABASE_URL !== 'https://tu-proyecto.supabase.co' && window.supabase) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+        } catch (e) {
+            console.log("Supabase operando en modo local/simulado");
+        }
+
+        // Estado del usuario activo
+        let currentUser = null;
+        let userState = { 
+            email: 'invitado@litiox.com',
+            fullName: 'Usuario Demo',
+            balance: 1250.00, 
+            accumulatedYieldToday: 20.7834, 
+            stakedTotal: 1250.00, 
+            totalWithdrawn: 1590.50, 
+            affiliateCommissions: 340.00, 
+            dailyRate: 0.0166 
+        };
+
+        window.onload = function() {
+            checkExistingSession();
+            initYieldChart();
+            startLiveYieldGenerator();
+            populateLivePayouts();
+        };
+
+        // Alternar entre Formulario de Login y Registro
+        function toggleAuthMode(mode) {
+            const loginForm = document.getElementById('login-form');
+            const regForm = document.getElementById('register-form');
+            const tabLogin = document.getElementById('tab-login-btn');
+            const tabReg = document.getElementById('tab-register-btn');
+
+            if (mode === 'login') {
+                loginForm.classList.remove('hidden');
+                regForm.classList.add('hidden');
+                tabLogin.className = 'flex-1 py-2.5 rounded-lg text-cyan-400 bg-slate-800 transition';
+                tabReg.className = 'flex-1 py-2.5 rounded-lg text-slate-400 hover:text-white transition';
+            } else {
+                loginForm.classList.add('hidden');
+                regForm.classList.remove('hidden');
+                tabReg.className = 'flex-1 py-2.5 rounded-lg text-cyan-400 bg-slate-800 transition';
+                tabLogin.className = 'flex-1 py-2.5 rounded-lg text-slate-400 hover:text-white transition';
+            }
+        }
+
+        // Manejar Inicio de Sesión
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            if (supabaseClient) {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) {
+                    showToast('Error de autenticación: ' + error.message, 'error');
+                    return;
+                }
+                currentUser = data.user;
+                await loadUserProfile(currentUser.id, email);
+            } else {
+                // Modo simulado si aún no pegó las llaves reales
+                userState.email = email;
+                userState.fullName = email.split('@')[0];
+            }
+
+            showToast('¡Bienvenido de nuevo!', 'success');
+            showDashboardView();
+        }
+
+        // Manejar Registro de Nuevo Usuario
+        async function handleRegister(e) {
+            e.preventDefault();
+            const fullName = document.getElementById('reg-fullname').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+
+            if (supabaseClient) {
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email,
+                    password,
+                    options: { data: { full_name: fullName } }
+                });
+
+                if (error) {
+                    showToast('Error al registrar: ' + error.message, 'error');
+                    return;
+                }
+
+                showToast('¡Registro exitoso! Ya puedes iniciar sesión.', 'success');
+                toggleAuthMode('login');
+            } else {
+                userState.email = email;
+                userState.fullName = fullName;
+                showToast('Cuenta creada con éxito (Modo Simulado)', 'success');
+                showDashboardView();
+            }
+        }
+
+        // Cargar Perfil desde Supabase Database
+        async function loadUserProfile(userId, email) {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
+            if (data) {
+                userState.fullName = data.full_name || email;
+                userState.balance = parseFloat(data.balance || 0);
+                userState.stakedTotal = parseFloat(data.staked_total || 0);
+            }
+        }
+
+        // Verificar si la sesión sigue activa
+        async function checkExistingSession() {
+            if (supabaseClient) {
+                const { data } = await supabaseClient.auth.getSession();
+                if (data.session) {
+                    currentUser = data.session.user;
+                    await loadUserProfile(currentUser.id, currentUser.email);
+                    showDashboardView();
+                }
+            }
+        }
+
+        // Ingreso Rápido en Modo Demo
+        function enterDemoMode() {
+            userState.fullName = 'Invitado Demo';
+            userState.balance = 1250.00;
+            showToast('Ingresaste en Modo Demo', 'info');
+            showDashboardView();
+        }
+
+        // Cerrar Sesión
+        async function handleLogout() {
+            if (supabaseClient) {
+                await supabaseClient.auth.signOut();
+            }
+            currentUser = null;
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('flex');
+            document.getElementById('auth-view').classList.remove('hidden');
+            showToast('Sesión cerrada correctamente', 'info');
+        }
+
+        // Mostrar Panel Principal
+        function showDashboardView() {
+            document.getElementById('auth-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            document.getElementById('dashboard-view').classList.add('flex');
+            document.getElementById('user-welcome-label').innerText = `Hola, ${userState.fullName}`;
+            updateUIState();
+        }
+
+        // Navegación entre Pestañas del Panel
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            const activeTab = document.getElementById(`tab-${tabId}`);
+            if (activeTab) activeTab.classList.remove('hidden');
+        }
+
+        // Ticker y Generador en Vivo
+        function startLiveYieldGenerator() {
+            setInterval(() => {
+                userState.accumulatedYieldToday += (userState.stakedTotal * userState.dailyRate) / 86400;
+                const yieldEl = document.getElementById('live-accumulated-yield');
+                if (yieldEl) yieldEl.innerText = '$' + userState.accumulatedYieldToday.toFixed(4);
+            }, 1000);
+        }
+
+        function claimDailyEarnings() {
+            userState.balance += userState.accumulatedYieldToday;
+            userState.accumulatedYieldToday = 0;
+            updateUIState();
+            showToast('¡Ganancias acreditadas a tu balance!', 'success');
+        }
+
+        function updateUIState() {
+            document.getElementById('header-balance-display').innerText = '$' + userState.balance.toFixed(2) + ' USDT';
+            document.getElementById('hero-staked-amount').innerText = '$' + userState.stakedTotal.toFixed(2);
+            document.getElementById('metric-total-portfolio').innerText = '$' + (userState.balance + userState.stakedTotal).toFixed(2);
+        }
+
+        function initYieldChart() {
+            const ctx = document.getElementById('yieldChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Hoy'],
+                    datasets: [{
+                        label: 'Acumulado USDT',
+                        data: [1120, 1140, 1162, 1183, 1205, 1228, 1250],
+                        borderColor: '#00f2fe',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function updateCalculator(val) {
+            const amount = parseFloat(val);
+            document.getElementById('calc-amount-label').innerText = '$' + amount.toLocaleString() + ' USDT';
+            document.getElementById('calc-daily').innerText = '$' + (amount * 0.01666).toFixed(2);
+            document.getElementById('calc-weekly').innerText = '$' + (amount * 0.01666 * 7).toFixed(2);
+            document.getElementById('calc-monthly').innerText = '$' + (amount * 0.50).toFixed(2);
+        }
+
+        function investInPackage(name, min, roi) {
+            if (userState.balance < min) {
+                showToast('Saldo insuficiente para activar este nodo', 'error');
+                return;
+            }
+            userState.balance -= min;
+            userState.stakedTotal += min;
+            updateUIState();
+            showToast(`¡Contrato ${name} activado con éxito!`, 'success');
+        }
+
+        function populateLivePayouts() {
+            const tbody = document.getElementById('live-payouts-body');
+            tbody.innerHTML = `
+                <tr><td class="p-3">0x8f...39a1</td><td class="p-3">Salar Apex 50%</td><td class="p-3 text-emerald-400">+$16.66 USDT</td><td class="p-3">0x3a2...99f1</td><td class="p-3 text-right"><span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[10px]">PAGADO</span></td></tr>
+                <tr><td class="p-3">0x1c...90b2</td><td class="p-3">GigaFactory 60%</td><td class="p-3 text-emerald-400">+$50.00 USDT</td><td class="p-3">0x71b...11a4</td><td class="p-3 text-right"><span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[10px]">PAGADO</span></td></tr>
+            `;
+        }
+
+        function openDepositModal() { document.getElementById('deposit-modal').classList.remove('hidden'); }
+        function closeDepositModal() { document.getElementById('deposit-modal').classList.add('hidden'); }
+        function confirmSimulatedDeposit() {
+            const amount = parseFloat(document.getElementById('deposit-sim-amount').value);
+            if (amount > 0) { userState.balance += amount; updateUIState(); closeDepositModal(); showToast('Depósito acreditado', 'success'); }
+        }
+
+        function openWithdrawModal() { document.getElementById('withdraw-modal').classList.remove('hidden'); }
+        function closeWithdrawModal() { document.getElementById('withdraw-modal').classList.add('hidden'); }
+        function executeWithdrawal() {
+            const amount = parseFloat(document.getElementById('withdraw-amount-input').value);
+            if (amount <= userState.balance) { userState.balance -= amount; updateUIState(); closeWithdrawModal(); showToast('Retiro enviado a revisión', 'success'); }
+        }
+
+        function copyReferralLink() { showToast('Enlace de referido copiado al portapapeles', 'success'); }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'pointer-events-auto p-3.5 rounded-xl bg-slate-900 border border-slate-700 text-white shadow-2xl text-xs flex items-center space-x-2 transition-all duration-300';
+            
+            let icon = 'fa-circle-info text-cyan-400';
+            if (type === 'success') icon = 'fa-circle-check text-emerald-400';
+            if (type === 'error') icon = 'fa-circle-xmark text-rose-400';
+
+            toast.innerHTML = `<i class="fa-solid ${icon} text-sm"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+    </script>
+</body>
+</html>
