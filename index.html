@@ -795,6 +795,7 @@
 
         // Estado Global del Usuario (Solo vive en memoria RAM)
         let userState = { 
+            id: '', // Agregamos user_id aquí
             email: '', fullName: '', balance: 0.00, stakedTotal: 0.00, totalWithdrawn: 0.00,
             totalYieldEarned: 0.00, refCode: '', referredBy: '', referralCount: 0, accumulatedYieldSession: 0.00
         };
@@ -821,7 +822,18 @@
                 toggleAuthMode('register');
             }
             initTelemetryChart();
+            
+            // Verificar si hay sesión activa al recargar
+            checkSession();
         };
+        
+        async function checkSession() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session && session.user) {
+                userState.id = session.user.id;
+                await loadUserProfile(session.user.email);
+            }
+        }
 
         function toggleAuthMode(mode) {
             const forms = ['login', 'register', 'forgot'];
@@ -852,6 +864,10 @@
             if (error) {
                 return showToast("Error al iniciar sesión. Revisa tus credenciales.", "error");
             }
+            
+            if (data && data.user) {
+                userState.id = data.user.id; // Guardar el user_id
+            }
 
             await loadUserProfile(email);
         }
@@ -865,9 +881,14 @@
             // Registrar en Auth
             const { data, error } = await supabaseClient.auth.signUp({ email, password: pass });
             if (error) return showToast(error.message, "error");
+            
+            if (data && data.user) {
+                userState.id = data.user.id; // Guardar el user_id para el registro
+            }
 
             const myRefCode = generateRefCode();
             const newProfile = {
+                // Si tienes columna user_id en profiles, añádela aquí: user_id: userState.id,
                 email: email,
                 full_name: fname,
                 balance: 0.00,
@@ -909,6 +930,7 @@
         }
 
         function enterDemoMode() {
+            userState.id = 'demo-user-id';
             userState.email = 'invitado@demo.com';
             userState.fullName = 'Usuario Demo';
             userState.balance = 1500;
@@ -1000,6 +1022,7 @@
             document.getElementById('nav-admin').classList.add('hidden');
             document.getElementById('nav-admin-mobile').classList.add('hidden');
             switchTab('dashboard');
+            userState.id = '';
             userState.email = '';
         }
 
@@ -1070,16 +1093,19 @@
             if (isNaN(amount) || amount < 10) return showToast('El mínimo de depósito es $10 USDT', 'error');
             if (!hash || hash.length < 10) return showToast('Ingresa un Hash válido', 'error');
 
+            if (!userState.id) {
+                return showToast('Error de sesión. Por favor, vuelve a iniciar sesión.', 'error');
+            }
 
             const tx = {
                 id: generateUUID(),
+                user_id: userState.id, // Añadido el user_id para Supabase
                 user_email: userState.email.toLowerCase(),
                 type: 'deposit',
                 amount: amount,
                 hash: hash,
                 wallet: '',
                 status: 'pending'
-                // Ya no enviamos local_date, Supabase usará created_at automáticamente
             };
             
             const { error } = await supabaseClient.from('transactions').insert([tx]);
@@ -1109,6 +1135,10 @@
             if (isNaN(amount) || amount < 25) return showToast('El monto mínimo es $25 USDT', 'error');
             if (amount > userState.balance) return showToast('Saldo insuficiente', 'error');
 
+            if (!userState.id) {
+                return showToast('Error de sesión. Por favor, vuelve a iniciar sesión.', 'error');
+            }
+
             // 1. Restar Saldo (Retención) en la nube
             userState.balance -= amount;
             await updateUserProfileInCloud({ balance: userState.balance });
@@ -1117,13 +1147,13 @@
             // 2. Crear Transacción
             const tx = {
                 id: generateUUID(),
+                user_id: userState.id, // Añadido el user_id para Supabase
                 user_email: userState.email.toLowerCase(),
                 type: 'withdraw',
                 amount: amount,
                 hash: '',
                 wallet: wallet,
                 status: 'pending'
-                // Ya no enviamos local_date, Supabase usará created_at automáticamente
             };
             
             const { error } = await supabaseClient.from('transactions').insert([tx]);
