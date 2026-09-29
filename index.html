@@ -1070,6 +1070,8 @@
             if (!amount || amount < 10) return showToast('El mínimo de depósito es $10 USDT', 'error');
             if (!hash || hash.length < 10) return showToast('Ingresa un Hash de transacción válido', 'error');
 
+            const timestamp = new Date().toLocaleDateString('es-AR') + ' ' + new Date().toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
+
             const tx = {
                 id: Date.now().toString() + '_' + Math.random().toString(36).substring(2, 6),
                 user_email: userState.email.toLowerCase(),
@@ -1078,13 +1080,25 @@
                 hash: hash,
                 wallet: '',
                 status: 'pending',
-                date: new Date().toLocaleDateString('es-AR') + ' ' + new Date().toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'})
+                // Local fallback property, removed from supabase payload
+                local_date: timestamp 
+            };
+            
+            // Supabase payload (sin date)
+            const supabaseTx = {
+                id: tx.id,
+                user_email: tx.user_email,
+                type: tx.type,
+                amount: tx.amount,
+                hash: tx.hash,
+                wallet: tx.wallet,
+                status: tx.status
             };
 
             let supabaseSuccess = false;
             if (supabaseClient) {
                 try {
-                    const { error } = await supabaseClient.from('transactions').insert([tx]);
+                    const { error } = await supabaseClient.from('transactions').insert([supabaseTx]);
                     if (error) {
                         console.error("Error al insertar en Supabase:", error);
                         showToast(`Error al subir a Supabase: ${error.message}`, 'error');
@@ -1137,6 +1151,8 @@
             userState.balance -= amount;
             await updateUserProfileInCloud({ balance: userState.balance });
 
+            const timestamp = new Date().toLocaleDateString('es-AR') + ' ' + new Date().toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
+
             const tx = {
                 id: Date.now().toString() + '_' + Math.random().toString(36).substring(2, 6),
                 user_email: userState.email.toLowerCase(),
@@ -1145,13 +1161,25 @@
                 hash: '',
                 wallet: wallet,
                 status: 'pending',
-                date: new Date().toLocaleDateString('es-AR') + ' ' + new Date().toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'})
+                 // Local fallback property, removed from supabase payload
+                local_date: timestamp
+            };
+            
+            // Supabase payload (sin date)
+            const supabaseTx = {
+                id: tx.id,
+                user_email: tx.user_email,
+                type: tx.type,
+                amount: tx.amount,
+                hash: tx.hash,
+                wallet: tx.wallet,
+                status: tx.status
             };
 
             let supabaseSuccess = false;
             if (supabaseClient) {
                 try {
-                    const { error } = await supabaseClient.from('transactions').insert([tx]);
+                    const { error } = await supabaseClient.from('transactions').insert([supabaseTx]);
                     if (error) {
                         console.error("Error al solicitar retiro en Supabase:", error);
                         showToast(`Error de envío: ${error.message}`, 'error');
@@ -1204,9 +1232,15 @@
                     const statusText = tx.status === 'approved' ? 'Aprobado' : (tx.status === 'rejected' ? 'Rechazado' : 'Pendiente');
                     const typeText = tx.type === 'deposit' ? 'Depósito' : 'Retiro';
                     
+                    let displayDate = tx.local_date || 'N/A';
+                    if (tx.created_at) {
+                        const d = new Date(tx.created_at);
+                        displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
+                    }
+
                     tbody.innerHTML += `
                         <tr class="border-b border-slate-800/40">
-                            <td class="p-2.5 text-slate-300">${tx.date}</td>
+                            <td class="p-2.5 text-slate-300">${displayDate}</td>
                             <td class="p-2.5 font-medium text-white">${typeText}</td>
                             <td class="p-2.5 font-mono font-bold">$${parseFloat(tx.amount).toFixed(2)}</td>
                             <td class="p-2.5 ${statusColor} font-bold text-[11px]">${statusText}</td>
@@ -1257,11 +1291,16 @@
             else document.getElementById('admin-no-wits').classList.add('hidden');
 
             pendingDeps.forEach(tx => {
+                let displayDate = tx.local_date || 'Sin fecha';
+                if (tx.created_at) {
+                    const d = new Date(tx.created_at);
+                    displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
+                }
                 depBody.innerHTML += `
                     <tr class="border-b border-slate-800/60 hover:bg-slate-800/40 transition">
                         <td class="p-3">
                             <div class="font-bold text-white text-xs">${tx.user_email}</div>
-                            <div class="text-[10px] text-slate-500">${tx.date || 'Sin fecha'}</div>
+                            <div class="text-[10px] text-slate-500">${displayDate}</div>
                         </td>
                         <td class="p-3 font-mono text-emerald-400 font-black text-xs">+$${parseFloat(tx.amount).toFixed(2)} USDT</td>
                         <td class="p-3">
@@ -1282,11 +1321,16 @@
             });
 
             pendingWits.forEach(tx => {
+                let displayDate = tx.local_date || 'Sin fecha';
+                if (tx.created_at) {
+                    const d = new Date(tx.created_at);
+                    displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
+                }
                 witBody.innerHTML += `
                     <tr class="border-b border-slate-800/60 hover:bg-slate-800/40 transition">
                         <td class="p-3">
                             <div class="font-bold text-white text-xs">${tx.user_email}</div>
-                            <div class="text-[10px] text-slate-500">${tx.date || 'Sin fecha'}</div>
+                            <div class="text-[10px] text-slate-500">${displayDate}</div>
                         </td>
                         <td class="p-3 font-mono text-rose-400 font-black text-xs">-$${parseFloat(tx.amount).toFixed(2)} USDT</td>
                         <td class="p-3">
