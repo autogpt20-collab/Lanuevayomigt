@@ -259,7 +259,7 @@
                 <div class="flex items-center space-x-3">
                     <div class="hidden sm:flex flex-col items-end mr-2">
                         <span class="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Saldo Disponible</span>
-                        <span class="text-sm font-extrabold text-white font-mono" id="header-balance-display">$1,250.00 USDT</span>
+                        <span class="text-sm font-extrabold text-white font-mono" id="header-balance-display">$0.00 USDT</span>
                     </div>
                     <button onclick="openDepositModal()" class="glow-button px-4 py-2 rounded-xl text-xs font-bold text-slate-950 flex items-center space-x-2">
                         <i class="fa-solid fa-wallet"></i>
@@ -342,7 +342,7 @@
                                 <div>
                                     <span class="text-xs text-slate-400">Ganancia Acumulada Hoy (USDT)</span>
                                     <div class="text-3xl font-black text-emerald-400 font-mono flex items-baseline space-x-1 mt-1">
-                                        <span id="live-accumulated-yield">$20.7834</span>
+                                        <span id="live-accumulated-yield">$0.0000</span>
                                         <span class="text-xs font-normal text-slate-400">USDT</span>
                                     </div>
                                 </div>
@@ -364,7 +364,7 @@
                                     </div>
                                     <div class="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl">
                                         <span class="text-slate-400 block text-[10px]">Depósito Staked</span>
-                                        <span class="text-cyan-400 font-bold text-sm font-mono" id="hero-staked-amount">$1,250.00</span>
+                                        <span class="text-cyan-400 font-bold text-sm font-mono" id="hero-staked-amount">$0.00</span>
                                     </div>
                                 </div>
 
@@ -384,14 +384,14 @@
                         <div class="flex justify-between items-start">
                             <div>
                                 <p class="text-xs font-medium text-slate-400">Portafolio Total</p>
-                                <h3 class="text-xl md:text-2xl font-black text-white mt-1 font-mono" id="metric-total-portfolio">$2,840.50</h3>
+                                <h3 class="text-xl md:text-2xl font-black text-white mt-1 font-mono" id="metric-total-portfolio">$0.00</h3>
                             </div>
                             <div class="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 border border-cyan-500/20">
                                 <i class="fa-solid fa-wallet text-lg"></i>
                             </div>
                         </div>
                         <p class="text-[11px] text-emerald-400 mt-2 font-medium flex items-center">
-                            <i class="fa-solid fa-arrow-trend-up mr-1"></i> +$20.83 acreditado hoy
+                            <i class="fa-solid fa-arrow-trend-up mr-1"></i> Producción Sincronizada
                         </p>
                     </div>
 
@@ -399,7 +399,7 @@
                         <div class="flex justify-between items-start">
                             <div>
                                 <p class="text-xs font-medium text-slate-400">Ganancias Retiradas</p>
-                                <h3 class="text-xl md:text-2xl font-black text-emerald-400 mt-1 font-mono" id="metric-total-withdrawn">$1,590.50</h3>
+                                <h3 class="text-xl md:text-2xl font-black text-emerald-400 mt-1 font-mono" id="metric-total-withdrawn">$0.00</h3>
                             </div>
                             <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
                                 <i class="fa-solid fa-money-bill-transfer text-lg"></i>
@@ -412,7 +412,7 @@
                         <div class="flex justify-between items-start">
                             <div>
                                 <p class="text-xs font-medium text-slate-400">Pools Activos</p>
-                                <h3 class="text-xl md:text-2xl font-black text-white mt-1">2 Nodos</h3>
+                                <h3 class="text-xl md:text-2xl font-black text-white mt-1">Salar Apex</h3>
                             </div>
                             <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 border border-purple-500/20">
                                 <i class="fa-solid fa-cubes text-lg"></i>
@@ -425,13 +425,13 @@
                         <div class="flex justify-between items-start">
                             <div>
                                 <p class="text-xs font-medium text-slate-400">Comisiones Red</p>
-                                <h3 class="text-xl md:text-2xl font-black text-amber-400 mt-1 font-mono" id="metric-affiliate-earnings">$340.00</h3>
+                                <h3 class="text-xl md:text-2xl font-black text-amber-400 mt-1 font-mono" id="metric-affiliate-earnings">$0.00</h3>
                             </div>
                             <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 border border-amber-500/20">
                                 <i class="fa-solid fa-users text-lg"></i>
                             </div>
                         </div>
-                        <p class="text-[11px] text-slate-400 mt-2">12 Inversores en equipo</p>
+                        <p class="text-[11px] text-slate-400 mt-2">Sistema Unilevel Activo</p>
                     </div>
                 </div>
 
@@ -473,35 +473,15 @@
                                         <span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-bold">50% Mensual</span>
                                     </div>
                                     <div class="flex justify-between text-xs text-slate-400">
-                                        <span>Invertido: <strong class="text-white font-mono">$1,000 USDT</strong></span>
-                                        <span>Diario: <strong class="text-emerald-400 font-mono">$16.66</strong></span>
+                                        <span>Staked: <strong class="text-white font-mono" id="active-contract-amount">$0 USDT</strong></span>
+                                        <span>Diario: <strong class="text-emerald-400 font-mono" id="active-contract-daily">$0.00</strong></span>
                                     </div>
                                     <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
                                         <div class="bg-cyan-400 h-full rounded-full" style="width: 45%"></div>
                                     </div>
                                     <div class="flex justify-between text-[10px] text-slate-500">
-                                        <span>Día 13.5 de 30</span>
-                                        <span>Vence en: 16d 10h</span>
-                                    </div>
-                                </div>
-
-                                <div class="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl space-y-2">
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-xs font-bold text-white flex items-center">
-                                            <i class="fa-solid fa-mountain text-teal-400 mr-1.5"></i> Puna Starter Node
-                                        </span>
-                                        <span class="text-[10px] bg-teal-500/10 text-teal-400 px-2 py-0.5 rounded-full font-bold">40% Mensual</span>
-                                    </div>
-                                    <div class="flex justify-between text-xs text-slate-400">
-                                        <span>Invertido: <strong class="text-white font-mono">$250 USDT</strong></span>
-                                        <span>Diario: <strong class="text-emerald-400 font-mono">$3.33</strong></span>
-                                    </div>
-                                    <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                                        <div class="bg-teal-400 h-full rounded-full" style="width: 80%"></div>
-                                    </div>
-                                    <div class="flex justify-between text-[10px] text-slate-500">
-                                        <span>Día 24 de 30</span>
-                                        <span>Vence en: 6d 04h</span>
+                                        <span>Estado: Activo</span>
+                                        <span>Pagos Diarios en Vivo</span>
                                     </div>
                                 </div>
                             </div>
@@ -715,18 +695,18 @@
 
     <!-- MAIN JAVASCRIPT & SUPABASE INTEGRATION -->
     <script>
-        // CONFIGURACIÓN DE SUPABASE (Reemplaza con tus claves de Project Settings > API)
-        const SUPABASE_URL = 'https://tu-proyecto.supabase.co';
-        const SUPABASE_ANON_KEY = 'tu-anon-key-aqui';
+        // CONFIGURACIÓN REAL DE SUPABASE
+        const SUPABASE_URL = 'https://bmbfjsxgwxfjuphvhvya.supabase.co';
+        const SUPABASE_ANON_KEY = 'EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtYmZqc3hnd3hmanVwaHZodnlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MzA0ODcsImV4cCI6MjEwNjIwNjQ4N30.C8MsEwGhtVfJPB23DLpNW1riLm0MPFW9yKCRbQ9wmsE';
         let supabaseClient = null;
 
-        // Intentar inicializar Supabase de forma segura
+        // Inicializar cliente de Supabase
         try {
-            if (SUPABASE_URL !== 'https://tu-proyecto.supabase.co' && window.supabase) {
+            if (window.supabase) {
                 supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             }
         } catch (e) {
-            console.log("Supabase operando en modo local/simulado");
+            console.log("Supabase error de inicialización:", e);
         }
 
         // Estado del usuario activo
@@ -735,10 +715,10 @@
             email: 'invitado@litiox.com',
             fullName: 'Usuario Demo',
             balance: 1250.00, 
-            accumulatedYieldToday: 20.7834, 
-            stakedTotal: 1250.00, 
-            totalWithdrawn: 1590.50, 
-            affiliateCommissions: 340.00, 
+            accumulatedYieldToday: 0.0000, 
+            stakedTotal: 1000.00, 
+            totalWithdrawn: 0.00, 
+            affiliateCommissions: 0.00, 
             dailyRate: 0.0166 
         };
 
@@ -783,14 +763,14 @@
                 }
                 currentUser = data.user;
                 await loadUserProfile(currentUser.id, email);
+                showToast('¡Bienvenido de nuevo!', 'success');
+                showDashboardView();
             } else {
-                // Modo simulado si aún no pegó las llaves reales
                 userState.email = email;
                 userState.fullName = email.split('@')[0];
+                showToast('¡Bienvenido!', 'success');
+                showDashboardView();
             }
-
-            showToast('¡Bienvenido de nuevo!', 'success');
-            showDashboardView();
         }
 
         // Manejar Registro de Nuevo Usuario
@@ -812,12 +792,12 @@
                     return;
                 }
 
-                showToast('¡Registro exitoso! Ya puedes iniciar sesión.', 'success');
+                showToast('¡Registro exitoso en Supabase! Ya puedes iniciar sesión.', 'success');
                 toggleAuthMode('login');
             } else {
                 userState.email = email;
                 userState.fullName = fullName;
-                showToast('Cuenta creada con éxito (Modo Simulado)', 'success');
+                showToast('Cuenta creada con éxito', 'success');
                 showDashboardView();
             }
         }
@@ -837,7 +817,7 @@
         async function checkExistingSession() {
             if (supabaseClient) {
                 const { data } = await supabaseClient.auth.getSession();
-                if (data.session) {
+                if (data && data.session) {
                     currentUser = data.session.user;
                     await loadUserProfile(currentUser.id, currentUser.email);
                     showDashboardView();
@@ -849,6 +829,7 @@
         function enterDemoMode() {
             userState.fullName = 'Invitado Demo';
             userState.balance = 1250.00;
+            userState.stakedTotal = 1000.00;
             showToast('Ingresaste en Modo Demo', 'info');
             showDashboardView();
         }
@@ -879,18 +860,35 @@
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
             const activeTab = document.getElementById(`tab-${tabId}`);
             if (activeTab) activeTab.classList.remove('hidden');
+
+            // Actualizar botones de navegación activos
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-cyan-400', 'bg-slate-800/80');
+                btn.classList.add('text-slate-400');
+            });
+            const activeNavBtn = document.getElementById(`nav-${tabId}`);
+            if (activeNavBtn) {
+                activeNavBtn.classList.remove('text-slate-400');
+                activeNavBtn.classList.add('text-cyan-400', 'bg-slate-800/80');
+            }
         }
 
         // Ticker y Generador en Vivo
         function startLiveYieldGenerator() {
             setInterval(() => {
-                userState.accumulatedYieldToday += (userState.stakedTotal * userState.dailyRate) / 86400;
-                const yieldEl = document.getElementById('live-accumulated-yield');
-                if (yieldEl) yieldEl.innerText = '$' + userState.accumulatedYieldToday.toFixed(4);
+                if (userState.stakedTotal > 0) {
+                    userState.accumulatedYieldToday += (userState.stakedTotal * userState.dailyRate) / 86400;
+                    const yieldEl = document.getElementById('live-accumulated-yield');
+                    if (yieldEl) yieldEl.innerText = '$' + userState.accumulatedYieldToday.toFixed(4);
+                }
             }, 1000);
         }
 
         function claimDailyEarnings() {
+            if (userState.accumulatedYieldToday <= 0) {
+                showToast('Aún no tienes ganancias acumuladas para reclamar', 'info');
+                return;
+            }
             userState.balance += userState.accumulatedYieldToday;
             userState.accumulatedYieldToday = 0;
             updateUIState();
@@ -901,6 +899,8 @@
             document.getElementById('header-balance-display').innerText = '$' + userState.balance.toFixed(2) + ' USDT';
             document.getElementById('hero-staked-amount').innerText = '$' + userState.stakedTotal.toFixed(2);
             document.getElementById('metric-total-portfolio').innerText = '$' + (userState.balance + userState.stakedTotal).toFixed(2);
+            document.getElementById('active-contract-amount').innerText = '$' + userState.stakedTotal.toFixed(2) + ' USDT';
+            document.getElementById('active-contract-daily').innerText = '$' + (userState.stakedTotal * userState.dailyRate).toFixed(2);
         }
 
         function initYieldChart() {
@@ -911,7 +911,7 @@
                     labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Hoy'],
                     datasets: [{
                         label: 'Acumulado USDT',
-                        data: [1120, 1140, 1162, 1183, 1205, 1228, 1250],
+                        data: [1000, 1016, 1033, 1050, 1066, 1083, 1100],
                         borderColor: '#00f2fe',
                         borderWidth: 2,
                         fill: false
