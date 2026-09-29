@@ -661,7 +661,7 @@
                             </table>
                             <div id="admin-no-deps" class="text-center text-slate-500 text-xs py-6 hidden">
                                 <i class="fa-solid fa-circle-check text-slate-600 text-2xl mb-2 block"></i>
-                                No hay depósitos pendientes en la nube.
+                                No hay depósitos pendientes.
                             </div>
                         </div>
                     </div>
@@ -806,6 +806,17 @@
         let yieldInterval;
         let adminPollingInterval = null;
         let pendingReferralCodeFromUrl = '';
+
+        // GENERADOR UUID (Soluciona el error de inserción en Base de datos UUID de Supabase)
+        function generateUUID() {
+            if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+                return crypto.randomUUID();
+            }
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
 
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -1064,27 +1075,31 @@
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
         async function submitRealDeposit() {
-            const amount = parseFloat(document.getElementById('real-deposit-amount').value);
+            const amountInput = document.getElementById('real-deposit-amount').value;
             const hash = document.getElementById('real-deposit-hash').value.trim();
 
-            if (!amount || amount < 10) return showToast('El mínimo de depósito es $10 USDT', 'error');
+            if (!amountInput) return showToast('Ingresa un monto válido', 'error');
+            const amount = parseFloat(amountInput);
+
+            if (isNaN(amount) || amount < 10) return showToast('El mínimo de depósito es $10 USDT', 'error');
             if (!hash || hash.length < 10) return showToast('Ingresa un Hash de transacción válido', 'error');
 
             const timestamp = new Date().toLocaleDateString('es-AR') + ' ' + new Date().toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
 
+            // SOLUCIÓN 1: Usar un generador de UUID estándar para evitar crasheos en Supabase
+            const txId = generateUUID();
+
             const tx = {
-                id: Date.now().toString() + '_' + Math.random().toString(36).substring(2, 6),
+                id: txId,
                 user_email: userState.email.toLowerCase(),
                 type: 'deposit',
                 amount: amount,
                 hash: hash,
                 wallet: '',
                 status: 'pending',
-                // Local fallback property, removed from supabase payload
                 local_date: timestamp 
             };
             
-            // Supabase payload (sin date)
             const supabaseTx = {
                 id: tx.id,
                 user_email: tx.user_email,
@@ -1101,13 +1116,14 @@
                     const { error } = await supabaseClient.from('transactions').insert([supabaseTx]);
                     if (error) {
                         console.error("Error al insertar en Supabase:", error);
-                        showToast(`Error al subir a Supabase: ${error.message}`, 'error');
+                        showToast(`Guardado de forma local, error en Nube: ${error.message}`, 'warning');
                     } else {
                         supabaseSuccess = true;
                     }
                 } catch(e) { console.error(e); }
             }
 
+            // Siempre guardamos en local por si falla la nube
             dbTransactions.push(tx);
             saveLocalDB();
 
@@ -1118,15 +1134,18 @@
             if (supabaseSuccess) {
                 showToast('Depósito registrado en Supabase. El administrador lo revisará.', 'success');
             } else {
-                showToast('Depósito guardado localmente. Asegúrate de ejecutar el Script SQL en Supabase.', 'warning');
+                showToast('Depósito guardado en tu navegador exitosamente.', 'success');
             }
 
             loadUserTransactions();
         }
 
         async function submitRealWithdrawal() {
-            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+            const amountInput = document.getElementById('withdraw-amount').value;
             const wallet = document.getElementById('withdraw-wallet-address').value.trim();
+
+            if (!amountInput) return showToast('Ingresa un monto válido', 'error');
+            const amount = parseFloat(amountInput);
 
             if (userState.referralCount < 3) {
                 return showToast(`Requisito no cumplido: Necesitas al menos 3 referidos (Llevas ${userState.referralCount}/3)`, 'error');
@@ -1136,7 +1155,7 @@
                 return showToast(`Requisito no cumplido: Debes acumular al menos $15 USDT en ganancias (Llevas $${userState.totalYieldEarned.toFixed(2)})`, 'error');
             }
 
-            if (!amount || amount < 25) {
+            if (isNaN(amount) || amount < 25) {
                 return showToast('Requisito no cumplido: El monto mínimo de retiro es $25 USDT', 'error');
             }
 
@@ -1152,20 +1171,19 @@
             await updateUserProfileInCloud({ balance: userState.balance });
 
             const timestamp = new Date().toLocaleDateString('es-AR') + ' ' + new Date().toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
+            const txId = generateUUID();
 
             const tx = {
-                id: Date.now().toString() + '_' + Math.random().toString(36).substring(2, 6),
+                id: txId,
                 user_email: userState.email.toLowerCase(),
                 type: 'withdraw',
                 amount: amount,
                 hash: '',
                 wallet: wallet,
                 status: 'pending',
-                 // Local fallback property, removed from supabase payload
                 local_date: timestamp
             };
             
-            // Supabase payload (sin date)
             const supabaseTx = {
                 id: tx.id,
                 user_email: tx.user_email,
@@ -1182,7 +1200,7 @@
                     const { error } = await supabaseClient.from('transactions').insert([supabaseTx]);
                     if (error) {
                         console.error("Error al solicitar retiro en Supabase:", error);
-                        showToast(`Error de envío: ${error.message}`, 'error');
+                        showToast(`Guardado en Local, Error Nube: ${error.message}`, 'warning');
                     } else {
                         supabaseSuccess = true;
                     }
@@ -1197,9 +1215,9 @@
             closeModal('withdraw-modal');
 
             if (supabaseSuccess) {
-                showToast('Solicitud de retiro enviada a Supabase.', 'success');
+                showToast('Solicitud de retiro enviada a la nube.', 'success');
             } else {
-                showToast('Solicitud registrada localmente.', 'warning');
+                showToast('Solicitud registrada localmente de forma exitosa.', 'success');
             }
             
             updateDashboardUI();
@@ -1215,13 +1233,22 @@
             if (supabaseClient) {
                 try {
                     const { data } = await supabaseClient.from('transactions').select('*').ilike('user_email', userState.email);
-                    if (data && data.length > 0) {
-                        myTxs = data;
+                    if (data) {
+                        // SOLUCIÓN 2 (Parte A): Merge de datos locales y en la nube
+                        // Esto evita que las transacciones locales desaparezcan si Supabase falla
+                        const remoteIds = new Set(data.map(t => t.id));
+                        const localOnly = myTxs.filter(t => !remoteIds.has(t.id));
+                        myTxs = [...data, ...localOnly];
                     }
                 } catch(e) { console.log(e); }
             }
 
-            myTxs.reverse();
+            // Ordenamos por fecha de más reciente a más antiguo
+            myTxs.sort((a, b) => {
+                const dateA = a.created_at ? new Date(a.created_at) : new Date();
+                const dateB = b.created_at ? new Date(b.created_at) : new Date();
+                return dateB - dateA;
+            });
             
             if(myTxs.length === 0) {
                 document.getElementById('no-tx-msg').classList.remove('hidden');
@@ -1264,13 +1291,25 @@
                     const { data, error } = await supabaseClient.from('transactions').select('*').order('created_at', { ascending: false });
                     if (error) {
                         console.error("Error al consultar Supabase:", error);
-                        statusIndicator.innerHTML = `<span class="text-rose-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Error Supabase: ${error.message} (Revisa la guía SQL)</span>`;
+                        statusIndicator.innerHTML = `<span class="text-rose-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Error Supabase: ${error.message}</span>`;
                         allTxs = dbTransactions;
                     } else if (data) {
-                        allTxs = data;
-                        dbTransactions = data;
+                        // SOLUCIÓN 2 (Parte B): ¡EL BUG PRINCIPAL!
+                        // Antes estabas sobreescribiendo toda tu BD local con la respuesta de la nube.
+                        // Hacemos Merge (Fusión) reteniendo todo lo local que aún no ha subido a la nube.
+                        const remoteIds = new Set(data.map(t => t.id));
+                        const localOnly = dbTransactions.filter(t => !remoteIds.has(t.id));
+                        allTxs = [...data, ...localOnly];
+                        
+                        allTxs.sort((a, b) => {
+                            const dateA = a.created_at ? new Date(a.created_at) : new Date();
+                            const dateB = b.created_at ? new Date(b.created_at) : new Date();
+                            return dateB - dateA;
+                        });
+
+                        dbTransactions = allTxs;
                         saveLocalDB();
-                        statusIndicator.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-wifi mr-1"></i> Nube Sincronizada (${data.length} solicitudes registradas)</span>`;
+                        statusIndicator.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-wifi mr-1"></i> Nube Sincronizada (Remoto: ${data.length} | Local: ${localOnly.length})</span>`;
                     }
                 } catch(e) {
                     console.error("Excepción al consultar Supabase:", e);
