@@ -24,6 +24,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -255,9 +256,13 @@
                 </nav>
 
                 <div class="flex items-center space-x-3">
-                    <div class="hidden sm:flex flex-col items-end mr-2">
+                    <div class="hidden sm:flex flex-col items-end mr-2 relative group">
                         <span class="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Saldo (USDT)</span>
-                        <span class="text-sm font-extrabold text-white font-mono" id="header-balance-display">$0.00</span>
+                        <div class="flex items-center space-x-1">
+                            <!-- Indicador de sincronización en vivo para el usuario -->
+                            <i class="fa-solid fa-circle text-[6px] text-emerald-400 pulse-dot" title="Sincronizado con Supabase"></i>
+                            <span class="text-sm font-extrabold text-white font-mono transition-all duration-300" id="header-balance-display">$0.00</span>
+                        </div>
                     </div>
                     <button onclick="openDepositModal()" class="glow-button px-4 py-2 rounded-xl text-xs font-bold text-slate-950 flex items-center space-x-2">
                         <i class="fa-solid fa-wallet"></i><span>Depositar</span>
@@ -360,7 +365,7 @@
                         <p class="text-xs font-medium text-slate-400 mb-1">Inversión Activa</p>
                         <h3 class="text-xl font-black text-white font-mono" id="metric-staked">$0.00</h3>
                     </div>
-                    <div class="glass-card p-4 rounded-2xl relative overflow-hidden">
+                    <div class="glass-card p-4 rounded-2xl relative overflow-hidden transition-colors duration-500" id="card-metric-balance">
                         <p class="text-xs font-medium text-slate-400 mb-1">Saldo Disponible</p>
                         <h3 class="text-xl font-black text-emerald-400 font-mono" id="metric-balance">$0.00</h3>
                     </div>
@@ -805,6 +810,7 @@
 
         let yieldInterval;
         let adminPollingInterval = null;
+        let userSyncInterval = null; // Nuevo interval para actualizar saldo al usuario automaticamente
         let pendingReferralCodeFromUrl = '';
 
         // GENERADOR UUID (Soluciona el error de inserción en Base de datos UUID de Supabase)
@@ -948,10 +954,14 @@
         async function loadUserProfile(email) {
             const cleanEmail = email.toLowerCase().trim();
             let found = false;
+            
             if (supabaseClient) {
                 try {
                     const { data } = await supabaseClient.from('profiles').select('*').ilike('email', cleanEmail).single();
                     if (data) {
+                        // Comprobar si hubo un cambio en el saldo para animar el frontend (opcional)
+                        const prevBalance = userState.balance;
+                        
                         userState.balance = parseFloat(data.balance || 0);
                         userState.stakedTotal = parseFloat(data.staked_total || 0);
                         userState.totalWithdrawn = parseFloat(data.total_withdrawn || 0);
@@ -961,8 +971,16 @@
                         userState.referralCount = parseInt(data.referral_count || 0);
                         userState.fullName = data.full_name || cleanEmail.split('@')[0];
                         found = true;
+
+                        // Efecto visual si el administrador le aprobó dinero mientras está online
+                        if(prevBalance !== userState.balance && document.getElementById('dashboard-view').classList.contains('flex')) {
+                            document.getElementById('card-metric-balance').classList.add('bg-emerald-900/40', 'border-emerald-500/50');
+                            setTimeout(() => {
+                                document.getElementById('card-metric-balance').classList.remove('bg-emerald-900/40', 'border-emerald-500/50');
+                            }, 2000);
+                        }
                     }
-                } catch(e) { console.log(e); }
+                } catch(e) { console.log("Fallo leyendo Supabase, usando local.", e); }
             }
 
             if (!found) {
@@ -974,12 +992,24 @@
                     saveLocalDB();
                 }
                 const p = dbProfiles[cleanEmail];
-                userState.balance = p.balance || 0;
-                userState.stakedTotal = p.stakedTotal || 0;
-                userState.totalWithdrawn = p.totalWithdrawn || 0;
-                userState.totalYieldEarned = p.totalYieldEarned || 0;
+                userState.balance = parseFloat(p.balance || 0);
+                userState.stakedTotal = parseFloat(p.stakedTotal || 0);
+                userState.totalWithdrawn = parseFloat(p.totalWithdrawn || 0);
+                userState.totalYieldEarned = parseFloat(p.totalYieldEarned || 0);
                 userState.refCode = p.refCode || generateRefCode(cleanEmail);
-                userState.referralCount = p.referralCount || 0;
+                userState.referralCount = parseInt(p.referralCount || 0);
+            }
+        }
+
+        // Función que pollea (pregunta) a Supabase cada pocos segundos para mantener el UI actualizado automáticamente
+        async function syncUserDataBackground() {
+            if (!userState.email) return;
+            await loadUserProfile(userState.email);
+            updateDashboardUI();
+            
+            // Si está en la pestaña de inicio, actualizamos la tabla de transacciones de forma silenciosa
+            if(!document.getElementById('tab-dashboard').classList.contains('hidden')) {
+                loadUserTransactions();
             }
         }
 
@@ -1001,16 +1031,23 @@
             updateDashboardUI();
             loadUserTransactions();
             startLiveYieldGenerator();
+
+            // Iniciar sincronización de fondo cada 5 segundos para que los saldos se actualicen solos
+            if(userSyncInterval) clearInterval(userSyncInterval);
+            userSyncInterval = setInterval(syncUserDataBackground, 5000);
         }
 
         function handleLogout() {
             if(yieldInterval) clearInterval(yieldInterval);
             if(adminPollingInterval) clearInterval(adminPollingInterval);
+            if(userSyncInterval) clearInterval(userSyncInterval);
+            
             document.getElementById('dashboard-view').classList.replace('flex', 'hidden');
             document.getElementById('auth-view').classList.remove('hidden');
             document.getElementById('nav-admin').classList.add('hidden');
             document.getElementById('nav-admin-mobile').classList.add('hidden');
             switchTab('dashboard');
+            userState.email = '';
         }
 
         function switchTab(tabId) {
@@ -1085,8 +1122,6 @@
             if (!hash || hash.length < 10) return showToast('Ingresa un Hash de transacción válido', 'error');
 
             const timestamp = new Date().toLocaleDateString('es-AR') + ' ' + new Date().toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
-
-            // SOLUCIÓN 1: Usar un generador de UUID estándar para evitar crasheos en Supabase
             const txId = generateUUID();
 
             const tx = {
@@ -1100,23 +1135,13 @@
                 local_date: timestamp 
             };
             
-            const supabaseTx = {
-                id: tx.id,
-                user_email: tx.user_email,
-                type: tx.type,
-                amount: tx.amount,
-                hash: tx.hash,
-                wallet: tx.wallet,
-                status: tx.status
-            };
-
             let supabaseSuccess = false;
             if (supabaseClient) {
                 try {
-                    const { error } = await supabaseClient.from('transactions').insert([supabaseTx]);
+                    const { error } = await supabaseClient.from('transactions').insert([tx]);
                     if (error) {
                         console.error("Error al insertar en Supabase:", error);
-                        showToast(`Guardado de forma local, error en Nube: ${error.message}`, 'warning');
+                        showToast(`Error en Nube: ${error.message}. Se guardó en local.`, 'warning');
                     } else {
                         supabaseSuccess = true;
                     }
@@ -1132,7 +1157,7 @@
             closeModal('deposit-modal');
 
             if (supabaseSuccess) {
-                showToast('Depósito registrado en Supabase. El administrador lo revisará.', 'success');
+                showToast('Depósito registrado en Supabase. En revisión.', 'success');
             } else {
                 showToast('Depósito guardado en tu navegador exitosamente.', 'success');
             }
@@ -1163,12 +1188,10 @@
                 return showToast('Saldo insuficiente disponible para retirar', 'error');
             }
 
-            if (!wallet || wallet.length < 15) {
-                return showToast('Ingresa una dirección de billetera válida (USDT BEP-20)', 'error');
-            }
-
+            // RESTAR SALDO AL INSTANTE AL SOLICITAR (Retención de fondos)
             userState.balance -= amount;
             await updateUserProfileInCloud({ balance: userState.balance });
+            updateDashboardUI();
 
             const timestamp = new Date().toLocaleDateString('es-AR') + ' ' + new Date().toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
             const txId = generateUUID();
@@ -1184,23 +1207,13 @@
                 local_date: timestamp
             };
             
-            const supabaseTx = {
-                id: tx.id,
-                user_email: tx.user_email,
-                type: tx.type,
-                amount: tx.amount,
-                hash: tx.hash,
-                wallet: tx.wallet,
-                status: tx.status
-            };
-
             let supabaseSuccess = false;
             if (supabaseClient) {
                 try {
-                    const { error } = await supabaseClient.from('transactions').insert([supabaseTx]);
+                    const { error } = await supabaseClient.from('transactions').insert([tx]);
                     if (error) {
                         console.error("Error al solicitar retiro en Supabase:", error);
-                        showToast(`Guardado en Local, Error Nube: ${error.message}`, 'warning');
+                        showToast(`Error Nube: ${error.message}`, 'warning');
                     } else {
                         supabaseSuccess = true;
                     }
@@ -1215,27 +1228,23 @@
             closeModal('withdraw-modal');
 
             if (supabaseSuccess) {
-                showToast('Solicitud de retiro enviada a la nube.', 'success');
+                showToast('Retiro enviado a la nube. Fondos retenidos temporalmente.', 'success');
             } else {
-                showToast('Solicitud registrada localmente de forma exitosa.', 'success');
+                showToast('Solicitud registrada localmente.', 'success');
             }
             
-            updateDashboardUI();
             loadUserTransactions();
         }
 
         async function loadUserTransactions() {
             const tbody = document.getElementById('user-tx-history');
-            tbody.innerHTML = '';
-
+            
             let myTxs = dbTransactions.filter(tx => tx.user_email === userState.email.toLowerCase());
 
             if (supabaseClient) {
                 try {
                     const { data } = await supabaseClient.from('transactions').select('*').ilike('user_email', userState.email);
                     if (data) {
-                        // SOLUCIÓN 2 (Parte A): Merge de datos locales y en la nube
-                        // Esto evita que las transacciones locales desaparezcan si Supabase falla
                         const remoteIds = new Set(data.map(t => t.id));
                         const localOnly = myTxs.filter(t => !remoteIds.has(t.id));
                         myTxs = [...data, ...localOnly];
@@ -1243,13 +1252,14 @@
                 } catch(e) { console.log(e); }
             }
 
-            // Ordenamos por fecha de más reciente a más antiguo
             myTxs.sort((a, b) => {
                 const dateA = a.created_at ? new Date(a.created_at) : new Date();
                 const dateB = b.created_at ? new Date(b.created_at) : new Date();
                 return dateB - dateA;
             });
             
+            // Construimos HTML en variable primero para no hacer repintado brusco si está en background
+            let newHtml = '';
             if(myTxs.length === 0) {
                 document.getElementById('no-tx-msg').classList.remove('hidden');
             } else {
@@ -1265,7 +1275,7 @@
                         displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
                     }
 
-                    tbody.innerHTML += `
+                    newHtml += `
                         <tr class="border-b border-slate-800/40">
                             <td class="p-2.5 text-slate-300">${displayDate}</td>
                             <td class="p-2.5 font-medium text-white">${typeText}</td>
@@ -1275,14 +1285,16 @@
                     `;
                 });
             }
+
+            if(tbody.innerHTML !== newHtml) {
+                tbody.innerHTML = newHtml;
+            }
         }
 
         async function loadAdminPanel() {
             const depBody = document.getElementById('admin-deposits-body');
             const witBody = document.getElementById('admin-withdrawals-body');
             const statusIndicator = document.getElementById('admin-status-indicator');
-            
-            depBody.innerHTML = ''; witBody.innerHTML = '';
 
             let allTxs = [];
 
@@ -1294,9 +1306,6 @@
                         statusIndicator.innerHTML = `<span class="text-rose-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Error Supabase: ${error.message}</span>`;
                         allTxs = dbTransactions;
                     } else if (data) {
-                        // SOLUCIÓN 2 (Parte B): ¡EL BUG PRINCIPAL!
-                        // Antes estabas sobreescribiendo toda tu BD local con la respuesta de la nube.
-                        // Hacemos Merge (Fusión) reteniendo todo lo local que aún no ha subido a la nube.
                         const remoteIds = new Set(data.map(t => t.id));
                         const localOnly = dbTransactions.filter(t => !remoteIds.has(t.id));
                         allTxs = [...data, ...localOnly];
@@ -1329,13 +1338,14 @@
             if (pendingWits.length === 0) document.getElementById('admin-no-wits').classList.remove('hidden');
             else document.getElementById('admin-no-wits').classList.add('hidden');
 
+            let newDepHtml = '';
             pendingDeps.forEach(tx => {
                 let displayDate = tx.local_date || 'Sin fecha';
                 if (tx.created_at) {
                     const d = new Date(tx.created_at);
                     displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
                 }
-                depBody.innerHTML += `
+                newDepHtml += `
                     <tr class="border-b border-slate-800/60 hover:bg-slate-800/40 transition">
                         <td class="p-3">
                             <div class="font-bold text-white text-xs">${tx.user_email}</div>
@@ -1358,14 +1368,16 @@
                     </tr>
                 `;
             });
+            depBody.innerHTML = newDepHtml;
 
+            let newWitHtml = '';
             pendingWits.forEach(tx => {
                 let displayDate = tx.local_date || 'Sin fecha';
                 if (tx.created_at) {
                     const d = new Date(tx.created_at);
                     displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
                 }
-                witBody.innerHTML += `
+                newWitHtml += `
                     <tr class="border-b border-slate-800/60 hover:bg-slate-800/40 transition">
                         <td class="p-3">
                             <div class="font-bold text-white text-xs">${tx.user_email}</div>
@@ -1388,6 +1400,7 @@
                     </tr>
                 `;
             });
+            witBody.innerHTML = newWitHtml;
         }
 
         async function resolveTx(id, newStatus) {
@@ -1404,6 +1417,7 @@
 
             tx.status = newStatus;
 
+            // 1. Actualizar estado en la BBDD Transacciones
             if (supabaseClient) {
                 try {
                     const { error } = await supabaseClient.from('transactions').update({ status: newStatus }).eq('id', id);
@@ -1414,55 +1428,48 @@
             const targetEmail = tx.user_email.toLowerCase();
             const numAmount = parseFloat(tx.amount);
 
+            // 2. Lógica matemática de balances en base a aprobación/rechazo
             if (tx.type === 'deposit' && newStatus === 'approved') {
-                await addBalanceToUser(targetEmail, numAmount);
+                // Aprobado el depósito: Dar el dinero
+                await adjustUserBalance(targetEmail, numAmount, 'balance');
             }
-
-            if (tx.type === 'withdraw' && newStatus === 'rejected') {
-                await addBalanceToUser(targetEmail, numAmount);
+            else if (tx.type === 'withdraw' && newStatus === 'rejected') {
+                // Rechazado el retiro: Devolver el dinero al saldo porque se le restó al solicitar
+                await adjustUserBalance(targetEmail, numAmount, 'balance');
             }
-
-            if (tx.type === 'withdraw' && newStatus === 'approved') {
-                await addWithdrawnToUser(targetEmail, numAmount);
+            else if (tx.type === 'withdraw' && newStatus === 'approved') {
+                // Aprobado el retiro: Sumar a la estadística "Total Retirado"
+                await adjustUserBalance(targetEmail, numAmount, 'total_withdrawn');
             }
 
             saveLocalDB();
             await loadAdminPanel();
             showToast(`Transacción ${newStatus === 'approved' ? 'Aprobada' : 'Rechazada'} correctamente`, 'success');
 
+            // Si el admin es él mismo (testing)
             if (targetEmail === userState.email.toLowerCase()) {
-                await loadUserProfile(userState.email);
-                updateDashboardUI();
-                loadUserTransactions();
+                await syncUserDataBackground();
             }
         }
 
-        async function addBalanceToUser(targetEmail, amount) {
+        async function adjustUserBalance(targetEmail, amount, columnToUpdate) {
             const cleanEmail = targetEmail.toLowerCase().trim();
             if (supabaseClient) {
                 try {
-                    const { data } = await supabaseClient.from('profiles').select('balance').ilike('email', cleanEmail).single();
+                    // Primero obtenemos el valor más actual de Supabase
+                    const { data } = await supabaseClient.from('profiles').select(columnToUpdate).ilike('email', cleanEmail).single();
                     if (data) {
-                        const newBal = (parseFloat(data.balance) || 0) + amount;
-                        await supabaseClient.from('profiles').update({ balance: newBal }).ilike('email', cleanEmail);
+                        const newValue = (parseFloat(data[columnToUpdate]) || 0) + amount;
+                        // Luego lo actualizamos
+                        await supabaseClient.from('profiles').update({ [columnToUpdate]: newValue }).ilike('email', cleanEmail);
                     }
-                } catch(e){ console.error("Error acreditando saldo en Supabase:", e); }
+                } catch(e){ console.error(`Error ajustando ${columnToUpdate} en Supabase:`, e); }
             }
+            
+            // Reflejar localmente (Respaldo)
             if (dbProfiles[cleanEmail]) {
-                dbProfiles[cleanEmail].balance = (dbProfiles[cleanEmail].balance || 0) + amount;
-            }
-        }
-
-        async function addWithdrawnToUser(targetEmail, amount) {
-            const cleanEmail = targetEmail.toLowerCase().trim();
-            if (supabaseClient) {
-                try {
-                    const { data } = await supabaseClient.from('profiles').select('total_withdrawn').ilike('email', cleanEmail).single();
-                    if (data) {
-                        const newW = (parseFloat(data.total_withdrawn) || 0) + amount;
-                        await supabaseClient.from('profiles').update({ total_withdrawn: newW }).ilike('email', cleanEmail);
-                    }
-                } catch(e){ console.error("Error registrando retiro en Supabase:", e); }
+                if(columnToUpdate === 'balance') dbProfiles[cleanEmail].balance = (parseFloat(dbProfiles[cleanEmail].balance) || 0) + amount;
+                if(columnToUpdate === 'total_withdrawn') dbProfiles[cleanEmail].totalWithdrawn = (parseFloat(dbProfiles[cleanEmail].totalWithdrawn) || 0) + amount;
             }
         }
 
@@ -1474,7 +1481,9 @@
             }
             const cleanEmail = userState.email.toLowerCase().trim();
             if (dbProfiles[cleanEmail]) {
-                Object.assign(dbProfiles[cleanEmail], fields);
+                if(fields.balance !== undefined) dbProfiles[cleanEmail].balance = fields.balance;
+                if(fields.staked_total !== undefined) dbProfiles[cleanEmail].stakedTotal = fields.staked_total;
+                if(fields.total_yield_earned !== undefined) dbProfiles[cleanEmail].totalYieldEarned = fields.total_yield_earned;
                 saveLocalDB();
             }
         }
