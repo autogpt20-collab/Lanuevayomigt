@@ -1070,7 +1070,6 @@
             if (isNaN(amount) || amount < 10) return showToast('El mínimo de depósito es $10 USDT', 'error');
             if (!hash || hash.length < 10) return showToast('Ingresa un Hash válido', 'error');
 
-            const timestamp = new Date().toLocaleDateString('es-AR') + ' ' + new Date().toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
 
             const tx = {
                 id: generateUUID(),
@@ -1079,8 +1078,8 @@
                 amount: amount,
                 hash: hash,
                 wallet: '',
-                status: 'pending',
-                local_date: timestamp 
+                status: 'pending'
+                // Ya no enviamos local_date, Supabase usará created_at automáticamente
             };
             
             const { error } = await supabaseClient.from('transactions').insert([tx]);
@@ -1115,8 +1114,6 @@
             await updateUserProfileInCloud({ balance: userState.balance });
             updateDashboardUI();
 
-            const timestamp = new Date().toLocaleDateString('es-AR') + ' ' + new Date().toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
-
             // 2. Crear Transacción
             const tx = {
                 id: generateUUID(),
@@ -1125,8 +1122,8 @@
                 amount: amount,
                 hash: '',
                 wallet: wallet,
-                status: 'pending',
-                local_date: timestamp
+                status: 'pending'
+                // Ya no enviamos local_date, Supabase usará created_at automáticamente
             };
             
             const { error } = await supabaseClient.from('transactions').insert([tx]);
@@ -1168,7 +1165,7 @@
                     const statusText = tx.status === 'approved' ? 'Aprobado' : (tx.status === 'rejected' ? 'Rechazado' : 'Pendiente');
                     const typeText = tx.type === 'deposit' ? 'Depósito' : 'Retiro';
                     
-                    let displayDate = tx.local_date || 'N/A';
+                    let displayDate = 'N/A';
                     if (tx.created_at) {
                         const d = new Date(tx.created_at);
                         displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
@@ -1214,8 +1211,11 @@
 
             let newDepHtml = '';
             pendingDeps.forEach(tx => {
-                let displayDate = tx.local_date || 'Sin fecha';
-                if (tx.created_at) displayDate = new Date(tx.created_at).toLocaleString('es-AR');
+                let displayDate = 'Sin fecha';
+                if (tx.created_at) {
+                    const d = new Date(tx.created_at);
+                    displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
+                }
                 newDepHtml += `
                     <tr class="border-b border-slate-800/60 hover:bg-slate-800/40 transition">
                         <td class="p-3"><div class="font-bold text-white text-xs">${tx.user_email}</div><div class="text-[10px] text-slate-500">${displayDate}</div></td>
@@ -1234,8 +1234,11 @@
 
             let newWitHtml = '';
             pendingWits.forEach(tx => {
-                let displayDate = tx.local_date || 'Sin fecha';
-                if (tx.created_at) displayDate = new Date(tx.created_at).toLocaleString('es-AR');
+                let displayDate = 'Sin fecha';
+                if (tx.created_at) {
+                     const d = new Date(tx.created_at);
+                     displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
+                }
                 newWitHtml += `
                     <tr class="border-b border-slate-800/60 hover:bg-slate-800/40 transition">
                         <td class="p-3"><div class="font-bold text-white text-xs">${tx.user_email}</div><div class="text-[10px] text-slate-500">${displayDate}</div></td>
