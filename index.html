@@ -1575,8 +1575,29 @@
                     if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; }
                 }
 
-                // ATOMIC UPDATE Y SELECT SIMULTÁNEO
-                // Esta es la parte vital: solo se actualiza si el status aún es 'pending'
+                // 1. PRE-CALCULAR EL SALDO ANTES DE APROBAR
+                // Obtenemos el saldo actual ANTES de cambiar el estado.
+                // Si tienes un Trigger en Supabase que suma automáticamente, al calcularlo
+                // antes lo esquivamos y evitamos que el frontend le vuelva a sumar al saldo ya actualizado.
+                const { data: prof, error: profErr } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
+                
+                if (profErr || !prof) {
+                    showToast('Error al obtener el perfil del usuario.', 'error');
+                    if (btnElement) {
+                        btnElement.disabled = false;
+                        btnElement.innerHTML = '<i class="fa-solid fa-check"></i>';
+                        const row = btnElement.closest('tr');
+                        if (row) { row.style.pointerEvents = 'auto'; row.style.opacity = '1'; }
+                    }
+                    processingTxs.delete(id);
+                    return;
+                }
+
+                const currentBalance = parseFloat(prof.balance || 0);
+                const newBalanceToSet = currentBalance + parseFloat(amount); // Cálculo absoluto
+
+                // 2. ATOMIC UPDATE DE LA TRANSACCIÓN
+                // Solo se actualiza si el status aún es 'pending'
                 const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
                     .update({ status: 'approved' })
                     .eq('id', id)
@@ -1588,28 +1609,22 @@
                     return;
                 }
 
-                // Si `updatedTx` es vacío/nulo, significa que NO se actualizó ninguna fila. 
-                // Alguien o algo ya cambió el estado de esta transacción milisegundos atrás.
+                // Si `updatedTx` es vacío/nulo, significa que alguien ya lo aprobó o la red falló milisegundos atrás
                 if (!updatedTx || (Array.isArray(updatedTx) && updatedTx.length === 0)) {
                     showToast('Operación bloqueada: La transacción ya había sido procesada.', 'warning');
                     return;
                 }
 
-                // Si la actualización en la DB fue exitosa, damos el saldo.
-                // Usamos select/update para traer el balance más actualizado directamente desde DB.
-                const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
-                if (prof) {
-                    const newBal = parseFloat(prof.balance || 0) + parseFloat(amount);
-                    await supabaseClient.from('profiles').update({ balance: newBal }).eq('email', userEmail);
-                    showToast('Depósito aprobado y saldo acreditado.', 'success');
-                }
+                // 3. ESTABLECER EL NUEVO SALDO ABSOLUTO
+                // En vez de sumarle al saldo que esté en el momento, le pasamos el saldo pre-calculado exacto.
+                await supabaseClient.from('profiles').update({ balance: newBalanceToSet }).eq('email', userEmail);
+                showToast('Depósito aprobado y saldo acreditado con éxito.', 'success');
+                
             } catch (err) {
                 console.error(err);
                 showToast('Ocurrió un error inesperado al procesar.', 'error');
             } finally {
                 loadAdminPanel();
-                // OJO: Retenemos el "Candado" durante 5 segundos para que si la tabla se auto-actualiza
-                // por el Polling y el usuario se desespera haciendo clic, siga bloqueado.
                 setTimeout(() => { processingTxs.delete(id); }, 5000); 
             }
         }
@@ -1624,6 +1639,13 @@
                     btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
                     const row = btnElement.closest('tr');
                     if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; }
+                }
+
+                // Pre-calcular
+                let newWithdrawn = 0;
+                const { data: prof } = await supabaseClient.from('profiles').select('total_withdrawn').eq('email', userEmail).single();
+                if (prof) {
+                    newWithdrawn = parseFloat(prof.total_withdrawn || 0) + parseFloat(amount);
                 }
 
                 const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
@@ -1642,9 +1664,7 @@
                     return;
                 }
 
-                const { data: prof } = await supabaseClient.from('profiles').select('total_withdrawn').eq('email', userEmail).single();
                 if (prof) {
-                    const newWithdrawn = parseFloat(prof.total_withdrawn || 0) + parseFloat(amount);
                     await supabaseClient.from('profiles').update({ total_withdrawn: newWithdrawn }).eq('email', userEmail);
                     showToast('Retiro marcado como completado.', 'success');
                 }
@@ -1668,6 +1688,15 @@
                     if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; }
                 }
 
+                // Pre-calcular saldo si es necesario reembolsar
+                let newBalToRefund = null;
+                if (type === 'withdraw') {
+                    const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
+                    if (prof) {
+                        newBalToRefund = parseFloat(prof.balance || 0) + parseFloat(amount);
+                    }
+                }
+
                 const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
                     .update({ status: 'rejected' })
                     .eq('id', id)
@@ -1684,13 +1713,9 @@
                     return;
                 }
 
-                // Si rechazamos un retiro, debemos devolver el balance al usuario
-                if (type === 'withdraw') {
-                    const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
-                    if (prof) {
-                        const newBal = parseFloat(prof.balance || 0) + parseFloat(amount);
-                        await supabaseClient.from('profiles').update({ balance: newBal }).eq('email', userEmail);
-                    }
+                // Si rechazamos un retiro, devolvemos el balance con el valor absoluto pre-calculado
+                if (type === 'withdraw' && newBalToRefund !== null) {
+                    await supabaseClient.from('profiles').update({ balance: newBalToRefund }).eq('email', userEmail);
                 }
                 
                 showToast('Transacción rechazada y cancelada correctamente.', 'success');
