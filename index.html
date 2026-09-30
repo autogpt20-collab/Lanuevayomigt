@@ -344,8 +344,8 @@
                                 </div>
                                 <div class="grid grid-cols-2 gap-2 pt-2 text-xs">
                                     <div class="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl">
-                                        <span class="text-slate-400 block text-[10px]">Tasa Limitada a</span>
-                                        <span class="text-white font-bold text-sm">1.66% / Día</span>
+                                        <span class="text-slate-400 block text-[10px]">Tasa Propia + Referidos</span>
+                                        <span class="text-white font-bold text-sm">1.66% + 0.3% Red</span>
                                     </div>
                                     <div class="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl">
                                         <span class="text-slate-400 block text-[10px]">Total Invertido (Staked)</span>
@@ -400,7 +400,7 @@
                                 <span class="font-bold text-slate-200"><i class="fa-solid fa-users text-cyan-400 mr-1.5"></i> 1. Invitar 3 Referidos</span>
                                 <span id="req-ref-badge" class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-bold">0 / 3</span>
                             </div>
-                            <p class="text-[11px] text-slate-400">Invita como mínimo a 3 usuarios con tu enlace. ¡Además ganas el <strong>0.3%</strong> de todas sus ganancias!</p>
+                            <p class="text-[11px] text-slate-400">Invita como mínimo a 3 usuarios con tu enlace. ¡Además ganas el <strong>0.3% diario</strong> de todos sus depósitos/inversiones!</p>
                             <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
                                 <div id="req-ref-bar" class="bg-cyan-400 h-full w-0 transition-all duration-500"></div>
                             </div>
@@ -512,7 +512,7 @@
             <div id="tab-referrals" class="tab-content hidden space-y-6">
                 <div class="text-center max-w-2xl mx-auto space-y-2 mb-6">
                     <h2 class="text-3xl font-black text-white"><i class="fa-solid fa-user-group text-cyan-400 mr-2"></i> Programa de Referidos</h2>
-                    <p class="text-slate-400 text-sm">Invita a tus amigos y colegas a invertir en LitioX. Obtén el <strong>0.3% de comisiones continuas</strong> sobre las ganancias generadas por tus invitados.</p>
+                    <p class="text-slate-400 text-sm">Invita a tus amigos y colegas a invertir en LitioX. Obtén un <strong>0.3% diario automático en vivo</strong> sobre la totalidad de depósitos e inversiones de tu red.</p>
                 </div>
 
                 <!-- Tu Link de Invitación -->
@@ -524,7 +524,7 @@
                             <i class="fa-solid fa-copy mr-1"></i> Copiar Link
                         </button>
                     </div>
-                    <p class="text-[11px] text-slate-400">Requisito para retirar: Tener al menos <strong>3 referidos registrados</strong> con tu enlace.</p>
+                    <p class="text-[11px] text-slate-400">Requisito obligatorio para retirar: Tener al menos <strong>3 referidos registrados</strong> con tu enlace.</p>
                 </div>
 
                 <!-- Métricas de Referidos -->
@@ -532,12 +532,12 @@
                     <div class="glass-card p-5 rounded-2xl text-center border border-slate-800">
                         <span class="text-xs text-slate-400">Referidos Registrados</span>
                         <div class="text-3xl font-black text-cyan-400 font-mono mt-1" id="ref-count-display">0 / 3</div>
-                        <p class="text-[10px] text-slate-500 mt-1" id="ref-status-text">Faltan 3 referidos para cumplir el requisito de retiro</p>
+                        <p class="text-[10px] text-slate-500 mt-1" id="ref-status-text">Faltan referidos para cumplir el requisito de retiro</p>
                     </div>
                     <div class="glass-card p-5 rounded-2xl text-center border border-slate-800">
-                        <span class="text-xs text-slate-400">Comisiones Obtenidas (0.3%)</span>
-                        <div class="text-3xl font-black text-emerald-400 font-mono mt-1" id="ref-earnings-display">$0.00 USDT</div>
-                        <p class="text-[10px] text-slate-500 mt-1">Acreditadas automáticamente a tu balance</p>
+                        <span class="text-xs text-slate-400">Volumen Total Red de Invitados</span>
+                        <div class="text-3xl font-black text-emerald-400 font-mono mt-1" id="ref-volume-display">$0.00 USDT</div>
+                        <p class="text-[10px] text-slate-500 mt-1">Generando 0.3% diario en vivo al contador principal</p>
                     </div>
                 </div>
 
@@ -550,6 +550,7 @@
                                 <tr class="text-slate-400 border-b border-slate-800">
                                     <th class="p-2">Usuario / Nombre</th>
                                     <th class="p-2">Fecha de Registro</th>
+                                    <th class="p-2">Inversión Activa</th>
                                 </tr>
                             </thead>
                             <tbody id="referred-users-list" class="divide-y divide-slate-800/50">
@@ -988,16 +989,19 @@
         // Estado Global del Usuario
         let userState = { 
             id: '', 
-            email: '', fullName: '', balance: 0.00, stakedTotal: 0.00, totalWithdrawn: 0.00,
-            totalYieldEarned: 0.00, refCode: '', referredBy: '', referralCount: 0, 
+            email: '', 
+            fullName: '', 
+            balance: 0.00, 
+            stakedTotal: 0.00, 
+            totalWithdrawn: 0.00,
+            totalYieldEarned: 0.00, 
+            refCode: '', 
+            referredBy: '', 
+            referralCount: 0, 
+            totalReferralStaked: 0.00, // Total de fondos depositados/invertidos por su red de referidos
             accumulatedYieldSession: 0.00,
             unclaimedYield: 0.00,
-            lastYieldTime: null,
-            // Agregados para el sistema de referidos:
-            refStakedTotal: 0.00,
-            totalRefYieldEarned: 0.00,
-            accumulatedRefYieldSession: 0.00,
-            unclaimedRefYield: 0.00
+            lastYieldTime: null
         };
 
         let yieldInterval = null;
@@ -1022,7 +1026,6 @@
                 toggleAuthMode('register');
             }
             initTelemetryChart();
-            startPayoutTimer();
             checkSession();
         };
 
@@ -1040,7 +1043,7 @@
                     await loadUserProfile(session.user.email);
                 }
             } catch (e) {
-                console.warn("No active session found or error checking session", e);
+                console.warn("No se encontró sesión activa o hubo error:", e);
             }
         }
 
@@ -1171,9 +1174,7 @@
                         referred_by: pendingReferralCodeFromUrl || null,
                         referral_count: 0,
                         unclaimed_yield: 0.00,
-                        last_yield_time: new Date().toISOString(),
-                        total_ref_yield_earned: 0.00,
-                        unclaimed_ref_yield: 0.00
+                        last_yield_time: new Date().toISOString()
                     };
 
                     const { error: profileError } = await supabaseClient.from('profiles').insert([newProfile]);
@@ -1187,6 +1188,7 @@
                         }
                     }
 
+                    // Si se registró con código de referido, actualizamos dinámicamente al patrocinador
                     if (pendingReferralCodeFromUrl && !profileError) {
                         const { data: referrers } = await supabaseClient.from('profiles').select('*').eq('ref_code', pendingReferralCodeFromUrl);
                         if (referrers && referrers.length > 0) {
@@ -1239,11 +1241,9 @@
             userState.totalYieldEarned = 25.00;
             userState.refCode = 'DEMO-1234';
             userState.referralCount = 3;
+            userState.totalReferralStaked = 350;
             userState.unclaimedYield = 0;
             userState.lastYieldTime = Date.now();
-            userState.refStakedTotal = 200;
-            userState.totalRefYieldEarned = 1.50;
-            userState.unclaimedRefYield = 0;
             completeLogin(userState.email);
         }
 
@@ -1264,35 +1264,21 @@
                 userState.referralCount = parseInt(data.referral_count || 0);
                 userState.fullName = data.full_name || cleanEmail.split('@')[0];
 
-                // NUEVOS CAMPOS: Comisiones de Referidos
-                userState.totalRefYieldEarned = parseFloat(data.total_ref_yield_earned || 0);
-                userState.unclaimedRefYield = parseFloat(data.unclaimed_ref_yield || 0);
-
-                // Obtener en tiempo real la suma del dinero invertido por todos los referidos de este usuario
-                const { data: refs } = await supabaseClient.from('profiles').select('staked_total').eq('referred_by', userState.refCode);
-                let totalRefStaked = 0;
-                if (refs) {
-                    refs.forEach(r => totalRefStaked += parseFloat(r.staked_total || 0));
-                }
-                userState.refStakedTotal = totalRefStaked;
-
-                // Lógica de Ganancias Offline / Continuas ESTRICTAMENTE LIMITADA
+                // Carga de rendimientos no reclamados y cálculo offline
                 userState.unclaimedYield = parseFloat(data.unclaimed_yield || 0);
                 const lastTimeStored = data.last_yield_time ? new Date(data.last_yield_time).getTime() : Date.now();
                 
                 const now = Date.now();
                 const secondsPassed = Math.max(0, (now - lastTimeStored) / 1000);
                 
-                // Producción Personal (1.66% diario)
-                const dailyRate = 0.0166;
-                const offlineYield = userState.stakedTotal > 0 ? (userState.stakedTotal * (dailyRate / 86400) * secondsPassed) : 0;
-                
-                // Producción de los Referidos para Comisiones (0.3% diario)
-                const refDailyRate = 0.003;
-                const offlineRefYield = userState.refStakedTotal > 0 ? (userState.refStakedTotal * (refDailyRate / 86400) * secondsPassed) : 0;
+                // Cargar también la lista de referidos para obtener el total invertido por su red
+                await loadReferredUsersList();
 
-                userState.accumulatedYieldSession = userState.unclaimedYield + offlineYield;
-                userState.accumulatedRefYieldSession = userState.unclaimedRefYield + offlineRefYield;
+                // Rendimiento Personal (1.66% diario) + Rendimiento Red (0.3% diario)
+                const personalYield = userState.stakedTotal > 0 ? (userState.stakedTotal * (0.0166 / 86400) * secondsPassed) : 0;
+                const referralYield = userState.totalReferralStaked > 0 ? (userState.totalReferralStaked * (0.003 / 86400) * secondsPassed) : 0;
+                
+                userState.accumulatedYieldSession = userState.unclaimedYield + personalYield + referralYield;
                 userState.lastYieldTime = now;
 
                 if(prevBalance !== userState.balance && prevBalance > 0 && document.getElementById('dashboard-view').classList.contains('flex')) {
@@ -1310,8 +1296,7 @@
                         full_name: cleanEmail.split('@')[0],
                         balance: 0, staked_total: 0, total_withdrawn: 0, total_yield_earned: 0,
                         ref_code: generateRefCode(), referral_count: 0,
-                        unclaimed_yield: 0.00, last_yield_time: new Date().toISOString(),
-                        total_ref_yield_earned: 0.00, unclaimed_ref_yield: 0.00
+                        unclaimed_yield: 0.00, last_yield_time: new Date().toISOString()
                      };
                      await supabaseClient.from('profiles').insert([newProfile]);
                      const { data: retryData } = await supabaseClient.from('profiles').select('*').eq('email', cleanEmail).single();
@@ -1408,6 +1393,91 @@
             }
         }
 
+        // --- SISTEMA DE LISTADO Y RENDIMIENTO DE REFERIDOS ---
+        async function loadReferredUsersList() {
+            if (!userState.refCode) return;
+            
+            const tbody = document.getElementById('referred-users-list');
+            const noRefsMsg = document.getElementById('no-refs-msg');
+            
+            if (userState.email === 'invitado@demo.com') {
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr class="border-b border-slate-800/50">
+                            <td class="p-2 font-medium text-white">Carlos Gómez (Demo)</td>
+                            <td class="p-2 text-slate-400">10/02/2026</td>
+                            <td class="p-2 font-mono text-emerald-400 font-semibold">$100.00 USDT</td>
+                        </tr>
+                        <tr class="border-b border-slate-800/50">
+                            <td class="p-2 font-medium text-white">Ana Martínez (Demo)</td>
+                            <td class="p-2 text-slate-400">12/02/2026</td>
+                            <td class="p-2 font-mono text-emerald-400 font-semibold">$200.00 USDT</td>
+                        </tr>
+                        <tr class="border-b border-slate-800/50">
+                            <td class="p-2 font-medium text-white">Lucía Fernández (Demo)</td>
+                            <td class="p-2 text-slate-400">14/02/2026</td>
+                            <td class="p-2 font-mono text-emerald-400 font-semibold">$50.00 USDT</td>
+                        </tr>
+                    `;
+                }
+                userState.referralCount = 3;
+                userState.totalReferralStaked = 350.00;
+                if (noRefsMsg) noRefsMsg.classList.add('hidden');
+                updateDashboardUI();
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('profiles')
+                    .select('full_name, email, created_at, staked_total, balance')
+                    .eq('referred_by', userState.refCode);
+
+                if (error) {
+                    console.error("Error al obtener lista de referidos:", error);
+                    return;
+                }
+
+                if (data && data.length > 0) {
+                    userState.referralCount = data.length;
+                    let sumStaked = 0;
+                    let html = '';
+
+                    data.forEach(refUser => {
+                        const userTotalFunds = (parseFloat(refUser.staked_total) || 0) + (parseFloat(refUser.balance) || 0);
+                        sumStaked += userTotalFunds;
+                        const regDate = refUser.created_at ? new Date(refUser.created_at).toLocaleDateString('es-ES') : 'Reciente';
+                        const displayName = refUser.full_name || refUser.email.split('@')[0];
+
+                        html += `
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-900/50 transition">
+                                <td class="p-2 font-medium text-white">${displayName}</td>
+                                <td class="p-2 text-slate-400">${regDate}</td>
+                                <td class="p-2 font-mono text-emerald-400 font-semibold">$${userTotalFunds.toFixed(2)} USDT</td>
+                            </tr>
+                        `;
+                    });
+
+                    userState.totalReferralStaked = sumStaked;
+                    if (tbody) tbody.innerHTML = html;
+                    if (noRefsMsg) noRefsMsg.classList.add('hidden');
+                } else {
+                    userState.referralCount = 0;
+                    userState.totalReferralStaked = 0;
+                    if (tbody) tbody.innerHTML = '';
+                    if (noRefsMsg) noRefsMsg.classList.remove('hidden');
+                }
+
+                if (userState.email && userState.email !== 'invitado@demo.com') {
+                    await updateUserProfileInCloud({ referral_count: userState.referralCount });
+                }
+
+                updateDashboardUI();
+            } catch (err) {
+                console.error("Excepción en loadReferredUsersList:", err);
+            }
+        }
+
         function updateDashboardUI() {
             document.getElementById('header-balance-display').innerText = `$${userState.balance.toFixed(2)}`;
             document.getElementById('metric-balance').innerText = `$${userState.balance.toFixed(2)}`;
@@ -1416,6 +1486,7 @@
             document.getElementById('metric-withdrawn').innerText = `$${userState.totalWithdrawn.toFixed(2)}`;
             document.getElementById('metric-yield-earned').innerText = `$${userState.totalYieldEarned.toFixed(2)}`;
 
+            // Actualización dinámica de requisitos
             document.getElementById('req-ref-badge').innerText = `${userState.referralCount} / 3`;
             const refPct = Math.min((userState.referralCount / 3) * 100, 100);
             document.getElementById('req-ref-bar').style.width = `${refPct}%`;
@@ -1428,14 +1499,15 @@
             document.getElementById('modal-req-yield').innerText = `$${userState.totalYieldEarned.toFixed(2)} / $15`;
 
             document.getElementById('ref-count-display').innerText = `${userState.referralCount} / 3`;
-            // Reemplazo del cálculo erróneo por el valor exacto sumado de la BD + en vivo
-            document.getElementById('ref-earnings-display').innerText = `$${(userState.totalRefYieldEarned + userState.accumulatedRefYieldSession).toFixed(6)} USDT`;
-            
+            const refVolElem = document.getElementById('ref-volume-display');
+            if(refVolElem) refVolElem.innerText = `$${userState.totalReferralStaked.toFixed(2)} USDT`;
+
             if (userState.referralCount >= 3) {
                 document.getElementById('ref-status-text').innerText = '¡Requisito de referidos CUMPLIDO!';
                 document.getElementById('ref-status-text').className = 'text-[10px] text-emerald-400 font-bold mt-1';
             } else {
-                document.getElementById('ref-status-text').innerText = `Faltan ${3 - userState.referralCount} referidos para cumplir el requisito de retiro`;
+                const missing = 3 - userState.referralCount;
+                document.getElementById('ref-status-text').innerText = `Faltan ${missing} referido(s) para habilitar el retiro`;
                 document.getElementById('ref-status-text').className = 'text-[10px] text-slate-500 mt-1';
             }
         }
@@ -1447,29 +1519,24 @@
         }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-        // --- LÓGICA DE INVERSIÓN Y GANANCIAS EN VIVO Y PERSISTENTES ---
+        // --- LÓGICA DE INVERSIÓN Y GANANCIAS EN VIVO CON RED DE REFERIDOS ---
         async function investInPackage(packageName, cost, dailyRate) {
             if (userState.balance < cost) {
                 showToast(`Saldo insuficiente. Necesitas $${cost} USDT en tu saldo disponible.`, 'error');
                 return;
             }
 
-            // Preservar la ganancia hasta este instante exacto
             const now = Date.now();
             userState.unclaimedYield = userState.accumulatedYieldSession;
-            userState.unclaimedRefYield = userState.accumulatedRefYieldSession;
             userState.lastYieldTime = now;
 
-            // Actualizar variables locales
             userState.balance -= cost;
             userState.stakedTotal += cost;
             
-            // Guardar en la base de datos de Supabase
             const updates = {
                 balance: userState.balance,
                 staked_total: userState.stakedTotal,
                 unclaimed_yield: userState.unclaimedYield,
-                unclaimed_ref_yield: userState.unclaimedRefYield,
                 last_yield_time: new Date(now).toISOString()
             };
             
@@ -1483,11 +1550,10 @@
 
             updateDashboardUI();
             showToast(`¡Activaste el plan ${packageName} con éxito!`, 'success');
-            
             switchTab('dashboard');
         }
 
-        // GENERADOR EN TIEMPO REAL CON LIMITADOR EXACTO
+        // GENERADOR EN TIEMPO REAL (Rendimiento Propio 1.66% + Rendimiento Red Referidos 0.3%)
         function startLiveYieldGenerator() {
             if (yieldInterval) clearInterval(yieldInterval);
             
@@ -1496,57 +1562,28 @@
                 if (userState.lastYieldTime) {
                     const secondsPassed = Math.max(0, (now - userState.lastYieldTime) / 1000);
                     
-                    // 1. Ganancias propias del usuario (1.66% diario)
-                    if (userState.stakedTotal > 0) {
-                        const dailyRate = 0.0166; 
-                        const yieldEarned = userState.stakedTotal * (dailyRate / 86400) * secondsPassed;
-                        userState.accumulatedYieldSession += yieldEarned;
-                        
-                        const yieldElem = document.getElementById('live-accumulated-yield');
-                        if (yieldElem) {
-                            yieldElem.innerText = `$${userState.accumulatedYieldSession.toFixed(6)}`;
-                        }
-                    }
-
-                    // 2. Ganancias de Referidos AUTOMÁTICAS (0.3% diario)
-                    if (userState.refStakedTotal > 0) {
-                        const refDailyRate = 0.003; 
-                        const refYieldEarned = userState.refStakedTotal * (refDailyRate / 86400) * secondsPassed;
-                        userState.accumulatedRefYieldSession += refYieldEarned;
-                        
-                        const refEarningsElem = document.getElementById('ref-earnings-display');
-                        if (refEarningsElem) {
-                            refEarningsElem.innerText = `$${(userState.totalRefYieldEarned + userState.accumulatedRefYieldSession).toFixed(6)} USDT`;
-                        }
+                    // 1. Ganancia propia: 1.66% diario
+                    const personalYield = userState.stakedTotal > 0 ? (userState.stakedTotal * (0.0166 / 86400) * secondsPassed) : 0;
+                    
+                    // 2. Ganancia por red de referidos: 0.3% diario sobre depósitos/inversiones de invitados
+                    const referralYield = userState.totalReferralStaked > 0 ? (userState.totalReferralStaked * (0.003 / 86400) * secondsPassed) : 0;
+                    
+                    userState.accumulatedYieldSession += (personalYield + referralYield);
+                    
+                    const yieldElem = document.getElementById('live-accumulated-yield');
+                    if (yieldElem) {
+                        yieldElem.innerText = `$${userState.accumulatedYieldSession.toFixed(6)}`;
                     }
                 }
                 userState.lastYieldTime = now;
-            }, 1000); // 1 segundo (Simulador de Telemetría)
+            }, 1000);
         }
 
         async function saveCurrentYieldToCloud() {
-            if (!userState.email || userState.email === 'invitado@demo.com' || (userState.stakedTotal <= 0 && userState.refStakedTotal <= 0)) return;
+            if (!userState.email || userState.email === 'invitado@demo.com') return;
             
-            let newBalance = userState.balance;
-            let newTotalRefYield = userState.totalRefYieldEarned;
-            
-            // Acreditar automáticamente las comisiones de referidos al saldo principal
-            if (userState.accumulatedRefYieldSession > 0) {
-                newBalance += userState.accumulatedRefYieldSession;
-                newTotalRefYield += userState.accumulatedRefYieldSession;
-                
-                userState.balance = newBalance;
-                userState.totalRefYieldEarned = newTotalRefYield;
-                userState.accumulatedRefYieldSession = 0; // Ya se acreditó
-                
-                updateDashboardUI(); // Visualiza el pequeño incremento de saldo
-            }
-
             const updates = {
                 unclaimed_yield: userState.accumulatedYieldSession,
-                balance: userState.balance,
-                total_ref_yield_earned: userState.totalRefYieldEarned,
-                unclaimed_ref_yield: userState.accumulatedRefYieldSession, // Quedará en 0
                 last_yield_time: new Date(userState.lastYieldTime || Date.now()).toISOString()
             };
             await updateUserProfileInCloud(updates);
@@ -1561,7 +1598,6 @@
             const claimedAmount = userState.accumulatedYieldSession;
             const now = Date.now();
             
-            // Acreditar al Saldo Disponible REAL
             userState.balance += claimedAmount;
             userState.totalYieldEarned += claimedAmount;
             userState.accumulatedYieldSession = 0;
@@ -1573,7 +1609,6 @@
             
             updateDashboardUI();
 
-            // Guardar en Supabase
             const updates = {
                 balance: userState.balance,
                 total_yield_earned: userState.totalYieldEarned,
@@ -1589,7 +1624,6 @@
 
             showToast(`¡+$${claimedAmount.toFixed(4)} USDT acreditados a tu saldo!`, 'success');
         }
-
 
         // --- SISTEMA DE TRANSACCIONES Y NUBE ---
         async function submitRealDeposit() {
@@ -1634,10 +1668,19 @@
             if (!amountInput) return showToast('Ingresa un monto válido', 'error');
             const amount = parseFloat(amountInput);
 
-            if (userState.referralCount < 3) return showToast(`Necesitas 3 referidos (Llevas ${userState.referralCount})`, 'error');
-            if (userState.totalYieldEarned < 15) return showToast(`Mínimo $15 en ganancias (Llevas $${userState.totalYieldEarned.toFixed(2)})`, 'error');
-            if (isNaN(amount) || amount < 25) return showToast('El monto mínimo es $25 USDT', 'error');
-            if (amount > userState.balance) return showToast('Saldo insuficiente', 'error');
+            // Validación estricta del requisito de mínimo 3 referidos
+            if (userState.referralCount < 3) {
+                return showToast(`Requisito no cumplido: Debes tener al menos 3 referidos para retirar (tienes ${userState.referralCount}/3).`, 'error');
+            }
+            if (userState.totalYieldEarned < 15) {
+                return showToast(`Mínimo $15 en ganancias acumuladas (llevas $${userState.totalYieldEarned.toFixed(2)})`, 'error');
+            }
+            if (isNaN(amount) || amount < 25) {
+                return showToast('El monto mínimo de retiro es $25 USDT', 'error');
+            }
+            if (amount > userState.balance) {
+                return showToast('Saldo disponible insuficiente', 'error');
+            }
 
             userState.balance -= amount;
             await updateUserProfileInCloud({ balance: userState.balance });
@@ -1667,180 +1710,288 @@
             document.getElementById('withdraw-amount').value = '';
             document.getElementById('withdraw-wallet-address').value = '';
             closeModal('withdraw-modal');
-            showToast('Retiro enviado. Fondos en retención.', 'success');
+            showToast('Solicitud de retiro enviada correctamente.', 'success');
             loadUserTransactions();
         }
 
         async function loadUserTransactions() {
-            if(userState.email === 'invitado@demo.com') return;
-
-            const tbody = document.getElementById('user-tx-history');
-            const { data, error } = await supabaseClient.from('transactions')
-                .select('*')
-                .eq('user_email', userState.email.toLowerCase())
-                .order('created_at', { ascending: false });
-
-            if (error) return console.error(error);
-
-            let newHtml = '';
-            if(!data || data.length === 0) {
-                document.getElementById('no-tx-msg').classList.remove('hidden');
-            } else {
-                document.getElementById('no-tx-msg').classList.add('hidden');
-                data.forEach(tx => {
-                    const statusColor = tx.status === 'approved' ? 'text-emerald-400' : (tx.status === 'rejected' ? 'text-rose-400' : 'text-amber-400');
-                    const statusText = tx.status === 'approved' ? 'Aprobado' : (tx.status === 'rejected' ? 'Rechazado' : 'Pendiente');
-                    const typeText = tx.type === 'deposit' ? 'Depósito' : 'Retiro';
-                    
-                    let displayDate = 'N/A';
-                    if (tx.created_at) {
-                        const d = new Date(tx.created_at);
-                        displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
-                    }
-                    newHtml += `
-                    <tr class="border-b border-slate-800/50">
-                        <td class="p-2">${displayDate}</td>
-                        <td class="p-2">${typeText}</td>
-                        <td class="p-2 font-mono text-white">$${tx.amount.toFixed(2)}</td>
-                        <td class="p-2 ${statusColor} font-bold">${statusText}</td>
-                    </tr>`;
-                });
-            }
-            tbody.innerHTML = newHtml;
-        }
-
-        // --- SISTEMA DE VISUALIZACIÓN DE REFERIDOS ---
-        async function loadReferredUsersList() {
             if (userState.email === 'invitado@demo.com') return;
 
-            // Busca los usuarios que se registraron con el código de referido del usuario actual
-            const { data, error } = await supabaseClient.from('profiles')
-                .select('full_name, email, created_at')
-                .eq('referred_by', userState.refCode)
-                .order('created_at', { ascending: false });
+            const tbody = document.getElementById('user-tx-history');
+            const noTxMsg = document.getElementById('no-tx-msg');
+            if (!tbody) return;
 
-            const tbody = document.getElementById('referred-users-list');
-            
-            if (error || !data || data.length === 0) {
-                document.getElementById('no-refs-msg').classList.remove('hidden');
-                tbody.innerHTML = '';
-                return;
-            }
-            
-            document.getElementById('no-refs-msg').classList.add('hidden');
-            let html = '';
-            data.forEach(u => {
-                let dateStr = 'Reciente';
-                if(u.created_at) {
-                    const d = new Date(u.created_at);
-                    dateStr = d.toLocaleDateString('es-AR');
+            try {
+                const { data, error } = await supabaseClient
+                    .from('transactions')
+                    .select('*')
+                    .eq('user_email', userState.email.toLowerCase())
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    console.error("Error al cargar movimientos:", error);
+                    return;
                 }
-                html += `
-                <tr class="border-b border-slate-800/50">
-                    <td class="p-2">
-                        <div class="font-bold text-slate-200">${u.full_name}</div>
-                        <div class="text-[10px] text-slate-500">${u.email}</div>
-                    </td>
-                    <td class="p-2 text-slate-400">${dateStr}</td>
-                </tr>`;
-            });
-            tbody.innerHTML = html;
+
+                if (data && data.length > 0) {
+                    let html = '';
+                    data.forEach(tx => {
+                        const dateStr = tx.created_at ? new Date(tx.created_at).toLocaleDateString('es-ES') : 'Hoy';
+                        const isDeposit = tx.type === 'deposit';
+                        const typeBadge = isDeposit 
+                            ? '<span class="text-emerald-400 font-bold"><i class="fa-solid fa-arrow-down mr-1"></i>Depósito</span>' 
+                            : '<span class="text-rose-400 font-bold"><i class="fa-solid fa-arrow-up mr-1"></i>Retiro</span>';
+                        
+                        let statusBadge = '<span class="text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded font-medium text-[10px]">Pendiente</span>';
+                        if (tx.status === 'approved') {
+                            statusBadge = '<span class="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded font-medium text-[10px]">Aprobado</span>';
+                        } else if (tx.status === 'rejected') {
+                            statusBadge = '<span class="text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded font-medium text-[10px]">Rechazado</span>';
+                        }
+
+                        html += `
+                            <tr class="border-b border-slate-800/50">
+                                <td class="p-2 text-slate-400 text-[11px]">${dateStr}</td>
+                                <td class="p-2">${typeBadge}</td>
+                                <td class="p-2 font-mono font-bold text-white">$${parseFloat(tx.amount).toFixed(2)}</td>
+                                <td class="p-2">${statusBadge}</td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                    if (noTxMsg) noTxMsg.classList.add('hidden');
+                } else {
+                    tbody.innerHTML = '';
+                    if (noTxMsg) noTxMsg.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error("Error en loadUserTransactions:", err);
+            }
         }
 
-        // --- PANEL ADMINISTRADOR COMPLETADO ---
+        // --- PANEL ADMINISTRADOR COMPLETO E INTEGRADO ---
         async function loadAdminPanel() {
-            if(userState.email === 'invitado@demo.com') return;
-            
-            document.getElementById('admin-status-indicator').innerHTML = '<span class="text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i> Conectado y Sincronizado</span>';
-
-            // Cargar Depósitos
-            const { data: deps } = await supabaseClient.from('transactions').select('*').eq('type', 'deposit').eq('status', 'pending');
+            const adminStatus = document.getElementById('admin-status-indicator');
             const depBody = document.getElementById('admin-deposits-body');
-            if(!deps || deps.length === 0) {
-                document.getElementById('admin-no-deps').classList.remove('hidden');
-                depBody.innerHTML = '';
-            } else {
-                document.getElementById('admin-no-deps').classList.add('hidden');
-                let html = '';
-                deps.forEach(tx => {
-                    html += `
-                    <tr class="border-b border-slate-800/50">
-                        <td class="p-3">${tx.user_email}</td>
-                        <td class="p-3 text-white font-mono">$${tx.amount.toFixed(2)}</td>
-                        <td class="p-3 text-[10px] text-slate-400 break-all">${tx.hash}</td>
-                        <td class="p-3 text-right">
-                            <button onclick="approveTx('${tx.id}', 'deposit', '${tx.user_email}', ${tx.amount})" class="bg-emerald-500/20 text-emerald-400 p-1.5 rounded hover:bg-emerald-500 hover:text-white transition"><i class="fa-solid fa-check"></i></button>
-                            <button onclick="rejectTx('${tx.id}')" class="bg-rose-500/20 text-rose-400 p-1.5 rounded hover:bg-rose-500 hover:text-white transition ml-1"><i class="fa-solid fa-xmark"></i></button>
-                        </td>
-                    </tr>`;
-                });
-                depBody.innerHTML = html;
-            }
-
-            // Cargar Retiros
-            const { data: wits } = await supabaseClient.from('transactions').select('*').eq('type', 'withdraw').eq('status', 'pending');
             const witBody = document.getElementById('admin-withdrawals-body');
-            if(!wits || wits.length === 0) {
-                document.getElementById('admin-no-wits').classList.remove('hidden');
-                witBody.innerHTML = '';
-            } else {
-                document.getElementById('admin-no-wits').classList.add('hidden');
-                let html = '';
-                wits.forEach(tx => {
-                    html += `
-                    <tr class="border-b border-slate-800/50">
-                        <td class="p-3">${tx.user_email}</td>
-                        <td class="p-3 text-white font-mono">$${tx.amount.toFixed(2)}</td>
-                        <td class="p-3 text-[10px] text-slate-400 break-all">${tx.wallet}</td>
-                        <td class="p-3 text-right">
-                            <button onclick="approveTx('${tx.id}', 'withdraw', '${tx.user_email}', ${tx.amount})" class="bg-emerald-500/20 text-emerald-400 p-1.5 rounded hover:bg-emerald-500 hover:text-white transition"><i class="fa-solid fa-check"></i></button>
-                            <button onclick="rejectTx('${tx.id}')" class="bg-rose-500/20 text-rose-400 p-1.5 rounded hover:bg-rose-500 hover:text-white transition ml-1"><i class="fa-solid fa-xmark"></i></button>
-                        </td>
-                    </tr>`;
-                });
-                witBody.innerHTML = html;
-            }
-        }
+            const noDeps = document.getElementById('admin-no-deps');
+            const noWits = document.getElementById('admin-no-wits');
 
-        async function approveTx(id, type, email, amount) {
-            if(!confirm('¿Aprobar transacción?')) return;
-            
-            await supabaseClient.from('transactions').update({ status: 'approved' }).eq('id', id);
-            
-            const { data: userProfile } = await supabaseClient.from('profiles').select('*').eq('email', email).single();
-            if(userProfile) {
-                if(type === 'deposit') {
-                    const newBal = parseFloat(userProfile.balance || 0) + parseFloat(amount);
-                    await supabaseClient.from('profiles').update({ balance: newBal }).eq('email', email);
-                } else if(type === 'withdraw') {
-                    const newWithdrawn = parseFloat(userProfile.total_withdrawn || 0) + parseFloat(amount);
-                    await supabaseClient.from('profiles').update({ total_withdrawn: newWithdrawn }).eq('email', email);
+            if (adminStatus) adminStatus.innerHTML = '<span class="text-cyan-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Sincronizando con Supabase...</span>';
+
+            try {
+                const { data: deposits, error: depError } = await supabaseClient
+                    .from('transactions')
+                    .select('*')
+                    .eq('type', 'deposit')
+                    .eq('status', 'pending')
+                    .order('created_at', { ascending: false });
+
+                const { data: withdrawals, error: witError } = await supabaseClient
+                    .from('transactions')
+                    .select('*')
+                    .eq('type', 'withdraw')
+                    .eq('status', 'pending')
+                    .order('created_at', { ascending: false });
+
+                if (depError || witError) {
+                    if (adminStatus) adminStatus.innerHTML = '<span class="text-rose-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Error al conectar con Supabase</span>';
+                    return;
                 }
+
+                // Renderizar Depósitos Pendientes
+                if (deposits && deposits.length > 0) {
+                    let depHtml = '';
+                    deposits.forEach(d => {
+                        const shortHash = d.hash ? `${d.hash.substring(0, 8)}...` : 'N/A';
+                        depHtml += `
+                            <tr class="border-b border-slate-800/50">
+                                <td class="p-3 font-medium text-white">${d.user_email}</td>
+                                <td class="p-3 font-mono text-emerald-400 font-bold">$${parseFloat(d.amount).toFixed(2)}</td>
+                                <td class="p-3 font-mono text-slate-400 text-[10px]" title="${d.hash || ''}">${shortHash}</td>
+                                <td class="p-3 text-right space-x-1">
+                                    <button onclick="approveDeposit('${d.id}', '${d.user_email}', ${d.amount})" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-2.5 py-1 rounded text-[10px] transition">
+                                        <i class="fa-solid fa-check"></i> Aprobar
+                                    </button>
+                                    <button onclick="rejectDeposit('${d.id}')" class="bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 font-bold px-2 py-1 rounded text-[10px] transition">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    if (depBody) depBody.innerHTML = depHtml;
+                    if (noDeps) noDeps.classList.add('hidden');
+                } else {
+                    if (depBody) depBody.innerHTML = '';
+                    if (noDeps) noDeps.classList.remove('hidden');
+                }
+
+                // Renderizar Retiros Pendientes
+                if (withdrawals && withdrawals.length > 0) {
+                    let witHtml = '';
+                    withdrawals.forEach(w => {
+                        const shortWallet = w.wallet ? `${w.wallet.substring(0, 8)}...` : 'N/A';
+                        witHtml += `
+                            <tr class="border-b border-slate-800/50">
+                                <td class="p-3 font-medium text-white">${w.user_email}</td>
+                                <td class="p-3 font-mono text-amber-400 font-bold">$${parseFloat(w.amount).toFixed(2)}</td>
+                                <td class="p-3 font-mono text-slate-400 text-[10px]" title="${w.wallet || ''}">${shortWallet}</td>
+                                <td class="p-3 text-right space-x-1">
+                                    <button onclick="approveWithdrawal('${w.id}', '${w.user_email}', ${w.amount})" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-2.5 py-1 rounded text-[10px] transition">
+                                        <i class="fa-solid fa-check"></i> Aprobar
+                                    </button>
+                                    <button onclick="rejectWithdrawal('${w.id}', '${w.user_email}', ${w.amount})" class="bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 font-bold px-2 py-1 rounded text-[10px] transition">
+                                        <i class="fa-solid fa-xmark"></i> Rechazar
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    if (witBody) witBody.innerHTML = witHtml;
+                    if (noWits) noWits.classList.add('hidden');
+                } else {
+                    if (witBody) witBody.innerHTML = '';
+                    if (noWits) noWits.classList.remove('hidden');
+                }
+
+                if (adminStatus) adminStatus.innerHTML = '<span class="text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i> Sincronizado en tiempo real</span>';
+
+            } catch (err) {
+                console.error("Error en panel administrador:", err);
+                if (adminStatus) adminStatus.innerHTML = '<span class="text-rose-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Error al cargar solicitudes</span>';
             }
-            
-            showToast('Transacción aprobada exitosamente', 'success');
-            loadAdminPanel();
         }
 
-        async function rejectTx(id) {
-            if(!confirm('¿Rechazar transacción? (Si es retiro, debes devolver el saldo manualmente al usuario)')) return;
-            await supabaseClient.from('transactions').update({ status: 'rejected' }).eq('id', id);
-            showToast('Transacción rechazada', 'success');
-            loadAdminPanel();
+        async function approveDeposit(txId, userEmail, amount) {
+            try {
+                // 1. Aprobar transacción
+                const { error: txError } = await supabaseClient
+                    .from('transactions')
+                    .update({ status: 'approved' })
+                    .eq('id', txId);
+
+                if (txError) throw txError;
+
+                // 2. Acreditar saldo al usuario
+                const { data: targetUser } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('email', userEmail.toLowerCase())
+                    .single();
+
+                if (targetUser) {
+                    const newBalance = (parseFloat(targetUser.balance) || 0) + parseFloat(amount);
+                    await supabaseClient
+                        .from('profiles')
+                        .update({ balance: newBalance })
+                        .eq('email', userEmail.toLowerCase());
+                }
+
+                showToast(`Depósito de $${amount} USDT aprobado correctamente.`, 'success');
+                loadAdminPanel();
+                if (userState.email.toLowerCase() === userEmail.toLowerCase()) {
+                    await syncUserDataBackground();
+                }
+            } catch (err) {
+                showToast(`Error al aprobar depósito: ${err.message}`, 'error');
+            }
         }
 
-        // --- EXTRAS E INTERFAZ ---
+        async function rejectDeposit(txId) {
+            try {
+                const { error } = await supabaseClient
+                    .from('transactions')
+                    .update({ status: 'rejected' })
+                    .eq('id', txId);
+
+                if (error) throw error;
+                showToast('Depósito rechazado.', 'warning');
+                loadAdminPanel();
+            } catch (err) {
+                showToast(`Error: ${err.message}`, 'error');
+            }
+        }
+
+        async function approveWithdrawal(txId, userEmail, amount) {
+            try {
+                const { error: txError } = await supabaseClient
+                    .from('transactions')
+                    .update({ status: 'approved' })
+                    .eq('id', txId);
+
+                if (txError) throw txError;
+
+                const { data: targetUser } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('email', userEmail.toLowerCase())
+                    .single();
+
+                if (targetUser) {
+                    const newWithdrawn = (parseFloat(targetUser.total_withdrawn) || 0) + parseFloat(amount);
+                    await supabaseClient
+                        .from('profiles')
+                        .update({ total_withdrawn: newWithdrawn })
+                        .eq('email', userEmail.toLowerCase());
+                }
+
+                showToast(`Retiro de $${amount} USDT aprobado.`, 'success');
+                loadAdminPanel();
+                if (userState.email.toLowerCase() === userEmail.toLowerCase()) {
+                    await syncUserDataBackground();
+                }
+            } catch (err) {
+                showToast(`Error al aprobar retiro: ${err.message}`, 'error');
+            }
+        }
+
+        async function rejectWithdrawal(txId, userEmail, amount) {
+            try {
+                const { error: txError } = await supabaseClient
+                    .from('transactions')
+                    .update({ status: 'rejected' })
+                    .eq('id', txId);
+
+                if (txError) throw txError;
+
+                // Devolver el saldo retenido al usuario
+                const { data: targetUser } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('email', userEmail.toLowerCase())
+                    .single();
+
+                if (targetUser) {
+                    const restoredBalance = (parseFloat(targetUser.balance) || 0) + parseFloat(amount);
+                    await supabaseClient
+                        .from('profiles')
+                        .update({ balance: restoredBalance })
+                        .eq('email', userEmail.toLowerCase());
+                }
+
+                showToast('Solicitud de retiro rechazada. Saldo devuelto al usuario.', 'warning');
+                loadAdminPanel();
+                if (userState.email.toLowerCase() === userEmail.toLowerCase()) {
+                    await syncUserDataBackground();
+                }
+            } catch (err) {
+                showToast(`Error al rechazar retiro: ${err.message}`, 'error');
+            }
+        }
+
+        // --- GRÁFICO Y TEMPORIZADORES DE TELEMETRÍA ---
         function initTelemetryChart() {
             const ctx = document.getElementById('telemetryChart');
-            if(!ctx) return;
+            if (!ctx) return;
             
-            const chart = new Chart(ctx, {
+            new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', 'Ahora'],
                     datasets: [{
-                        label: 'Volumen (L/s)',
-                        data: [41.2, 42.1, 41.8, 42.5, 42.8, 42.6, 42.8],
+                        label: 'Caudal DLE (L/s)',
+                        data: [38.2, 40.1, 39.5, 41.8, 43.0, 42.1, 42.8],
                         borderColor: '#00f2fe',
                         backgroundColor: 'rgba(0, 242, 254, 0.1)',
                         borderWidth: 2,
@@ -1853,29 +2004,24 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                        x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#64748b', font: { size: 10 } } },
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#64748b', font: { size: 10 } } }
                     }
                 }
             });
 
+            // Contador de tiempo restante
             setInterval(() => {
-                const val = 42 + Math.random();
-                document.getElementById('tel-vol').innerText = val.toFixed(1) + ' L/s';
-            }, 3000);
-        }
-
-        function startPayoutTimer() {
-            setInterval(() => {
+                const timerElem = document.getElementById('time-to-payout');
+                if (!timerElem) return;
                 const now = new Date();
-                const tomorrow = new Date(now);
-                tomorrow.setHours(24, 0, 0, 0);
-                const diff = tomorrow - now;
-                const h = Math.floor((diff % 86400000) / 3600000).toString().padStart(2, '0');
-                const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
-                const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-                const el = document.getElementById('time-to-payout');
-                if(el) el.innerText = `${h}:${m}:${s}`;
+                const nextMidnight = new Date(now);
+                nextMidnight.setHours(24, 0, 0, 0);
+                const diff = Math.max(0, Math.floor((nextMidnight - now) / 1000));
+                const hours = String(Math.floor(diff / 3600)).padStart(2, '0');
+                const minutes = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+                const seconds = String(diff % 60).padStart(2, '0');
+                timerElem.innerText = `${hours}:${minutes}:${seconds}`;
             }, 1000);
         }
     </script>
