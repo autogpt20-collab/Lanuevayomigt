@@ -53,9 +53,16 @@
             transition: all 0.3s ease;
         }
 
-        .glow-button:hover {
+        .glow-button:hover:not(:disabled) {
             box-shadow: 0 0 25px rgba(0, 242, 254, 0.6);
             transform: translateY(-1px);
+        }
+        
+        .glow-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
         }
 
         .pulse-dot {
@@ -731,7 +738,7 @@
                     <label class="text-[10px] text-slate-400">Hash de la Transacción (TxID)</label>
                     <input type="text" id="real-deposit-hash" placeholder="Pega el Hash de blockchain aquí..." class="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-xl p-3 font-mono mt-1">
                 </div>
-                <button onclick="submitRealDeposit()" class="w-full glow-button text-slate-950 font-black py-3 rounded-xl text-xs mt-2">Notificar Pago</button>
+                <button onclick="submitRealDeposit(this)" class="w-full glow-button text-slate-950 font-black py-3 rounded-xl text-xs mt-2 transition-all">Notificar Pago</button>
             </div>
         </div>
     </div>
@@ -770,7 +777,7 @@
                     <label class="text-[10px] text-slate-400">Monto a Retirar (Mínimo $25 USDT)</label>
                     <input type="number" id="withdraw-amount" placeholder="Ej: 50" class="w-full bg-slate-900 border border-slate-700 text-white text-sm rounded-xl p-3 font-mono mt-1">
                 </div>
-                <button onclick="submitRealWithdrawal()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl text-xs mt-2 transition">Solicitar Retiro</button>
+                <button onclick="submitRealWithdrawal(this)" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl text-xs mt-2 transition-all">Solicitar Retiro</button>
             </div>
         </div>
     </div>
@@ -808,8 +815,15 @@
         let userSyncInterval = null; 
         let pendingReferralCodeFromUrl = '';
         
-        // Bloqueo global para evitar peticiones duplicadas de transacciones (Evita el doble-clic rápido)
+        // ==========================================
+        // CERRADURAS (LOCKS) ANTI-DUPLICACIÓN FIX
+        // ==========================================
+        
+        // Bloqueo global de ID de Transacciones para que el panel de Admin no apruebe ni rechace 2 veces
         let processingTxs = new Set(); 
+        
+        // Bloqueo Global para el usuario (Evita que el usuario apriete el botón de submit depositar o retirar varias veces)
+        let isSubmittingTx = false;
 
         function generateUUID() {
             if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
@@ -1316,7 +1330,10 @@
             showToast(`¡+$${claimedAmount.toFixed(4)} USDT acreditados a tu saldo!`, 'success');
         }
 
-        async function submitRealDeposit() {
+        
+        async function submitRealDeposit(btnElement) {
+            if (isSubmittingTx) return; // Evita el doble clic inmediato
+
             const amountInput = document.getElementById('real-deposit-amount').value;
             const hash = document.getElementById('real-deposit-hash').value.trim();
 
@@ -1332,33 +1349,53 @@
                 return;
             }
 
-            const tx = {
-                id: generateUUID(),
-                user_id: userState.id,
-                user_email: (userState.email || '').toLowerCase(),
-                type: 'deposit',
-                amount: amount,
-                hash: hash,
-                wallet: '',
-                status: 'pending',
-                created_at: new Date().toISOString()
-            };
-            
-            const { error } = await supabaseClient.from('transactions').insert([tx]);
-            
-            if (error) {
-                showToast(`Error de Supabase: Verifica que la tabla exista. (${error.message})`, 'error');
-                return;
-            }
+            isSubmittingTx = true;
+            const originalBtnText = btnElement.innerText;
+            btnElement.disabled = true;
+            btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
 
-            document.getElementById('real-deposit-amount').value = '';
-            document.getElementById('real-deposit-hash').value = '';
-            closeModal('deposit-modal');
-            showToast('Depósito enviado a revisión.', 'success');
-            loadUserTransactions();
+            try {
+                // Validación para evitar Depósitos Duplicados a nivel global (Revisa si el hash ya existe)
+                const { data: existingTx } = await supabaseClient.from('transactions').select('id').eq('hash', hash);
+                if (existingTx && existingTx.length > 0) {
+                    showToast('Este hash (TxID) ya ha sido reportado previamente.', 'error');
+                    return;
+                }
+
+                const tx = {
+                    id: generateUUID(),
+                    user_id: userState.id,
+                    user_email: (userState.email || '').toLowerCase(),
+                    type: 'deposit',
+                    amount: amount,
+                    hash: hash,
+                    wallet: '',
+                    status: 'pending',
+                    created_at: new Date().toISOString()
+                };
+                
+                const { error } = await supabaseClient.from('transactions').insert([tx]);
+                
+                if (error) {
+                    showToast(`Error al procesar. Intenta nuevamente. (${error.message})`, 'error');
+                    return;
+                }
+
+                document.getElementById('real-deposit-amount').value = '';
+                document.getElementById('real-deposit-hash').value = '';
+                closeModal('deposit-modal');
+                showToast('Depósito enviado a revisión.', 'success');
+                loadUserTransactions();
+            } finally {
+                isSubmittingTx = false;
+                btnElement.disabled = false;
+                btnElement.innerText = originalBtnText;
+            }
         }
 
-        async function submitRealWithdrawal() {
+        async function submitRealWithdrawal(btnElement) {
+            if (isSubmittingTx) return; // Candado para doble-clic
+
             const amountInput = document.getElementById('withdraw-amount').value;
             const wallet = document.getElementById('withdraw-wallet-address').value.trim();
 
@@ -1377,37 +1414,49 @@
                 return;
             }
 
-            userState.balance -= amount;
-            await updateUserProfileInCloud({ balance: userState.balance });
-            updateDashboardUI();
+            isSubmittingTx = true;
+            const originalBtnText = btnElement.innerText;
+            btnElement.disabled = true;
+            btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Solicitando...';
 
-            const tx = {
-                id: generateUUID(),
-                user_id: userState.id,
-                user_email: (userState.email || '').toLowerCase(),
-                type: 'withdraw',
-                amount: amount,
-                hash: '',
-                wallet: wallet,
-                status: 'pending',
-                created_at: new Date().toISOString()
-            };
-            
-            const { error } = await supabaseClient.from('transactions').insert([tx]);
-            
-            if (error) {
-                showToast(`Error de conexión: ${error.message}`, 'error');
-                userState.balance += amount;
+            try {
+                userState.balance -= amount;
                 await updateUserProfileInCloud({ balance: userState.balance });
                 updateDashboardUI();
-                return;
-            }
 
-            document.getElementById('withdraw-amount').value = '';
-            document.getElementById('withdraw-wallet-address').value = '';
-            closeModal('withdraw-modal');
-            showToast('Retiro enviado. Fondos en retención.', 'success');
-            loadUserTransactions();
+                const tx = {
+                    id: generateUUID(),
+                    user_id: userState.id,
+                    user_email: (userState.email || '').toLowerCase(),
+                    type: 'withdraw',
+                    amount: amount,
+                    hash: '',
+                    wallet: wallet,
+                    status: 'pending',
+                    created_at: new Date().toISOString()
+                };
+                
+                const { error } = await supabaseClient.from('transactions').insert([tx]);
+                
+                if (error) {
+                    showToast(`Error de conexión: ${error.message}`, 'error');
+                    // Revertimos la deducción de saldo
+                    userState.balance += amount;
+                    await updateUserProfileInCloud({ balance: userState.balance });
+                    updateDashboardUI();
+                    return;
+                }
+
+                document.getElementById('withdraw-amount').value = '';
+                document.getElementById('withdraw-wallet-address').value = '';
+                closeModal('withdraw-modal');
+                showToast('Retiro enviado. Fondos en retención.', 'success');
+                loadUserTransactions();
+            } finally {
+                isSubmittingTx = false;
+                btnElement.disabled = false;
+                btnElement.innerText = originalBtnText;
+            }
         }
 
         async function loadUserTransactions() {
@@ -1450,6 +1499,7 @@
             }
         }
 
+        
         async function loadAdminPanel() {
             if (!ADMIN_EMAILS.includes(userState.email.toLowerCase())) return;
             const statusInd = document.getElementById('admin-status-indicator');
@@ -1470,13 +1520,15 @@
                 document.getElementById('admin-no-deps').classList.add('hidden');
                 let h = '';
                 deps.forEach(t => {
-                    h += `<tr>
+                    // Si este id ya está bloqueado localmente (processingTxs), se deshabilita la fila temporalmente
+                    const isDisabled = processingTxs.has(t.id) ? 'pointer-events: none; opacity: 0.4;' : '';
+                    h += `<tr id="tr-${t.id}" style="${isDisabled}">
                         <td class="p-3">${t.user_email}</td>
                         <td class="p-3 font-mono text-emerald-400">$${t.amount.toFixed(2)}</td>
                         <td class="p-3 font-mono text-[10px] break-all max-w-[100px]">${t.hash}</td>
-                        <td class="p-3 text-right">
-                            <button onclick="adminApproveDeposit(this, '${t.id}', '${t.user_email}', ${t.amount})" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 px-2 py-1 rounded transition mr-1" title="Aprobar"><i class="fa-solid fa-check"></i></button>
-                            <button onclick="adminRejectTransaction(this, '${t.id}', '${t.type}', ${t.amount}, '${t.user_email}')" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-slate-950 px-2 py-1 rounded transition" title="Rechazar"><i class="fa-solid fa-xmark"></i></button>
+                        <td class="p-3 text-right whitespace-nowrap">
+                            <button onclick="adminApproveDeposit(this, '${t.id}', '${t.user_email}', ${t.amount})" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 px-2 py-1 rounded transition mr-1 disabled:opacity-50" title="Aprobar"><i class="fa-solid fa-check"></i></button>
+                            <button onclick="adminRejectTransaction(this, '${t.id}', '${t.type}', ${t.amount}, '${t.user_email}')" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-slate-950 px-2 py-1 rounded transition disabled:opacity-50" title="Rechazar"><i class="fa-solid fa-xmark"></i></button>
                         </td>
                     </tr>`;
                 });
@@ -1490,13 +1542,14 @@
                 document.getElementById('admin-no-wits').classList.add('hidden');
                 let h = '';
                 wits.forEach(t => {
-                    h += `<tr>
+                    const isDisabled = processingTxs.has(t.id) ? 'pointer-events: none; opacity: 0.4;' : '';
+                    h += `<tr id="tr-${t.id}" style="${isDisabled}">
                         <td class="p-3">${t.user_email}</td>
                         <td class="p-3 font-mono text-amber-400">$${t.amount.toFixed(2)}</td>
                         <td class="p-3 font-mono text-[10px] break-all max-w-[100px]">${t.wallet}</td>
-                        <td class="p-3 text-right">
-                            <button onclick="adminApproveWithdrawal(this, '${t.id}', '${t.user_email}', ${t.amount})" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 px-2 py-1 rounded transition mr-1" title="Aprobar"><i class="fa-solid fa-check"></i></button>
-                            <button onclick="adminRejectTransaction(this, '${t.id}', '${t.type}', ${t.amount}, '${t.user_email}')" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-slate-950 px-2 py-1 rounded transition" title="Rechazar"><i class="fa-solid fa-xmark"></i></button>
+                        <td class="p-3 text-right whitespace-nowrap">
+                            <button onclick="adminApproveWithdrawal(this, '${t.id}', '${t.user_email}', ${t.amount})" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 px-2 py-1 rounded transition mr-1 disabled:opacity-50" title="Aprobar"><i class="fa-solid fa-check"></i></button>
+                            <button onclick="adminRejectTransaction(this, '${t.id}', '${t.type}', ${t.amount}, '${t.user_email}')" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-slate-950 px-2 py-1 rounded transition disabled:opacity-50" title="Rechazar"><i class="fa-solid fa-xmark"></i></button>
                         </td>
                     </tr>`;
                 });
@@ -1504,8 +1557,12 @@
             }
         }
 
-        // SOLUCIÓN AL BUG DE DUPLICADOS: Bloqueo de Set () y Atomic Update (eq('status', 'pending'))
+        // ==========================================
+        // LÓGICA DE APROBACIONES ESTRICTAS (FIX DUPLICACIÓN)
+        // ==========================================
+
         async function adminApproveDeposit(btnElement, id, userEmail, amount) {
+            // Candado local: si ya hicimos clic, no permitimos ejecutar otra vez
             if (processingTxs.has(id)) return;
             processingTxs.add(id);
 
@@ -1513,10 +1570,13 @@
                 if (btnElement) {
                     btnElement.disabled = true;
                     btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                    // Bloquea toda la fila visualmente (evita interacción con CSS)
+                    const row = btnElement.closest('tr');
+                    if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; }
                 }
 
-                // ATOMIC UPDATE: Asegura que la DB solo realice el update SI su estado actual sigue siendo 'pending'.
-                // Si dos peticiones entran a la vez, la segunda retornará error / 0 filas y evitaremos el doble cargo.
+                // ATOMIC UPDATE Y SELECT SIMULTÁNEO
+                // Esta es la parte vital: solo se actualiza si el status aún es 'pending'
                 const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
                     .update({ status: 'approved' })
                     .eq('id', id)
@@ -1525,31 +1585,35 @@
 
                 if (txErr) {
                     showToast('Error de conexión al aprobar la transacción.', 'error');
-                    loadAdminPanel();
                     return;
                 }
 
-                // Si no se modificaron filas, la orden ya había sido procesada en otro click/pestaña
-                if (!updatedTx || updatedTx.length === 0) {
-                    showToast('Transacción interceptada: Ya se había procesado.', 'warning');
-                    loadAdminPanel();
+                // Si `updatedTx` es vacío/nulo, significa que NO se actualizó ninguna fila. 
+                // Alguien o algo ya cambió el estado de esta transacción milisegundos atrás.
+                if (!updatedTx || (Array.isArray(updatedTx) && updatedTx.length === 0)) {
+                    showToast('Operación bloqueada: La transacción ya había sido procesada.', 'warning');
                     return;
                 }
 
-                // Solo si la orden se actualizó atómicamente procedemos a dar el saldo:
+                // Si la actualización en la DB fue exitosa, damos el saldo.
+                // Usamos select/update para traer el balance más actualizado directamente desde DB.
                 const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
                 if (prof) {
                     const newBal = parseFloat(prof.balance || 0) + parseFloat(amount);
                     await supabaseClient.from('profiles').update({ balance: newBal }).eq('email', userEmail);
-                    showToast('Depósito aprobado y saldo acreditado con éxito.', 'success');
-                    loadAdminPanel();
+                    showToast('Depósito aprobado y saldo acreditado.', 'success');
                 }
+            } catch (err) {
+                console.error(err);
+                showToast('Ocurrió un error inesperado al procesar.', 'error');
             } finally {
-                processingTxs.delete(id); // Liberamos el candado visual
+                loadAdminPanel();
+                // OJO: Retenemos el "Candado" durante 5 segundos para que si la tabla se auto-actualiza
+                // por el Polling y el usuario se desespera haciendo clic, siga bloqueado.
+                setTimeout(() => { processingTxs.delete(id); }, 5000); 
             }
         }
 
-        // Aplicamos la misma lógica anti doble-clic a los retiros
         async function adminApproveWithdrawal(btnElement, id, userEmail, amount) {
             if (processingTxs.has(id)) return;
             processingTxs.add(id);
@@ -1558,6 +1622,8 @@
                 if (btnElement) {
                     btnElement.disabled = true;
                     btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                    const row = btnElement.closest('tr');
+                    if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; }
                 }
 
                 const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
@@ -1568,13 +1634,11 @@
 
                 if (txErr) {
                     showToast('Error de conexión al procesar.', 'error');
-                    loadAdminPanel();
                     return;
                 }
 
-                if (!updatedTx || updatedTx.length === 0) {
-                    showToast('Esta orden de retiro ya fue confirmada.', 'warning');
-                    loadAdminPanel();
+                if (!updatedTx || (Array.isArray(updatedTx) && updatedTx.length === 0)) {
+                    showToast('Bloqueado: Esta orden de retiro ya fue confirmada.', 'warning');
                     return;
                 }
 
@@ -1583,14 +1647,15 @@
                     const newWithdrawn = parseFloat(prof.total_withdrawn || 0) + parseFloat(amount);
                     await supabaseClient.from('profiles').update({ total_withdrawn: newWithdrawn }).eq('email', userEmail);
                     showToast('Retiro marcado como completado.', 'success');
-                    loadAdminPanel();
                 }
+            } catch(err) {
+                console.error(err);
             } finally {
-                processingTxs.delete(id);
+                loadAdminPanel();
+                setTimeout(() => { processingTxs.delete(id); }, 5000);
             }
         }
 
-        // Aplicamos la misma lógica al rechazo de peticiones
         async function adminRejectTransaction(btnElement, id, type, amount, userEmail) {
             if (processingTxs.has(id)) return;
             processingTxs.add(id);
@@ -1599,6 +1664,8 @@
                 if (btnElement) {
                     btnElement.disabled = true;
                     btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                    const row = btnElement.closest('tr');
+                    if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; }
                 }
 
                 const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
@@ -1609,17 +1676,15 @@
 
                 if (txErr) {
                     showToast('Error al rechazar TX.', 'error');
-                    loadAdminPanel();
                     return;
                 }
 
-                if (!updatedTx || updatedTx.length === 0) {
-                    showToast('Esta transacción ya había sido gestionada.', 'warning');
-                    loadAdminPanel();
+                if (!updatedTx || (Array.isArray(updatedTx) && updatedTx.length === 0)) {
+                    showToast('Bloqueado: La transacción ya había sido gestionada.', 'warning');
                     return;
                 }
 
-                // Si se rechaza un retiro (y era atómicamente válido), le devolvemos los fondos al usuario
+                // Si rechazamos un retiro, debemos devolver el balance al usuario
                 if (type === 'withdraw') {
                     const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
                     if (prof) {
@@ -1628,10 +1693,12 @@
                     }
                 }
                 
-                showToast('Transacción rechazada correctamente.', 'success');
-                loadAdminPanel();
+                showToast('Transacción rechazada y cancelada correctamente.', 'success');
+            } catch(err) {
+                console.error(err);
             } finally {
-                processingTxs.delete(id);
+                loadAdminPanel();
+                setTimeout(() => { processingTxs.delete(id); }, 5000);
             }
         }
 
