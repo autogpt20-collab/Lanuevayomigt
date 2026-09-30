@@ -992,7 +992,12 @@
             totalYieldEarned: 0.00, refCode: '', referredBy: '', referralCount: 0, 
             accumulatedYieldSession: 0.00,
             unclaimedYield: 0.00,
-            lastYieldTime: null
+            lastYieldTime: null,
+            // Agregados para el sistema de referidos:
+            refStakedTotal: 0.00,
+            totalRefYieldEarned: 0.00,
+            accumulatedRefYieldSession: 0.00,
+            unclaimedRefYield: 0.00
         };
 
         let yieldInterval = null;
@@ -1017,6 +1022,7 @@
                 toggleAuthMode('register');
             }
             initTelemetryChart();
+            startPayoutTimer();
             checkSession();
         };
 
@@ -1165,7 +1171,9 @@
                         referred_by: pendingReferralCodeFromUrl || null,
                         referral_count: 0,
                         unclaimed_yield: 0.00,
-                        last_yield_time: new Date().toISOString()
+                        last_yield_time: new Date().toISOString(),
+                        total_ref_yield_earned: 0.00,
+                        unclaimed_ref_yield: 0.00
                     };
 
                     const { error: profileError } = await supabaseClient.from('profiles').insert([newProfile]);
@@ -1233,6 +1241,9 @@
             userState.referralCount = 3;
             userState.unclaimedYield = 0;
             userState.lastYieldTime = Date.now();
+            userState.refStakedTotal = 200;
+            userState.totalRefYieldEarned = 1.50;
+            userState.unclaimedRefYield = 0;
             completeLogin(userState.email);
         }
 
@@ -1253,20 +1264,35 @@
                 userState.referralCount = parseInt(data.referral_count || 0);
                 userState.fullName = data.full_name || cleanEmail.split('@')[0];
 
-                // Lógica de Ganancias Offline / Continuas ESTRICTAMENTE LIMITADA al 1.66% diario
+                // NUEVOS CAMPOS: Comisiones de Referidos
+                userState.totalRefYieldEarned = parseFloat(data.total_ref_yield_earned || 0);
+                userState.unclaimedRefYield = parseFloat(data.unclaimed_ref_yield || 0);
+
+                // Obtener en tiempo real la suma del dinero invertido por todos los referidos de este usuario
+                const { data: refs } = await supabaseClient.from('profiles').select('staked_total').eq('referred_by', userState.refCode);
+                let totalRefStaked = 0;
+                if (refs) {
+                    refs.forEach(r => totalRefStaked += parseFloat(r.staked_total || 0));
+                }
+                userState.refStakedTotal = totalRefStaked;
+
+                // Lógica de Ganancias Offline / Continuas ESTRICTAMENTE LIMITADA
                 userState.unclaimedYield = parseFloat(data.unclaimed_yield || 0);
                 const lastTimeStored = data.last_yield_time ? new Date(data.last_yield_time).getTime() : Date.now();
                 
                 const now = Date.now();
-                // Calcular los segundos pasados
                 const secondsPassed = Math.max(0, (now - lastTimeStored) / 1000);
                 
-                // Tasa exacta limitada matemáticamente: 1.66% diario
+                // Producción Personal (1.66% diario)
                 const dailyRate = 0.0166;
-                // Esto limita la generación para que nunca supere lo contemplado
                 const offlineYield = userState.stakedTotal > 0 ? (userState.stakedTotal * (dailyRate / 86400) * secondsPassed) : 0;
                 
+                // Producción de los Referidos para Comisiones (0.3% diario)
+                const refDailyRate = 0.003;
+                const offlineRefYield = userState.refStakedTotal > 0 ? (userState.refStakedTotal * (refDailyRate / 86400) * secondsPassed) : 0;
+
                 userState.accumulatedYieldSession = userState.unclaimedYield + offlineYield;
+                userState.accumulatedRefYieldSession = userState.unclaimedRefYield + offlineRefYield;
                 userState.lastYieldTime = now;
 
                 if(prevBalance !== userState.balance && prevBalance > 0 && document.getElementById('dashboard-view').classList.contains('flex')) {
@@ -1284,7 +1310,8 @@
                         full_name: cleanEmail.split('@')[0],
                         balance: 0, staked_total: 0, total_withdrawn: 0, total_yield_earned: 0,
                         ref_code: generateRefCode(), referral_count: 0,
-                        unclaimed_yield: 0.00, last_yield_time: new Date().toISOString()
+                        unclaimed_yield: 0.00, last_yield_time: new Date().toISOString(),
+                        total_ref_yield_earned: 0.00, unclaimed_ref_yield: 0.00
                      };
                      await supabaseClient.from('profiles').insert([newProfile]);
                      const { data: retryData } = await supabaseClient.from('profiles').select('*').eq('email', cleanEmail).single();
@@ -1401,10 +1428,15 @@
             document.getElementById('modal-req-yield').innerText = `$${userState.totalYieldEarned.toFixed(2)} / $15`;
 
             document.getElementById('ref-count-display').innerText = `${userState.referralCount} / 3`;
-            document.getElementById('ref-earnings-display').innerText = `$${(userState.totalYieldEarned * 0.003).toFixed(2)} USDT`;
+            // Reemplazo del cálculo erróneo por el valor exacto sumado de la BD + en vivo
+            document.getElementById('ref-earnings-display').innerText = `$${(userState.totalRefYieldEarned + userState.accumulatedRefYieldSession).toFixed(6)} USDT`;
+            
             if (userState.referralCount >= 3) {
                 document.getElementById('ref-status-text').innerText = '¡Requisito de referidos CUMPLIDO!';
                 document.getElementById('ref-status-text').className = 'text-[10px] text-emerald-400 font-bold mt-1';
+            } else {
+                document.getElementById('ref-status-text').innerText = `Faltan ${3 - userState.referralCount} referidos para cumplir el requisito de retiro`;
+                document.getElementById('ref-status-text').className = 'text-[10px] text-slate-500 mt-1';
             }
         }
 
@@ -1425,6 +1457,7 @@
             // Preservar la ganancia hasta este instante exacto
             const now = Date.now();
             userState.unclaimedYield = userState.accumulatedYieldSession;
+            userState.unclaimedRefYield = userState.accumulatedRefYieldSession;
             userState.lastYieldTime = now;
 
             // Actualizar variables locales
@@ -1436,6 +1469,7 @@
                 balance: userState.balance,
                 staked_total: userState.stakedTotal,
                 unclaimed_yield: userState.unclaimedYield,
+                unclaimed_ref_yield: userState.unclaimedRefYield,
                 last_yield_time: new Date(now).toISOString()
             };
             
@@ -1453,38 +1487,66 @@
             switchTab('dashboard');
         }
 
-        // GENERADOR EN TIEMPO REAL CON LIMITADOR EXACTO DEL 1.66% CADA 24HS
+        // GENERADOR EN TIEMPO REAL CON LIMITADOR EXACTO
         function startLiveYieldGenerator() {
             if (yieldInterval) clearInterval(yieldInterval);
             
             yieldInterval = setInterval(() => {
                 const now = Date.now();
-                if (userState.stakedTotal > 0 && userState.lastYieldTime) {
-                    // Calculo de tiempo exacto que previene incrementos anómalos o de manipulación de reloj
+                if (userState.lastYieldTime) {
                     const secondsPassed = Math.max(0, (now - userState.lastYieldTime) / 1000);
                     
-                    // Límite de porcentaje (exactamente 1.66% cada 24 horas - 86400 segundos)
-                    const dailyRate = 0.0166; 
-                    
-                    // Asegura que no se acredite más del valor contemplado por ese fragmento de tiempo exacto
-                    const yieldEarned = userState.stakedTotal * (dailyRate / 86400) * secondsPassed;
-                    
-                    userState.accumulatedYieldSession += yieldEarned;
-                    
-                    const yieldElem = document.getElementById('live-accumulated-yield');
-                    if (yieldElem) {
-                        yieldElem.innerText = `$${userState.accumulatedYieldSession.toFixed(6)}`;
+                    // 1. Ganancias propias del usuario (1.66% diario)
+                    if (userState.stakedTotal > 0) {
+                        const dailyRate = 0.0166; 
+                        const yieldEarned = userState.stakedTotal * (dailyRate / 86400) * secondsPassed;
+                        userState.accumulatedYieldSession += yieldEarned;
+                        
+                        const yieldElem = document.getElementById('live-accumulated-yield');
+                        if (yieldElem) {
+                            yieldElem.innerText = `$${userState.accumulatedYieldSession.toFixed(6)}`;
+                        }
+                    }
+
+                    // 2. Ganancias de Referidos AUTOMÁTICAS (0.3% diario)
+                    if (userState.refStakedTotal > 0) {
+                        const refDailyRate = 0.003; 
+                        const refYieldEarned = userState.refStakedTotal * (refDailyRate / 86400) * secondsPassed;
+                        userState.accumulatedRefYieldSession += refYieldEarned;
+                        
+                        const refEarningsElem = document.getElementById('ref-earnings-display');
+                        if (refEarningsElem) {
+                            refEarningsElem.innerText = `$${(userState.totalRefYieldEarned + userState.accumulatedRefYieldSession).toFixed(6)} USDT`;
+                        }
                     }
                 }
                 userState.lastYieldTime = now;
-            }, 1000); // Se aumenta el tick a 1000ms (1 segundo) para limitar cálculo estricto en tiempo real
+            }, 1000); // 1 segundo (Simulador de Telemetría)
         }
 
         async function saveCurrentYieldToCloud() {
-            if (!userState.email || userState.email === 'invitado@demo.com' || userState.stakedTotal <= 0) return;
+            if (!userState.email || userState.email === 'invitado@demo.com' || (userState.stakedTotal <= 0 && userState.refStakedTotal <= 0)) return;
             
+            let newBalance = userState.balance;
+            let newTotalRefYield = userState.totalRefYieldEarned;
+            
+            // Acreditar automáticamente las comisiones de referidos al saldo principal
+            if (userState.accumulatedRefYieldSession > 0) {
+                newBalance += userState.accumulatedRefYieldSession;
+                newTotalRefYield += userState.accumulatedRefYieldSession;
+                
+                userState.balance = newBalance;
+                userState.totalRefYieldEarned = newTotalRefYield;
+                userState.accumulatedRefYieldSession = 0; // Ya se acreditó
+                
+                updateDashboardUI(); // Visualiza el pequeño incremento de saldo
+            }
+
             const updates = {
                 unclaimed_yield: userState.accumulatedYieldSession,
+                balance: userState.balance,
+                total_ref_yield_earned: userState.totalRefYieldEarned,
+                unclaimed_ref_yield: userState.accumulatedRefYieldSession, // Quedará en 0
                 last_yield_time: new Date(userState.lastYieldTime || Date.now()).toISOString()
             };
             await updateUserProfileInCloud(updates);
@@ -1635,78 +1697,187 @@
                         const d = new Date(tx.created_at);
                         displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
                     }
-
                     newHtml += `
-                        <tr class="border-b border-slate-800/40">
-                            <td class="p-2.5 text-slate-300">${displayDate}</td>
-                            <td class="p-2.5 font-medium text-white">${typeText}</td>
-                            <td class="p-2.5 font-mono font-bold">$${parseFloat(tx.amount).toFixed(2)}</td>
-                            <td class="p-2.5 ${statusColor} font-bold text-[11px]">${statusText}</td>
-                        </tr>
-                    `;
+                    <tr class="border-b border-slate-800/50">
+                        <td class="p-2">${displayDate}</td>
+                        <td class="p-2">${typeText}</td>
+                        <td class="p-2 font-mono text-white">$${tx.amount.toFixed(2)}</td>
+                        <td class="p-2 ${statusColor} font-bold">${statusText}</td>
+                    </tr>`;
                 });
             }
-
-            if(tbody.innerHTML !== newHtml) tbody.innerHTML = newHtml;
+            tbody.innerHTML = newHtml;
         }
 
-        // --- LISTA DE REFERIDOS ---
+        // --- SISTEMA DE VISUALIZACIÓN DE REFERIDOS ---
         async function loadReferredUsersList() {
-            if (userState.email === 'invitado@demo.com' || !userState.refCode) return;
+            if (userState.email === 'invitado@demo.com') return;
+
+            // Busca los usuarios que se registraron con el código de referido del usuario actual
+            const { data, error } = await supabaseClient.from('profiles')
+                .select('full_name, email, created_at')
+                .eq('referred_by', userState.refCode)
+                .order('created_at', { ascending: false });
 
             const tbody = document.getElementById('referred-users-list');
             
-            const { data, error } = await supabaseClient.from('profiles')
-                .select('full_name, created_at')
-                .eq('referred_by', userState.refCode);
-
-            if (error) return console.error(error);
-
-            let newHtml = '';
-            if(!data || data.length === 0) {
+            if (error || !data || data.length === 0) {
                 document.getElementById('no-refs-msg').classList.remove('hidden');
-            } else {
-                document.getElementById('no-refs-msg').classList.add('hidden');
-                data.forEach(ref => {
-                    const d = new Date(ref.created_at);
-                    const displayDate = d.toLocaleDateString('es-AR');
-                    newHtml += `
-                        <tr class="border-b border-slate-800/40">
-                            <td class="p-2.5 font-medium text-white">${ref.full_name}</td>
-                            <td class="p-2.5 text-slate-300">${displayDate}</td>
-                        </tr>
-                    `;
-                });
+                tbody.innerHTML = '';
+                return;
             }
-
-            if(tbody.innerHTML !== newHtml) tbody.innerHTML = newHtml;
+            
+            document.getElementById('no-refs-msg').classList.add('hidden');
+            let html = '';
+            data.forEach(u => {
+                let dateStr = 'Reciente';
+                if(u.created_at) {
+                    const d = new Date(u.created_at);
+                    dateStr = d.toLocaleDateString('es-AR');
+                }
+                html += `
+                <tr class="border-b border-slate-800/50">
+                    <td class="p-2">
+                        <div class="font-bold text-slate-200">${u.full_name}</div>
+                        <div class="text-[10px] text-slate-500">${u.email}</div>
+                    </td>
+                    <td class="p-2 text-slate-400">${dateStr}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
         }
 
-        // --- FUNCIONES EXTRA / DE CIERRE PARA COMPLETAR EL SCRIPT ---
-        function initTelemetryChart() {
-            // Inicialización dummy/vacía para el canvas
-            const ctx = document.getElementById('telemetryChart');
-            if (ctx) {
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
-                        datasets: [{
-                            label: 'Volumen (L/s)',
-                            data: [40, 42.8, 41.5, 43.2, 42.8, 43.5, 42.8],
-                            borderColor: '#2dd4bf',
-                            tension: 0.4
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false }
-                });
-            }
-        }
-
+        // --- PANEL ADMINISTRADOR COMPLETADO ---
         async function loadAdminPanel() {
-            // Función reservada para el panel de administración
+            if(userState.email === 'invitado@demo.com') return;
+            
+            document.getElementById('admin-status-indicator').innerHTML = '<span class="text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i> Conectado y Sincronizado</span>';
+
+            // Cargar Depósitos
+            const { data: deps } = await supabaseClient.from('transactions').select('*').eq('type', 'deposit').eq('status', 'pending');
+            const depBody = document.getElementById('admin-deposits-body');
+            if(!deps || deps.length === 0) {
+                document.getElementById('admin-no-deps').classList.remove('hidden');
+                depBody.innerHTML = '';
+            } else {
+                document.getElementById('admin-no-deps').classList.add('hidden');
+                let html = '';
+                deps.forEach(tx => {
+                    html += `
+                    <tr class="border-b border-slate-800/50">
+                        <td class="p-3">${tx.user_email}</td>
+                        <td class="p-3 text-white font-mono">$${tx.amount.toFixed(2)}</td>
+                        <td class="p-3 text-[10px] text-slate-400 break-all">${tx.hash}</td>
+                        <td class="p-3 text-right">
+                            <button onclick="approveTx('${tx.id}', 'deposit', '${tx.user_email}', ${tx.amount})" class="bg-emerald-500/20 text-emerald-400 p-1.5 rounded hover:bg-emerald-500 hover:text-white transition"><i class="fa-solid fa-check"></i></button>
+                            <button onclick="rejectTx('${tx.id}')" class="bg-rose-500/20 text-rose-400 p-1.5 rounded hover:bg-rose-500 hover:text-white transition ml-1"><i class="fa-solid fa-xmark"></i></button>
+                        </td>
+                    </tr>`;
+                });
+                depBody.innerHTML = html;
+            }
+
+            // Cargar Retiros
+            const { data: wits } = await supabaseClient.from('transactions').select('*').eq('type', 'withdraw').eq('status', 'pending');
+            const witBody = document.getElementById('admin-withdrawals-body');
+            if(!wits || wits.length === 0) {
+                document.getElementById('admin-no-wits').classList.remove('hidden');
+                witBody.innerHTML = '';
+            } else {
+                document.getElementById('admin-no-wits').classList.add('hidden');
+                let html = '';
+                wits.forEach(tx => {
+                    html += `
+                    <tr class="border-b border-slate-800/50">
+                        <td class="p-3">${tx.user_email}</td>
+                        <td class="p-3 text-white font-mono">$${tx.amount.toFixed(2)}</td>
+                        <td class="p-3 text-[10px] text-slate-400 break-all">${tx.wallet}</td>
+                        <td class="p-3 text-right">
+                            <button onclick="approveTx('${tx.id}', 'withdraw', '${tx.user_email}', ${tx.amount})" class="bg-emerald-500/20 text-emerald-400 p-1.5 rounded hover:bg-emerald-500 hover:text-white transition"><i class="fa-solid fa-check"></i></button>
+                            <button onclick="rejectTx('${tx.id}')" class="bg-rose-500/20 text-rose-400 p-1.5 rounded hover:bg-rose-500 hover:text-white transition ml-1"><i class="fa-solid fa-xmark"></i></button>
+                        </td>
+                    </tr>`;
+                });
+                witBody.innerHTML = html;
+            }
         }
 
+        async function approveTx(id, type, email, amount) {
+            if(!confirm('¿Aprobar transacción?')) return;
+            
+            await supabaseClient.from('transactions').update({ status: 'approved' }).eq('id', id);
+            
+            const { data: userProfile } = await supabaseClient.from('profiles').select('*').eq('email', email).single();
+            if(userProfile) {
+                if(type === 'deposit') {
+                    const newBal = parseFloat(userProfile.balance || 0) + parseFloat(amount);
+                    await supabaseClient.from('profiles').update({ balance: newBal }).eq('email', email);
+                } else if(type === 'withdraw') {
+                    const newWithdrawn = parseFloat(userProfile.total_withdrawn || 0) + parseFloat(amount);
+                    await supabaseClient.from('profiles').update({ total_withdrawn: newWithdrawn }).eq('email', email);
+                }
+            }
+            
+            showToast('Transacción aprobada exitosamente', 'success');
+            loadAdminPanel();
+        }
+
+        async function rejectTx(id) {
+            if(!confirm('¿Rechazar transacción? (Si es retiro, debes devolver el saldo manualmente al usuario)')) return;
+            await supabaseClient.from('transactions').update({ status: 'rejected' }).eq('id', id);
+            showToast('Transacción rechazada', 'success');
+            loadAdminPanel();
+        }
+
+        // --- EXTRAS E INTERFAZ ---
+        function initTelemetryChart() {
+            const ctx = document.getElementById('telemetryChart');
+            if(!ctx) return;
+            
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    datasets: [{
+                        label: 'Volumen (L/s)',
+                        data: [41.2, 42.1, 41.8, 42.5, 42.8, 42.6, 42.8],
+                        borderColor: '#00f2fe',
+                        backgroundColor: 'rgba(0, 242, 254, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+
+            setInterval(() => {
+                const val = 42 + Math.random();
+                document.getElementById('tel-vol').innerText = val.toFixed(1) + ' L/s';
+            }, 3000);
+        }
+
+        function startPayoutTimer() {
+            setInterval(() => {
+                const now = new Date();
+                const tomorrow = new Date(now);
+                tomorrow.setHours(24, 0, 0, 0);
+                const diff = tomorrow - now;
+                const h = Math.floor((diff % 86400000) / 3600000).toString().padStart(2, '0');
+                const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+                const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+                const el = document.getElementById('time-to-payout');
+                if(el) el.innerText = `${h}:${m}:${s}`;
+            }, 1000);
+        }
     </script>
 </body>
 </html>
