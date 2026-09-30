@@ -248,7 +248,7 @@
                         <i class="fa-solid fa-satellite-dish mr-1"></i> Salares
                     </button>
                     <button onclick="switchTab('team')" id="nav-team" class="nav-btn px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
-                        <i class="fa-solid fa-users-gear mr-1"></i> Equipo
+                        <i class="fa-solid fa-users text-cyan-400 mr-1"></i> Nosotros
                     </button>
                     <button onclick="switchTab('admin')" id="nav-admin" class="hidden nav-btn px-3 py-2 rounded-lg text-xs font-bold text-amber-400 hover:bg-amber-500/10 transition-all border border-amber-500/30">
                         <i class="fa-solid fa-user-shield mr-1"></i> Panel Admin
@@ -289,6 +289,9 @@
             </button>
             <button onclick="switchTab('telemetry')" class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px] font-medium">
                 <i class="fa-solid fa-satellite-dish text-lg mb-0.5"></i><span>Salares</span>
+            </button>
+            <button onclick="switchTab('team')" class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px] font-medium">
+                <i class="fa-solid fa-users text-lg mb-0.5"></i><span>Nosotros</span>
             </button>
             <button onclick="switchTab('admin')" id="nav-admin-mobile" class="hidden mobile-nav-btn flex flex-col items-center text-amber-400 text-[10px] font-bold">
                 <i class="fa-solid fa-shield text-lg mb-0.5"></i><span>Admin</span>
@@ -579,47 +582,218 @@
                 </div>
             </div>
 
-            <!-- TAB 5: EQUIPO DIRECTIVO -->
-            <div id="tab-team" class="tab-content hidden space-y-6">
-                <div class="text-center max-w-2xl mx-auto space-y-2 mb-8">
-                    <h2 class="text-3xl font-black text-white">Directorio Ejecutivo</h2>
-                    <p class="text-slate-400 text-sm">Conoce a los expertos detrás de la tecnología de extracción y distribución blockchain de LitioX.</p>
+            <!-- TAB 5: NOSOTROS Y EQUIPO DIRECTIVO -->
+            <div id="tab-team" class="tab-content hidden space-y-12">
+                
+                <!-- Encabezado de la Sección -->
+                <div class="text-center max-w-3xl mx-auto space-y-3">
+                    <div class="inline-flex items-center space-x-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
+                        <i class="fa-solid fa-earth-asia text-emerald-400 mr-1"></i> Tecnología Surcoreana & Minería Global
+                    </div>
+                    <h2 class="text-3xl md:text-5xl font-black text-white tracking-tight">Nosotros</h2>
+                    <p class="text-slate-300 text-sm md:text-base leading-relaxed">
+                        Conoce a los pioneros surcoreanos que están revolucionando la tokenización de materias primas estratégicas combinando biotecnología extractiva de última generación y finanzas descentralizadas.
+                    </p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <!-- Founder 1 -->
-                    <div class="glass-card rounded-2xl p-6 border border-slate-800 text-center relative overflow-hidden group">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-cyan-400"></div>
-                        <div class="w-24 h-24 mx-auto rounded-full bg-slate-800 border-4 border-slate-900 shadow-xl overflow-hidden mb-4 relative">
-                            <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition duration-500" alt="CEO">
+                <!-- GRIDS DE LOS 4 FUNDADORES COREANOS -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    
+                    <!-- Fundador 1 -->
+                    <div class="glass-card rounded-3xl p-6 border border-slate-800/80 hover:border-cyan-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 to-teal-400"></div>
+                        <div>
+                            <div class="w-28 h-28 mx-auto rounded-2xl bg-slate-800 border-2 border-cyan-500/30 shadow-2xl overflow-hidden mb-5 relative group-hover:scale-105 transition-transform duration-300">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-500" alt="Dr. Sung-Hoon Park">
+                            </div>
+                            <div class="text-center">
+                                <span class="text-[10px] uppercase tracking-widest font-extrabold text-cyan-400 bg-cyan-500/10 px-2.5 py-0.5 rounded-full">CEO & Co-Fundador</span>
+                                <h3 class="text-xl font-black text-white mt-2">Dr. Sung-Hoon Park</h3>
+                                <p class="text-slate-400 text-xs font-semibold mb-3">Ex-Director de I+D en Samsung SDI</p>
+                                <p class="text-xs text-slate-300 leading-relaxed text-left border-t border-slate-800/80 pt-3 mt-1">
+                                    Doctor en Ingenieria Minera y Mineralogía Aplicada por KAIST (Daejeon, Corea del Sur). Pionero en sistemas de Extracción Directa de Litio (DLE). Cuenta con más de 16 años de experiencia optimizando salares en Asia y Sudamérica.
+                                </p>
+                            </div>
                         </div>
-                        <h3 class="text-lg font-bold text-white">Dr. Ji-Hoon Park</h3>
-                        <p class="text-cyan-400 text-xs font-semibold mb-3">CEO & Geólogo Principal</p>
-                        <p class="text-xs text-slate-400 leading-relaxed">Ex-Director de I+D en Samsung SDI. Doctorado en Mineralogía Aplicada por KAIST. Con más de 15 años diseñando procesos de extracción directa de litio (DLE) eficientes.</p>
+                        <div class="mt-4 pt-3 border-t border-slate-800/60 flex justify-center space-x-3 text-slate-400 text-xs">
+                            <span class="text-[11px] font-mono text-cyan-300"><i class="fa-solid fa-graduation-cap text-cyan-400 mr-1"></i> KAIST PhD</span>
+                        </div>
                     </div>
 
-                    <!-- Founder 2 -->
-                    <div class="glass-card rounded-2xl p-6 border border-slate-800 text-center relative overflow-hidden group">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-emerald-400"></div>
-                        <div class="w-24 h-24 mx-auto rounded-full bg-slate-800 border-4 border-slate-900 shadow-xl overflow-hidden mb-4 relative">
-                            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition duration-500" alt="CTO">
+                    <!-- Fundador 2 -->
+                    <div class="glass-card rounded-3xl p-6 border border-slate-800/80 hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
+                        <div>
+                            <div class="w-28 h-28 mx-auto rounded-2xl bg-slate-800 border-2 border-emerald-500/30 shadow-2xl overflow-hidden mb-5 relative group-hover:scale-105 transition-transform duration-300">
+                                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-500" alt="Min-Soo Kim">
+                            </div>
+                            <div class="text-center">
+                                <span class="text-[10px] uppercase tracking-widest font-extrabold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">CTO & Co-Fundador</span>
+                                <h3 class="text-xl font-black text-white mt-2">Min-Soo Kim</h3>
+                                <p class="text-slate-400 text-xs font-semibold mb-3">Líder Blockchain & IoT Seúl</p>
+                                <p class="text-xs text-slate-300 leading-relaxed text-left border-t border-slate-800/80 pt-3 mt-1">
+                                    Graduado Magna Cum Laude de la Universidad Nacional de Seúl (SNU). Arquitecto principal de oráculos de telemetría IoT. Ha liderado protocolos de alta frecuencia y auditoría de contratos inteligentes auditados en redes Web3.
+                                </p>
+                            </div>
                         </div>
-                        <h3 class="text-lg font-bold text-white">Min-Soo Kim</h3>
-                        <p class="text-emerald-400 text-xs font-semibold mb-3">CTO & Arquitecto Blockchain</p>
-                        <p class="text-xs text-slate-400 leading-relaxed">Egresado de la Universidad Nacional de Seúl. Experto en contratos inteligentes y DeFi. Lideró la integración de la trazabilidad de minerales en redes BEP-20.</p>
+                        <div class="mt-4 pt-3 border-t border-slate-800/60 flex justify-center space-x-3 text-slate-400 text-xs">
+                            <span class="text-[11px] font-mono text-emerald-300"><i class="fa-solid fa-code text-emerald-400 mr-1"></i> SNU B.S. CS</span>
+                        </div>
                     </div>
 
-                    <!-- Founder 3 -->
-                    <div class="glass-card rounded-2xl p-6 border border-slate-800 text-center relative overflow-hidden group">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-amber-400"></div>
-                        <div class="w-24 h-24 mx-auto rounded-full bg-slate-800 border-4 border-slate-900 shadow-xl overflow-hidden mb-4 relative">
-                            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition duration-500" alt="CFO">
+                    <!-- Fundador 3 -->
+                    <div class="glass-card rounded-3xl p-6 border border-slate-800/80 hover:border-amber-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-orange-400"></div>
+                        <div>
+                            <div class="w-28 h-28 mx-auto rounded-2xl bg-slate-800 border-2 border-amber-500/30 shadow-2xl overflow-hidden mb-5 relative group-hover:scale-105 transition-transform duration-300">
+                                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-500" alt="Seo-Yeon Choi">
+                            </div>
+                            <div class="text-center">
+                                <span class="text-[10px] uppercase tracking-widest font-extrabold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full">CFO & Finanzas</span>
+                                <h3 class="text-xl font-black text-white mt-2">Seo-Yeon Choi</h3>
+                                <p class="text-slate-400 text-xs font-semibold mb-3">Especialista Financiera Cuantitativa</p>
+                                <p class="text-xs text-slate-300 leading-relaxed text-left border-t border-slate-800/80 pt-3 mt-1">
+                                    Ex-Vicepresidenta de Mercados de Capitales en KTB Investment Securities en Singapur. Posee una maestría en Finanzas Cuantitativas por Yonsei University. Diseñó el modelo de yield sostenible respaldado en materias primas.
+                                </p>
+                            </div>
                         </div>
-                        <h3 class="text-lg font-bold text-white">Seo-Yeon Choi</h3>
-                        <p class="text-amber-400 text-xs font-semibold mb-3">CFO & Estrategia Financiera</p>
-                        <p class="text-xs text-slate-400 leading-relaxed">Anteriormente Jefa de Operaciones Institucionales en importantes Exchanges asiáticos. Diseñó el modelo económico de LitioX para asegurar una rentabilidad sostenible.</p>
+                        <div class="mt-4 pt-3 border-t border-slate-800/60 flex justify-center space-x-3 text-slate-400 text-xs">
+                            <span class="text-[11px] font-mono text-amber-300"><i class="fa-solid fa-chart-pie text-amber-400 mr-1"></i> Yonsei M.S. Finance</span>
+                        </div>
+                    </div>
+
+                    <!-- Fundador 4 -->
+                    <div class="glass-card rounded-3xl p-6 border border-slate-800/80 hover:border-blue-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-cyan-400"></div>
+                        <div>
+                            <div class="w-28 h-28 mx-auto rounded-2xl bg-slate-800 border-2 border-blue-500/30 shadow-2xl overflow-hidden mb-5 relative group-hover:scale-105 transition-transform duration-300">
+                                <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop&q=80" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-500" alt="Dr. Do-Yoon Lee">
+                            </div>
+                            <div class="text-center">
+                                <span class="text-[10px] uppercase tracking-widest font-extrabold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-full">CIO & Innovación</span>
+                                <h3 class="text-xl font-black text-white mt-2">Dr. Do-Yoon Lee</h3>
+                                <p class="text-slate-400 text-xs font-semibold mb-3">Investigador Baterías de Nueva Generación</p>
+                                <p class="text-xs text-slate-300 leading-relaxed text-left border-t border-slate-800/80 pt-3 mt-1">
+                                    Doctor por POSTECH (Pohang University of Science and Technology). Autor de 14 patentes en síntesis de carbonato e hidróxido de litio grado batería (99.9% pureza), asegurando contratos directos de compra con automotrices globales.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-800/60 flex justify-center space-x-3 text-slate-400 text-xs">
+                            <span class="text-[11px] font-mono text-blue-300"><i class="fa-solid fa-atom text-blue-400 mr-1"></i> POSTECH PhD</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- DESCRIPCIÓN DE LA EMPRESA & POR QUÉ ELEGIR EL LITIO -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch pt-4">
+                    
+                    <!-- Tarjeta: ¿Quiénes Somos? -->
+                    <div class="lg:col-span-6 glass-card p-8 rounded-3xl border border-slate-800 flex flex-col justify-between space-y-6 relative overflow-hidden">
+                        <div class="space-y-4">
+                            <div class="inline-flex items-center space-x-2 text-cyan-400 text-xs font-bold uppercase tracking-widest">
+                                <i class="fa-solid fa-building-shield"></i>
+                                <span>Sobre LitioX Corporation</span>
+                            </div>
+                            <h3 class="text-2xl md:text-3xl font-black text-white leading-tight">
+                                El Puente entre la Alta Tecnología Asiática y el Oro Blanco Sudamericano
+                            </h3>
+                            <p class="text-slate-300 text-xs md:text-sm leading-relaxed">
+                                <strong>LitioX</strong> es una plataforma de inversión descentralizada de última generación, nacida de la alianza estratégica entre científicos e inversores surcoreanos y operadores mineros locales en el <i>Triángulo del Litio</i> (Salar de Olaroz, Jujuy y Salta).
+                            </p>
+                            <p class="text-slate-300 text-xs md:text-sm leading-relaxed">
+                                Tokenizamos los flujos de caja y contratos de venta del mineral extraído en tiempo real. Mediante nuestros pozos de Extracción Directa de Litio (DLE), reducimos el tiempo de cristalización de 18 meses a solo <strong>24 horas</strong>, permitiendo márgenes de ganancia sin precedentes que se distribuyen diariamente a nuestros inversores en USDT.
+                            </p>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-3 pt-4 border-t border-slate-800 text-center">
+                            <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                                <span class="text-xl font-black text-cyan-400 block">99.9%</span>
+                                <span class="text-[10px] text-slate-400 font-medium">Pureza Batería</span>
+                            </div>
+                            <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                                <span class="text-xl font-black text-emerald-400 block">&lt; 24h</span>
+                                <span class="text-[10px] text-slate-400 font-medium">Ciclo DLE</span>
+                            </div>
+                            <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                                <span class="text-xl font-black text-amber-400 block">100%</span>
+                                <span class="text-[10px] text-slate-400 font-medium">On-Chain Audit</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tarjeta: ¿Por qué invertir en Litio Hoy? -->
+                    <div class="lg:col-span-6 glass-card p-8 rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/30 flex flex-col justify-between space-y-6 relative overflow-hidden shadow-2xl">
+                        <div class="space-y-4">
+                            <div class="inline-flex items-center space-x-2 text-emerald-400 text-xs font-bold uppercase tracking-widest">
+                                <i class="fa-solid fa-arrow-trend-up"></i>
+                                <span>Máxima Rentabilidad Global</span>
+                            </div>
+                            <h3 class="text-2xl md:text-3xl font-black text-white leading-tight">
+                                ¿Por qué Invertir en Litio Hoy? El Mineral más Rentable del Siglo XXI
+                            </h3>
+                            <ul class="space-y-3 text-xs md:text-sm text-slate-300">
+                                <li class="flex items-start space-x-3">
+                                    <i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i>
+                                    <span><strong>Demanda Imparable por Vehículos Eléctricos e IA:</strong> Las gigafábricas de baterías y los centros de datos demandan más del 300% de la producción global actual.</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i>
+                                    <span><strong>Costos Minimos DLE:</strong> Gracias a la tecnología de patentes coreanas de LitioX, el costo de producción por tonelada es de solo $4,200 USD, mientras que se vende a más de $24,000 USD/Ton.</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i>
+                                    <span><strong>Retorno Inmediato y Liquidez en USDT:</strong> A diferencia de las acciones tradicionales de minería que tardan años en repartir dividendos, LitioX acredita utilidades en tiempo real.</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-2xl flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-2xl flex-shrink-0">
+                                <i class="fa-solid fa-piggy-bank"></i>
+                            </div>
+                            <p class="text-xs text-emerald-200">
+                                <strong>Rentabilidad Garantizada:</strong> La escasez de litio de alta pureza convierte a esta materia prima en el activo de mayor apreciación sostenida para esta década.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- SECCIÓN DE CONFIABILIDAD Y GARANTÍA QUE GENERA CONFIANZA -->
+                <div class="glass-card p-8 rounded-3xl border border-cyan-500/30 bg-slate-900/90 shadow-2xl relative overflow-hidden">
+                    <div class="text-center max-w-2xl mx-auto mb-8 space-y-2">
+                        <h3 class="text-2xl font-black text-white"><i class="fa-solid fa-shield-halved text-cyan-400 mr-2"></i> Nuestra Confiabilidad es tu Garantía</h3>
+                        <p class="text-xs text-slate-400">Diseñado bajo los estándares de auditoría corporativa de Corea del Sur e infraestructura blockchain inalterable.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                        <div class="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-2">
+                            <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-lg mb-2">
+                                <i class="fa-solid fa-satellite"></i>
+                            </div>
+                            <h4 class="text-sm font-bold text-white">Telemetría Transparente</h4>
+                            <p class="text-xs text-slate-400 leading-relaxed">Monitoreo en vivo conectado a los sensores IoT de los salares. Puedes verificar la producción de litros por segundo y presión de bombeo en tiempo real desde la pestaña <i>Salares</i>.</p>
+                        </div>
+
+                        <div class="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-2">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg mb-2">
+                                <i class="fa-solid fa-lock-keyhole"></i>
+                            </div>
+                            <h4 class="text-sm font-bold text-white">Respaldo Físico & Liquidez</h4>
+                            <p class="text-xs text-slate-400 leading-relaxed">Cada depósito en USDT es custodiado en smart contracts auditados con colateral en stock físico de Carbonato de Litio Grado Batería almacenado en depósitos fiscales.</p>
+                        </div>
+
+                        <div class="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-2">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg mb-2">
+                                <i class="fa-solid fa-handshake-simple"></i>
+                            </div>
+                            <h4 class="text-sm font-bold text-white">Cumplimiento & Seguridad</h4>
+                            <p class="text-xs text-slate-400 leading-relaxed">Procesamiento seguro automatizado mediante Supabase Cloud Database y pagos en USDT (BEP-20) con trazabilidad blockchain directa.</p>
+                        </div>
                     </div>
                 </div>
+
             </div>
 
             <!-- TAB 6: PANEL ADMINISTRADOR -->
@@ -911,13 +1085,12 @@
                 const { data, error } = await supabaseClient.auth.signUp({ email, password: pass });
                 
                 if (error) {
-                    // Handle specific errors
                     if (error.message.includes("Database error saving new user") || error.message.includes("already registered")) {
                          showToast("El correo ya existe o hubo un conflicto en la base de datos de Auth. Intenta recuperar la contraseña.", "error");
                     } else {
                         showToast(error.message, "error");
                     }
-                    return; // Stop execution if auth fails
+                    return;
                 }
                 
                 if (data && data.user) {
@@ -926,7 +1099,6 @@
                     // 2. Prepare profile data
                     const myRefCode = generateRefCode();
                     const newProfile = {
-                        // user_id: userState.id, // Uncomment this line if your 'profiles' table has a 'user_id' column that is a foreign key to auth.users.id
                         email: email,
                         full_name: fname,
                         balance: 0.00,
@@ -943,10 +1115,7 @@
                     
                     if (profileError) {
                         console.error("Error al crear perfil en la tabla custom:", profileError);
-                        
-                        // Check if it's a unique constraint violation on email
                         if (profileError.code === '23505') {
-                            // Profile already exists for this email, try to just load it instead of failing
                             showToast("El perfil ya existía. Iniciando sesión...", "success");
                             await loadUserProfile(email);
                             return;
@@ -1040,26 +1209,23 @@
                 }
             } else {
                 console.error("Perfil no encontrado o error RLS:", error);
-                // Try to create profile if it doesn't exist but auth succeeded
                 if (userState.id) {
                      showToast("Creando perfil de usuario faltante...", "warning");
                      const newProfile = {
-                        // user_id: userState.id, 
                         email: cleanEmail,
                         full_name: cleanEmail.split('@')[0],
                         balance: 0, staked_total: 0, total_withdrawn: 0, total_yield_earned: 0,
                         ref_code: generateRefCode(), referral_count: 0
                      };
                      await supabaseClient.from('profiles').insert([newProfile]);
-                     // Retry load
                      const { data: retryData } = await supabaseClient.from('profiles').select('*').eq('email', cleanEmail).single();
                      if (retryData) {
-                         loadUserProfile(cleanEmail); // Recursive call should work now
+                         loadUserProfile(cleanEmail);
                          return;
                      }
                 }
                 showToast("Fallo al cargar el perfil. Puede que necesites iniciar sesión nuevamente.", "error");
-                handleLogout(); // Force logout if profile is completely inaccessible
+                handleLogout();
             }
         }
 
@@ -1077,7 +1243,6 @@
             document.getElementById('dashboard-view').classList.replace('hidden', 'flex');
             document.getElementById('user-welcome-label').innerText = `Usuario: ${userState.fullName}`;
             
-            // Lógica de validación de Admin
             const isAdmin = ADMIN_EMAILS.some(a => email.toLowerCase() === a.toLowerCase());
             if (isAdmin) {
                 document.getElementById('nav-admin').classList.remove('hidden');
@@ -1110,7 +1275,6 @@
             document.getElementById('nav-admin').classList.add('hidden');
             document.getElementById('nav-admin-mobile').classList.add('hidden');
             
-            // Clear forms
             document.getElementById('login-email').value = '';
             document.getElementById('login-password').value = '';
             
@@ -1253,7 +1417,6 @@
             
             if (error) {
                 showToast(`Error Nube: ${error.message}`, 'error');
-                // Devolver balance si falló la creación de TX
                 userState.balance += amount;
                 await updateUserProfileInCloud({ balance: userState.balance });
                 updateDashboardUI();
