@@ -607,7 +607,6 @@
                         Conoce a los pioneros surcoreanos que están revolucionando la tokenización de materias primas estratégicas combinando biotecnología extractiva de última generación y finanzas descentralizadas.
                     </p>
                 </div>
-                <!-- Información resumida para evitar excesivo HTML -->
                 <div class="glass-card p-8 rounded-3xl border border-slate-800 flex flex-col justify-between space-y-6 relative overflow-hidden">
                     <div class="space-y-4">
                         <div class="inline-flex items-center space-x-2 text-cyan-400 text-xs font-bold uppercase tracking-widest">
@@ -1473,8 +1472,8 @@
                         <td class="p-3 font-mono text-emerald-400">$${t.amount.toFixed(2)}</td>
                         <td class="p-3 font-mono text-[10px] break-all max-w-[100px]">${t.hash}</td>
                         <td class="p-3 text-right">
-                            <button onclick="adminApproveDeposit('${t.id}', '${t.user_email}', ${t.amount})" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 px-2 py-1 rounded transition mr-1"><i class="fa-solid fa-check"></i></button>
-                            <button onclick="adminRejectTransaction('${t.id}')" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-slate-950 px-2 py-1 rounded transition"><i class="fa-solid fa-xmark"></i></button>
+                            <button onclick="adminApproveDeposit(this, '${t.id}', '${t.user_email}', ${t.amount})" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 px-2 py-1 rounded transition mr-1" title="Aprobar"><i class="fa-solid fa-check"></i></button>
+                            <button onclick="adminRejectTransaction(this, '${t.id}', '${t.type}', ${t.amount}, '${t.user_email}')" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-slate-950 px-2 py-1 rounded transition" title="Rechazar"><i class="fa-solid fa-xmark"></i></button>
                         </td>
                     </tr>`;
                 });
@@ -1493,8 +1492,8 @@
                         <td class="p-3 font-mono text-amber-400">$${t.amount.toFixed(2)}</td>
                         <td class="p-3 font-mono text-[10px] break-all max-w-[100px]">${t.wallet}</td>
                         <td class="p-3 text-right">
-                            <button onclick="adminApproveWithdrawal('${t.id}', '${t.user_email}', ${t.amount})" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 px-2 py-1 rounded transition mr-1"><i class="fa-solid fa-check"></i></button>
-                            <button onclick="adminRejectTransaction('${t.id}')" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-slate-950 px-2 py-1 rounded transition"><i class="fa-solid fa-xmark"></i></button>
+                            <button onclick="adminApproveWithdrawal(this, '${t.id}', '${t.user_email}', ${t.amount})" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 px-2 py-1 rounded transition mr-1" title="Aprobar"><i class="fa-solid fa-check"></i></button>
+                            <button onclick="adminRejectTransaction(this, '${t.id}', '${t.type}', ${t.amount}, '${t.user_email}')" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-slate-950 px-2 py-1 rounded transition" title="Rechazar"><i class="fa-solid fa-xmark"></i></button>
                         </td>
                     </tr>`;
                 });
@@ -1502,20 +1501,45 @@
             }
         }
 
-        async function adminApproveDeposit(id, userEmail, amount) {
+        // SOLUCIÓN AL BUG DE DUPLICADOS: Verificación de estado + Desactivación inmediata
+        async function adminApproveDeposit(btnElement, id, userEmail, amount) {
+            if (btnElement) {
+                btnElement.disabled = true;
+                btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            }
+
+            // Validar que realmente esté pendiente ANTES de sumar
+            const { data: txData } = await supabaseClient.from('transactions').select('status').eq('id', id).single();
+            if (!txData || txData.status !== 'pending') {
+                showToast('Esta transacción ya fue procesada anteriormente.', 'warning');
+                return loadAdminPanel();
+            }
+
             const { error: txErr } = await supabaseClient.from('transactions').update({ status: 'approved' }).eq('id', id);
             if (txErr) return showToast('Error al aprobar TX', 'error');
 
             const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
             if (prof) {
-                const newBal = parseFloat(prof.balance) + parseFloat(amount);
+                const newBal = parseFloat(prof.balance || 0) + parseFloat(amount);
                 await supabaseClient.from('profiles').update({ balance: newBal }).eq('email', userEmail);
-                showToast('Depósito aprobado y saldo sumado', 'success');
+                showToast('Depósito aprobado y saldo acreditado', 'success');
                 loadAdminPanel();
             }
         }
 
-        async function adminApproveWithdrawal(id, userEmail, amount) {
+        async function adminApproveWithdrawal(btnElement, id, userEmail, amount) {
+            if (btnElement) {
+                btnElement.disabled = true;
+                btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            }
+
+            // Validar que realmente esté pendiente ANTES de procesar
+            const { data: txData } = await supabaseClient.from('transactions').select('status').eq('id', id).single();
+            if (!txData || txData.status !== 'pending') {
+                showToast('Esta transacción ya fue procesada anteriormente.', 'warning');
+                return loadAdminPanel();
+            }
+
             const { error: txErr } = await supabaseClient.from('transactions').update({ status: 'approved' }).eq('id', id);
             if (txErr) return showToast('Error al aprobar TX', 'error');
 
@@ -1523,15 +1547,38 @@
             if (prof) {
                 const newWithdrawn = parseFloat(prof.total_withdrawn || 0) + parseFloat(amount);
                 await supabaseClient.from('profiles').update({ total_withdrawn: newWithdrawn }).eq('email', userEmail);
-                showToast('Retiro aprobado', 'success');
+                showToast('Retiro marcado como completado', 'success');
                 loadAdminPanel();
             }
         }
 
-        async function adminRejectTransaction(id) {
+        async function adminRejectTransaction(btnElement, id, type, amount, userEmail) {
+            if (btnElement) {
+                btnElement.disabled = true;
+                btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            }
+
+            const { data: txData } = await supabaseClient.from('transactions').select('status').eq('id', id).single();
+            if (!txData || txData.status !== 'pending') {
+                showToast('Esta transacción ya fue procesada.', 'warning');
+                return loadAdminPanel();
+            }
+
             const { error } = await supabaseClient.from('transactions').update({ status: 'rejected' }).eq('id', id);
             if (!error) {
-                showToast('Transacción rechazada', 'success');
+                // Si es un retiro rechazado, DEBEMOS DEVOLVERLE EL SALDO al usuario
+                if (type === 'withdraw') {
+                    const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
+                    if (prof) {
+                        const newBal = parseFloat(prof.balance || 0) + parseFloat(amount);
+                        await supabaseClient.from('profiles').update({ balance: newBal }).eq('email', userEmail);
+                    }
+                }
+                
+                showToast('Transacción rechazada correctamente', 'success');
+                loadAdminPanel();
+            } else {
+                showToast('Error al rechazar TX', 'error');
                 loadAdminPanel();
             }
         }
