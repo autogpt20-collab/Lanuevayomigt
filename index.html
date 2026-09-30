@@ -86,7 +86,7 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-black">
 
-    <!-- ==================== VISTA 1: AUTENTICACIÓN (LOGIN / REGISTRO) ==================== -->
+    <!-- ==================== VISTA 1: AUTENTICACIÓN ==================== -->
     <div id="auth-view" class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
         <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute bottom-10 right-10 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -130,8 +130,8 @@
                     </div>
                 </div>
                 <button type="submit" id="login-btn-submit" class="w-full glow-button text-slate-950 font-black py-3 rounded-xl text-xs flex items-center justify-center space-x-2 mt-2">
-                    <span>Ingresar a la Plataforma</span>
-                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    <span id="login-btn-text">Ingresar a la Plataforma</span>
+                    <i class="fa-solid fa-arrow-right-to-bracket" id="login-btn-icon"></i>
                 </button>
             </form>
 
@@ -162,8 +162,8 @@
                     </div>
                 </div>
                 <button type="submit" id="reg-btn-submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl text-xs transition flex items-center justify-center space-x-2">
-                    <span>Crear Cuenta Gratis</span>
-                    <i class="fa-solid fa-user-plus"></i>
+                    <span id="reg-btn-text">Crear Cuenta Gratis</span>
+                    <i class="fa-solid fa-user-plus" id="reg-btn-icon"></i>
                 </button>
             </form>
 
@@ -259,7 +259,6 @@
                     <div class="hidden sm:flex flex-col items-end mr-2 relative group">
                         <span class="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Saldo (USDT)</span>
                         <div class="flex items-center space-x-1">
-                            <!-- Indicador de sincronización en vivo para el usuario -->
                             <i class="fa-solid fa-circle text-[6px] text-emerald-400 pulse-dot" title="Sincronizado con Supabase"></i>
                             <span class="text-sm font-extrabold text-white font-mono transition-all duration-300" id="header-balance-display">$0.00</span>
                         </div>
@@ -623,7 +622,7 @@
                 </div>
             </div>
 
-            <!-- TAB 6: PANEL ADMINISTRADOR (Sincronizado con Supabase) -->
+            <!-- TAB 6: PANEL ADMINISTRADOR -->
             <div id="tab-admin" class="tab-content hidden space-y-6">
                 <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div class="flex items-center space-x-4">
@@ -793,9 +792,9 @@
 
         const ADMIN_EMAILS = ['matiasmpv24@gmail.com', 'matiasjalil26@gmail.com'];
 
-        // Estado Global del Usuario (Solo vive en memoria RAM)
+        // Estado Global del Usuario
         let userState = { 
-            id: '', // Agregamos user_id aquí
+            id: '', 
             email: '', fullName: '', balance: 0.00, stakedTotal: 0.00, totalWithdrawn: 0.00,
             totalYieldEarned: 0.00, refCode: '', referredBy: '', referralCount: 0, accumulatedYieldSession: 0.00
         };
@@ -822,16 +821,18 @@
                 toggleAuthMode('register');
             }
             initTelemetryChart();
-            
-            // Verificar si hay sesión activa al recargar
             checkSession();
         };
         
         async function checkSession() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session && session.user) {
-                userState.id = session.user.id;
-                await loadUserProfile(session.user.email);
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session && session.user) {
+                    userState.id = session.user.id;
+                    await loadUserProfile(session.user.email);
+                }
+            } catch (e) {
+                console.warn("No active session found or error checking session", e);
             }
         }
 
@@ -853,23 +854,48 @@
 
         function generateRefCode() { return 'LITIO-' + Math.random().toString(36).substring(2, 7).toUpperCase(); }
 
+        function setButtonLoading(btnId, isLoading, defaultText, defaultIcon) {
+            const btnText = document.getElementById(`${btnId}-text`);
+            const btnIcon = document.getElementById(`${btnId}-icon`);
+            const btn = document.getElementById(`${btnId}-submit`);
+            
+            if (!btnText || !btnIcon || !btn) return;
+            
+            if (isLoading) {
+                btn.disabled = true;
+                btn.classList.add('opacity-70', 'cursor-not-allowed');
+                btnText.innerText = 'Procesando...';
+                btnIcon.className = 'fa-solid fa-spinner fa-spin';
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-70', 'cursor-not-allowed');
+                btnText.innerText = defaultText;
+                btnIcon.className = `fa-solid ${defaultIcon}`;
+            }
+        }
+
         // --- AUTENTICACIÓN ---
         async function handleLogin(e) {
             e.preventDefault();
             const email = document.getElementById('login-email').value.toLowerCase().trim();
             const pass = document.getElementById('login-password').value;
 
-            // Intentar login de Auth
-            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
-            if (error) {
-                return showToast("Error al iniciar sesión. Revisa tus credenciales.", "error");
-            }
-            
-            if (data && data.user) {
-                userState.id = data.user.id; // Guardar el user_id
-            }
+            setButtonLoading('login-btn', true, 'Ingresar a la Plataforma', 'fa-arrow-right-to-bracket');
 
-            await loadUserProfile(email);
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+                
+                if (error) {
+                    showToast("Error al iniciar sesión. Revisa tus credenciales.", "error");
+                } else if (data && data.user) {
+                    userState.id = data.user.id;
+                    await loadUserProfile(email);
+                }
+            } catch (err) {
+                showToast("Ocurrió un error inesperado al conectar.", "error");
+            } finally {
+                setButtonLoading('login-btn', false, 'Ingresar a la Plataforma', 'fa-arrow-right-to-bracket');
+            }
         }
 
         async function handleRegister(e) {
@@ -878,55 +904,100 @@
             const pass = document.getElementById('reg-password').value;
             const fname = document.getElementById('reg-fullname').value;
 
-            // Registrar en Auth
-            const { data, error } = await supabaseClient.auth.signUp({ email, password: pass });
-            if (error) return showToast(error.message, "error");
-            
-            if (data && data.user) {
-                userState.id = data.user.id; // Guardar el user_id para el registro
-            }
+            setButtonLoading('reg-btn', true, 'Crear Cuenta Gratis', 'fa-user-plus');
 
-            const myRefCode = generateRefCode();
-            const newProfile = {
-                // Si tienes columna user_id en profiles, añádela aquí: user_id: userState.id,
-                email: email,
-                full_name: fname,
-                balance: 0.00,
-                staked_total: 0.00,
-                total_withdrawn: 0.00,
-                total_yield_earned: 0.00,
-                ref_code: myRefCode,
-                referred_by: pendingReferralCodeFromUrl || null,
-                referral_count: 0
-            };
-
-            // Insertar perfil en BBDD
-            const { error: profileError } = await supabaseClient.from('profiles').insert([newProfile]);
-            
-            if (profileError) {
-                console.error("Error al crear perfil:", profileError);
-                return showToast("La cuenta se creó pero hubo un error en la base de datos.", "error");
-            }
-
-            // Lógica de referidos
-            if (pendingReferralCodeFromUrl) {
-                const { data: referrers } = await supabaseClient.from('profiles').select('*').eq('ref_code', pendingReferralCodeFromUrl);
-                if (referrers && referrers.length > 0) {
-                    const refUser = referrers[0];
-                    await supabaseClient.from('profiles').update({ referral_count: (refUser.referral_count || 0) + 1 }).eq('email', refUser.email);
+            try {
+                // 1. Attempt to sign up in Auth
+                const { data, error } = await supabaseClient.auth.signUp({ email, password: pass });
+                
+                if (error) {
+                    // Handle specific errors
+                    if (error.message.includes("Database error saving new user") || error.message.includes("already registered")) {
+                         showToast("El correo ya existe o hubo un conflicto en la base de datos de Auth. Intenta recuperar la contraseña.", "error");
+                    } else {
+                        showToast(error.message, "error");
+                    }
+                    return; // Stop execution if auth fails
                 }
-            }
+                
+                if (data && data.user) {
+                    userState.id = data.user.id;
+                    
+                    // 2. Prepare profile data
+                    const myRefCode = generateRefCode();
+                    const newProfile = {
+                        // user_id: userState.id, // Uncomment this line if your 'profiles' table has a 'user_id' column that is a foreign key to auth.users.id
+                        email: email,
+                        full_name: fname,
+                        balance: 0.00,
+                        staked_total: 0.00,
+                        total_withdrawn: 0.00,
+                        total_yield_earned: 0.00,
+                        ref_code: myRefCode,
+                        referred_by: pendingReferralCodeFromUrl || null,
+                        referral_count: 0
+                    };
 
-            showToast('¡Cuenta creada correctamente! Iniciando sesión...', 'success');
-            await loadUserProfile(email);
+                    // 3. Insert into profiles table
+                    const { error: profileError } = await supabaseClient.from('profiles').insert([newProfile]);
+                    
+                    if (profileError) {
+                        console.error("Error al crear perfil en la tabla custom:", profileError);
+                        
+                        // Check if it's a unique constraint violation on email
+                        if (profileError.code === '23505') {
+                            // Profile already exists for this email, try to just load it instead of failing
+                            showToast("El perfil ya existía. Iniciando sesión...", "success");
+                            await loadUserProfile(email);
+                            return;
+                        } else {
+                            showToast("La cuenta se creó en Auth, pero falló al guardar el perfil. Contacta soporte.", "warning");
+                        }
+                    }
+
+                    // 4. Handle Referrals
+                    if (pendingReferralCodeFromUrl && !profileError) {
+                        const { data: referrers } = await supabaseClient.from('profiles').select('*').eq('ref_code', pendingReferralCodeFromUrl);
+                        if (referrers && referrers.length > 0) {
+                            const refUser = referrers[0];
+                            await supabaseClient.from('profiles').update({ referral_count: (refUser.referral_count || 0) + 1 }).eq('email', refUser.email);
+                        }
+                    }
+
+                    showToast('¡Cuenta creada correctamente! Iniciando sesión...', 'success');
+                    await loadUserProfile(email);
+                } else {
+                     showToast("Ocurrió un error al registrar el usuario en Auth.", "error");
+                }
+                
+            } catch (err) {
+                console.error("Registro fallido:", err);
+                showToast("Ocurrió un error inesperado durante el registro.", "error");
+            } finally {
+                setButtonLoading('reg-btn', false, 'Crear Cuenta Gratis', 'fa-user-plus');
+            }
         }
 
         async function handleForgotPassword(e) {
             e.preventDefault();
             const email = document.getElementById('forgot-email').value;
-            await supabaseClient.auth.resetPasswordForEmail(email);
-            showToast('Si el correo existe, enviamos las instrucciones.', 'success');
-            setTimeout(() => toggleAuthMode('login'), 2000);
+            
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+            btn.disabled = true;
+
+            try {
+                const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+                if (error) throw error;
+                showToast('Si el correo existe, enviamos las instrucciones.', 'success');
+                setTimeout(() => toggleAuthMode('login'), 2000);
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         }
 
         function enterDemoMode() {
@@ -959,7 +1030,6 @@
                 userState.referralCount = parseInt(data.referral_count || 0);
                 userState.fullName = data.full_name || cleanEmail.split('@')[0];
 
-                // Efecto visual si se recibe dinero
                 if(prevBalance !== userState.balance && prevBalance > 0 && document.getElementById('dashboard-view').classList.contains('flex')) {
                     document.getElementById('card-metric-balance').classList.add('bg-emerald-900/40', 'border-emerald-500/50');
                     setTimeout(() => { document.getElementById('card-metric-balance').classList.remove('bg-emerald-900/40', 'border-emerald-500/50'); }, 2000);
@@ -970,7 +1040,26 @@
                 }
             } else {
                 console.error("Perfil no encontrado o error RLS:", error);
-                showToast("Fallo al leer perfil de la nube. Asegúrate de configurar la base de datos.", "error");
+                // Try to create profile if it doesn't exist but auth succeeded
+                if (userState.id) {
+                     showToast("Creando perfil de usuario faltante...", "warning");
+                     const newProfile = {
+                        // user_id: userState.id, 
+                        email: cleanEmail,
+                        full_name: cleanEmail.split('@')[0],
+                        balance: 0, staked_total: 0, total_withdrawn: 0, total_yield_earned: 0,
+                        ref_code: generateRefCode(), referral_count: 0
+                     };
+                     await supabaseClient.from('profiles').insert([newProfile]);
+                     // Retry load
+                     const { data: retryData } = await supabaseClient.from('profiles').select('*').eq('email', cleanEmail).single();
+                     if (retryData) {
+                         loadUserProfile(cleanEmail); // Recursive call should work now
+                         return;
+                     }
+                }
+                showToast("Fallo al cargar el perfil. Puede que necesites iniciar sesión nuevamente.", "error");
+                handleLogout(); // Force logout if profile is completely inaccessible
             }
         }
 
@@ -1003,7 +1092,6 @@
             loadUserTransactions();
             startLiveYieldGenerator();
 
-            // Sincronización continua con Supabase (Pregunta cada 4 segundos)
             if(userSyncInterval) clearInterval(userSyncInterval);
             if(userState.email !== 'invitado@demo.com') {
                 userSyncInterval = setInterval(syncUserDataBackground, 4000);
@@ -1021,6 +1109,11 @@
             document.getElementById('auth-view').classList.remove('hidden');
             document.getElementById('nav-admin').classList.add('hidden');
             document.getElementById('nav-admin-mobile').classList.add('hidden');
+            
+            // Clear forms
+            document.getElementById('login-email').value = '';
+            document.getElementById('login-password').value = '';
+            
             switchTab('dashboard');
             userState.id = '';
             userState.email = '';
@@ -1044,7 +1137,7 @@
 
             if(tabId === 'admin') {
                 loadAdminPanel();
-                adminPollingInterval = setInterval(loadAdminPanel, 4000); // Admin poll cada 4 seg
+                adminPollingInterval = setInterval(loadAdminPanel, 4000); 
             }
         }
 
@@ -1093,13 +1186,13 @@
             if (isNaN(amount) || amount < 10) return showToast('El mínimo de depósito es $10 USDT', 'error');
             if (!hash || hash.length < 10) return showToast('Ingresa un Hash válido', 'error');
 
-            if (!userState.id) {
+            if (!userState.id && userState.email !== 'invitado@demo.com') {
                 return showToast('Error de sesión. Por favor, vuelve a iniciar sesión.', 'error');
             }
 
             const tx = {
                 id: generateUUID(),
-                user_id: userState.id, // Añadido el user_id para Supabase
+                user_id: userState.id || 'demo',
                 user_email: userState.email.toLowerCase(),
                 type: 'deposit',
                 amount: amount,
@@ -1135,7 +1228,7 @@
             if (isNaN(amount) || amount < 25) return showToast('El monto mínimo es $25 USDT', 'error');
             if (amount > userState.balance) return showToast('Saldo insuficiente', 'error');
 
-            if (!userState.id) {
+            if (!userState.id && userState.email !== 'invitado@demo.com') {
                 return showToast('Error de sesión. Por favor, vuelve a iniciar sesión.', 'error');
             }
 
@@ -1147,7 +1240,7 @@
             // 2. Crear Transacción
             const tx = {
                 id: generateUUID(),
-                user_id: userState.id, // Añadido el user_id para Supabase
+                user_id: userState.id || 'demo',
                 user_email: userState.email.toLowerCase(),
                 type: 'withdraw',
                 amount: amount,
@@ -1287,27 +1380,22 @@
         }
 
         async function resolveTx(id, newStatus) {
-            // Obtener Transacción Exacta
             const { data: tx, error: errTx } = await supabaseClient.from('transactions').select('*').eq('id', id).single();
             if(errTx || !tx) return showToast('No se encontró la transacción', 'error');
 
-            // 1. Actualizar estado de TX en Nube
             const { error: updErr } = await supabaseClient.from('transactions').update({ status: newStatus }).eq('id', id);
             if(updErr) return showToast('Error al actualizar transacción', 'error');
 
             const targetEmail = tx.user_email.toLowerCase();
             const numAmount = parseFloat(tx.amount);
 
-            // 2. Actualizar Matemática del Usuario según el tipo
             if (tx.type === 'deposit' && newStatus === 'approved') {
                 await adjustUserBalance(targetEmail, numAmount, 'balance');
             }
             else if (tx.type === 'withdraw' && newStatus === 'rejected') {
-                // Reembolsar saldo retenido
                 await adjustUserBalance(targetEmail, numAmount, 'balance');
             }
             else if (tx.type === 'withdraw' && newStatus === 'approved') {
-                // Sumar al contador histórico de retiro
                 await adjustUserBalance(targetEmail, numAmount, 'total_withdrawn');
             }
 
@@ -1317,7 +1405,6 @@
 
         async function adjustUserBalance(targetEmail, amountToAdd, columnToUpdate) {
             const email = targetEmail.toLowerCase().trim();
-            // Fetch balance actual en nube para evitar desfases
             const { data } = await supabaseClient.from('profiles').select(columnToUpdate).eq('email', email).single();
             if (data) {
                 const newValue = (parseFloat(data[columnToUpdate]) || 0) + amountToAdd;
@@ -1390,7 +1477,7 @@
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             const colors = type === 'success' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' : 
-                          (type === 'error' ? 'bg-rose-500/20 text-rose-400 border-rose-500/50' : 'bg-amber-500/20 text-amber-400 border-amber-500/50');
+                          (type === 'error' ? 'bg-rose-500/20 text-rose-400 border-rose-500/50' : (type === 'warning' ? 'bg-amber-500/20 text-amber-400 border-amber-500/50' : 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50'));
             const icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-circle-exclamation' : 'fa-bell');
 
             toast.className = `toast-enter flex items-center p-3 rounded-lg border ${colors} backdrop-blur-md text-xs font-semibold shadow-lg pointer-events-auto max-w-xs`;
