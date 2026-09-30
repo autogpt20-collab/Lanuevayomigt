@@ -1,1507 +1,1685 @@
+
 <!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LitioX - Plataforma de Inversión en Litio & Yield Protocol</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = {
-darkMode: 'class',
-theme: {
-extend: {
-colors: {
-darkbg: '#080c14',
-cardbg: '#0f172a',
-},
-fontFamily: {
-sans: ['Inter', 'sans-serif'],
-}
-}
-}
-}
-</script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<!-- Supabase JS -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-body {
-font-family: 'Inter', sans-serif;
-background-color: #060911;
-color: #f1f5f9;
-}
-.glass-card {
-background: rgba(15, 23, 42, 0.75);
-backdrop-filter: blur(12px);
-border: 1px solid rgba(255, 255, 255, 0.08);
-}
-.glass-card-hover:hover {
-border-color: rgba(0, 242, 254, 0.4);
-box-shadow: 0 0 20px rgba(0, 242, 254, 0.15);
-transition: all 0.3s ease;
-}
-.glow-button {
-background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
-transition: all 0.3s ease;
-}
-.glow-button:hover {
-box-shadow: 0 0 25px rgba(0, 242, 254, 0.6);
-transform: translateY(-1px);
-}
-.pulse-dot {
-animation: pulse-animation 2s infinite;
-}
-@keyframes pulse-animation {
-0% { box-shadow: 0 0 0 0px rgba(16, 185, 129, 0.7); }
-70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-100% { box-shadow: 0 0 0 0px rgba(16, 185, 129, 0); }
-}
-.toast-enter { animation: slideInRight 0.3s ease-out forwards; }
-.toast-leave { animation: fadeOut 0.3s ease-in forwards; }
-@keyframes slideInRight {
-from { transform: translateX(100%); opacity: 0; }
-to { transform: translateX(0); opacity: 1; }
-}
-@keyframes fadeOut {
-from { opacity: 1; }
-to { opacity: 0; }
-}
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0b1120; }
-::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #334155; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LitioX - Plataforma de Inversión en Litio & Yield Protocol</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#080c14',
+                        cardbg: '#0f172a',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #060911;
+            color: #f1f5f9;
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card-hover:hover {
+            border-color: rgba(0, 242, 254, 0.4);
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .glow-button {
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .glow-button:hover {
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.6);
+            transform: translateY(-1px);
+        }
+
+        .pulse-dot {
+            animation: pulse-animation 2s infinite;
+        }
+
+        @keyframes pulse-animation {
+            0% { box-shadow: 0 0 0 0px rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0px rgba(16, 185, 129, 0); }
+        }
+
+        .toast-enter { animation: slideInRight 0.3s ease-out forwards; }
+        .toast-leave { animation: fadeOut 0.3s ease-in forwards; }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0b1120; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-black">
-<!-- ==================== VISTA 1: AUTENTICACIÓN ==================== -->
-<div id="auth-view" class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-<div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
-<div class="absolute bottom-10 right-10 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-<div class="w-full max-w-md glass-card rounded-3xl p-8 border border-slate-800 relative z-10 shadow-2xl">
-<div class="text-center space-y-3 mb-8">
-<div class="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 via-teal-400 to-emerald-400 p-0.5 shadow-xl shadow-cyan-500/20">
-<div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
-<i class="fa-solid fa-bolt text-cyan-400 text-2xl"></i>
-</div>
-</div>
-<div>
-<h1 class="text-2xl font-black tracking-wider text-white">LITIO<span class="text-cyan-400">X</span></h1>
-<p class="text-xs text-slate-400">Protocolo Descentralizado de Rendimiento Minero</p>
-</div>
-</div>
-<!-- Tabs Auth -->
-<div id="auth-tabs" class="flex bg-slate-900/90 p-1 rounded-xl border border-slate-800 mb-6 text-xs font-semibold">
-<button id="tab-login-btn" onclick="toggleAuthMode('login')" class="flex-1 py-2.5 rounded-lg text-cyan-400 bg-slate-800 transition">Iniciar Sesión</button>
-<button id="tab-register-btn" onclick="toggleAuthMode('register')" class="flex-1 py-2.5 rounded-lg text-slate-400 hover:text-white transition">Registrarse</button>
-</div>
-<!-- FORMULARIO: LOGIN -->
-<form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
-<div>
-<label class="block text-xs text-slate-400 font-medium mb-1">Correo Electrónico</label>
-<div class="relative">
-<i class="fa-solid fa-envelope absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
-<input type="email" id="login-email" required placeholder="tu@email.com" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
-</div>
-</div>
-<div>
-<div class="flex justify-between items-end mb-1">
-<label class="block text-xs text-slate-400 font-medium">Contraseña</label>
-<button type="button" onclick="toggleAuthMode('forgot')" class="text-[10px] text-cyan-400 hover:underline">¿Olvidaste tu contraseña?</button>
-</div>
-<div class="relative">
-<i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
-<input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
-</div>
-</div>
-<button type="submit" id="login-btn-submit" class="w-full glow-button text-slate-950 font-black py-3 rounded-xl text-xs flex items-center justify-center space-x-2 mt-2">
-<span id="login-btn-text">Ingresar a la Plataforma</span>
-<i class="fa-solid fa-arrow-right-to-bracket" id="login-btn-icon"></i>
-</button>
-</form>
-<!-- FORMULARIO: REGISTRO -->
-<form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 hidden">
-<div id="referral-banner-notice" class="hidden bg-cyan-500/10 border border-cyan-500/30 p-2.5 rounded-xl text-center">
-<p class="text-[11px] text-cyan-300 font-semibold"><i class="fa-solid fa-user-plus mr-1"></i> Te estás registrando con un enlace de invitación</p>
-</div>
-<div>
-<label class="block text-xs text-slate-400 font-medium mb-1">Nombre Completo</label>
-<div class="relative">
-<i class="fa-solid fa-user absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
-<input type="text" id="reg-fullname" required placeholder="Ej. Juan Pérez" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
-</div>
-</div>
-<div>
-<label class="block text-xs text-slate-400 font-medium mb-1">Correo Electrónico</label>
-<div class="relative">
-<i class="fa-solid fa-envelope absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
-<input type="email" id="reg-email" required placeholder="tu@email.com" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
-</div>
-</div>
-<div>
-<label class="block text-xs text-slate-400 font-medium mb-1">Contraseña</label>
-<div class="relative">
-<i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
-<input type="password" id="reg-password" minlength="6" required placeholder="Mínimo 6 caracteres" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
-</div>
-</div>
-<button type="submit" id="reg-btn-submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl text-xs transition flex items-center justify-center space-x-2">
-<span id="reg-btn-text">Crear Cuenta Gratis</span>
-<i class="fa-solid fa-user-plus" id="reg-btn-icon"></i>
-</button>
-</form>
-<!-- FORMULARIO: RECUPERAR CONTRASEÑA -->
-<form id="forgot-form" onsubmit="handleForgotPassword(event)" class="space-y-4 hidden">
-<div class="text-center mb-2">
-<h3 class="text-white text-sm font-bold">Recuperar Acceso</h3>
-<p class="text-[10px] text-slate-400 mt-1">Ingresa tu correo para enviarte las instrucciones de restablecimiento.</p>
-</div>
-<div>
-<label class="block text-xs text-slate-400 font-medium mb-1">Correo Electrónico</label>
-<div class="relative">
-<i class="fa-solid fa-envelope absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
-<input type="email" id="forgot-email" required placeholder="tu@email.com" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
-</div>
-</div>
-<button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs transition flex items-center justify-center space-x-2">
-<span>Enviar Correo de Recuperación</span>
-<i class="fa-solid fa-paper-plane"></i>
-</button>
-<button type="button" onclick="toggleAuthMode('login')" class="w-full text-[10px] text-slate-400 hover:text-white transition text-center mt-2">
-Volver a Iniciar Sesión
-</button>
-</form>
-<div id="demo-divider" class="relative my-6 text-center">
-<div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-800"></div></div>
-<span class="relative bg-slate-950 px-3 text-[10px] text-slate-500 uppercase font-mono tracking-wider">o prueba rápida</span>
-</div>
-<button id="demo-btn" onclick="enterDemoMode()" class="w-full bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center space-x-2">
-<i class="fa-solid fa-flask text-cyan-400"></i>
-<span>Ingresar como Invitado (Modo Demo)</span>
-</button>
-</div>
-</div>
-<!-- ==================== VISTA 2: PANEL PRINCIPAL (DASHBOARD) ==================== -->
-<div id="dashboard-view" class="hidden flex-col min-h-screen">
-<!-- Ticker superior -->
-<div class="bg-slate-950 border-b border-slate-800 text-xs py-2 px-4 overflow-hidden whitespace-nowrap flex items-center justify-between text-slate-400">
-<div class="flex items-center space-x-6 animate-marquee">
-<span class="flex items-center"><i class="fa-solid fa-circle text-[8px] text-emerald-400 mr-2 pulse-dot"></i> RED $LITH MAINNET: <span class="text-white font-semibold ml-1">$1.00 USDT</span></span>
-<span class="text-slate-500">|</span>
-<span>PRECIO LITIO C2/N3 (Salar de Olaroz): <span class="text-emerald-400 font-medium">$24,850 USD/Ton (+3.4%)</span></span>
-<span class="text-slate-500">|</span>
-<span>CAPACIDAD EXTRACTIVA: <span class="text-cyan-400 font-medium">18,450 Ton/Año</span></span>
-</div>
-<div class="hidden md:flex items-center space-x-4 text-xs">
-<span class="text-slate-300"><i class="fa-solid fa-clock mr-1"></i> PAGO DIARIO: <span id="time-to-payout" class="font-mono text-cyan-400">08:42:15</span></span>
-</div>
-</div>
-<!-- Encabezado y Navegación Principal -->
-<header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 lg:px-8 py-3.5">
-<div class="max-w-7xl mx-auto flex items-center justify-between">
-<div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('dashboard')">
-<div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-teal-400 to-emerald-400 p-0.5 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-<div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-<i class="fa-solid fa-bolt text-cyan-400 text-lg"></i>
-</div>
-</div>
-<div>
-<div class="flex items-center space-x-1.5">
-<span class="text-xl font-black tracking-wider text-white">LITIO<span class="text-cyan-400">X</span></span>
-</div>
-<p class="text-[10px] text-slate-400 tracking-tight" id="user-welcome-label">Hola, Usuario</p>
-</div>
-</div>
-<nav class="hidden md:flex items-center space-x-1 bg-slate-950/60 p-1.5 rounded-xl border border-slate-800">
-<button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn active px-3 py-2 rounded-lg text-xs font-semibold transition-all text-cyan-400 bg-slate-800/80">
-<i class="fa-solid fa-chart-line mr-1"></i> Inicio
-</button>
-<button onclick="switchTab('packages')" id="nav-packages" class="nav-btn px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
-<i class="fa-solid fa-cubes-stacked mr-1"></i> Planes
-</button>
-<button onclick="switchTab('referrals')" id="nav-referrals" class="nav-btn px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
-<i class="fa-solid fa-user-group mr-1"></i> Referidos
-</button>
-<button onclick="switchTab('telemetry')" id="nav-telemetry" class="nav-btn px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
-<i class="fa-solid fa-satellite-dish mr-1"></i> Salares
-</button>
-<button onclick="switchTab('team')" id="nav-team" class="nav-btn px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
-<i class="fa-solid fa-users text-cyan-400 mr-1"></i> Nosotros
-</button>
-<button onclick="switchTab('admin')" id="nav-admin" class="hidden nav-btn px-3 py-2 rounded-lg text-xs font-bold text-amber-400 hover:bg-amber-500/10 transition-all border border-amber-500/30">
-<i class="fa-solid fa-user-shield mr-1"></i> Panel Admin
-</button>
-</nav>
-<div class="flex items-center space-x-3">
-<div class="hidden sm:flex flex-col items-end mr-2 relative group">
-<span class="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Saldo (USDT)</span>
-<div class="flex items-center space-x-1">
-<i class="fa-solid fa-circle text-[6px] text-emerald-400 pulse-dot" title="Sincronizado con Supabase"></i>
-<span class="text-sm font-extrabold text-white font-mono transition-all duration-300" id="header-balance-display">$0.00</span>
-</div>
-</div>
-<button onclick="openDepositModal()" class="glow-button px-4 py-2 rounded-xl text-xs font-bold text-slate-950 flex items-center space-x-2">
-<i class="fa-solid fa-wallet"></i><span>Depositar</span>
-</button>
-<button onclick="openWithdrawModal()" class="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold transition">
-Retirar
-</button>
-<button onclick="handleLogout()" class="text-slate-400 hover:text-rose-400 p-2 text-sm transition ml-1" title="Cerrar Sesión">
-<i class="fa-solid fa-right-from-bracket"></i>
-</button>
-</div>
-</div>
-</header>
-<!-- Navigation Bar Mobile -->
-<div class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 border-t border-slate-800 py-2 px-3 backdrop-blur-lg flex justify-around items-center">
-<button onclick="switchTab('dashboard')" class="mobile-nav-btn flex flex-col items-center text-cyan-400 text-[10px] font-medium">
-<i class="fa-solid fa-chart-line text-lg mb-0.5"></i><span>Inicio</span>
-</button>
-<button onclick="switchTab('packages')" class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px] font-medium">
-<i class="fa-solid fa-cubes-stacked text-lg mb-0.5"></i><span>Invertir</span>
-</button>
-<button onclick="switchTab('referrals')" class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px] font-medium">
-<i class="fa-solid fa-user-group text-lg mb-0.5"></i><span>Referidos</span>
-</button>
-<button onclick="switchTab('telemetry')" class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px] font-medium">
-<i class="fa-solid fa-satellite-dish text-lg mb-0.5"></i><span>Salares</span>
-</button>
-<button onclick="switchTab('team')" class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px] font-medium">
-<i class="fa-solid fa-users text-lg mb-0.5"></i><span>Nosotros</span>
-</button>
-<button onclick="switchTab('admin')" id="nav-admin-mobile" class="hidden mobile-nav-btn flex flex-col items-center text-amber-400 text-[10px] font-bold">
-<i class="fa-solid fa-shield text-lg mb-0.5"></i><span>Admin</span>
-</button>
-</div>
-<!-- CONTENEDOR PRINCIPAL -->
-<main class="max-w-7xl mx-auto px-4 lg:px-8 py-6 w-full flex-grow mb-16 md:mb-0">
-<!-- TAB 1: DASHBOARD OVERVIEW -->
-<div id="tab-dashboard" class="tab-content space-y-6">
-<!-- Hero Banner -->
-<div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-teal-950/60 border border-slate-800 p-6 md:p-8">
-<div class="absolute -right-12 -bottom-12 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
-<div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-<div class="lg:col-span-7 space-y-4">
-<div class="inline-flex items-center space-x-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 px-3 py-1 rounded-full text-xs font-semibold">
-<i class="fa-solid fa-bolt text-amber-400"></i>
-<span>Rendimiento Fijo por Producción Minera</span>
-</div>
-<h1 class="text-2xl md:text-4xl font-extrabold text-white tracking-tight leading-tight">
-Genera hasta <span class="bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent">50% Mensual</span> respaldado por Litio
-</h1>
-<p class="text-slate-300 text-sm leading-relaxed">
-LitioX monetiza la extracción directa en los salares de Jujuy y Salta. Cada token representa cuotas de producción con distribución de utilidades en USDT.
-</p>
-<div class="flex flex-wrap gap-3 pt-2">
-<button onclick="switchTab('packages')" class="glow-button px-6 py-3 rounded-xl font-bold text-slate-950 text-sm flex items-center space-x-2">
-<span>Ver Pools de Minería</span>
-<i class="fa-solid fa-arrow-right"></i>
-</button>
-</div>
-</div>
-<!-- Generador de ganancias -->
-<div class="lg:col-span-5 bg-slate-950/80 border border-slate-800 rounded-2xl p-5 shadow-2xl relative">
-<div class="flex justify-between items-center mb-3 border-b border-slate-800/80 pb-2">
-<span class="text-xs text-slate-400 font-semibold uppercase flex items-center">
-<i class="fa-solid fa-microchip text-emerald-400 mr-2"></i> Generador de Ganancias
-</span>
-<span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono">EN VIVO</span>
-</div>
-<div class="space-y-3">
-<div>
-<span class="text-xs text-slate-400">Ganancia Diaria Generándose (USDT)</span>
-<div class="text-3xl font-black text-emerald-400 font-mono flex items-baseline space-x-1 mt-1">
-<span id="live-accumulated-yield">$0.000000</span>
-<span class="text-xs font-normal text-slate-400">USDT</span>
-</div>
-</div>
-<div class="grid grid-cols-2 gap-2 pt-2 text-xs">
-<div class="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl">
-<span class="text-slate-400 block text-[10px]">Tasa Promedio</span>
-<span class="text-white font-bold text-sm">~ 1.66% / Día</span>
-</div>
-<div class="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl">
-<span class="text-slate-400 block text-[10px]">Total Invertido (Staked)</span>
-<span class="text-cyan-400 font-bold text-sm font-mono" id="hero-staked-amount">$0.00</span>
-</div>
-</div>
-<button onclick="claimDailyEarnings()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center space-x-2">
-<i class="fa-solid fa-hand-holding-dollar"></i>
-<span>Acreditar al Saldo Disponible</span>
-</button>
-</div>
-</div>
-</div>
-</div>
-<!-- Tarjetero métricas -->
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-<div class="glass-card p-4 rounded-2xl relative overflow-hidden">
-<p class="text-xs font-medium text-slate-400 mb-1">Inversión Activa</p>
-<h3 class="text-xl font-black text-white font-mono" id="metric-staked">$0.00</h3>
-</div>
-<div class="glass-card p-4 rounded-2xl relative overflow-hidden transition-colors duration-500" id="card-metric-balance">
-<p class="text-xs font-medium text-slate-400 mb-1">Saldo Disponible</p>
-<h3 class="text-xl font-black text-emerald-400 font-mono" id="metric-balance">$0.00</h3>
-</div>
-<div class="glass-card p-4 rounded-2xl relative overflow-hidden">
-<p class="text-xs font-medium text-slate-400 mb-1">Ganancias Acumuladas</p>
-<h3 class="text-xl font-black text-amber-400 font-mono" id="metric-yield-earned">$0.00</h3>
-</div>
-<div class="glass-card p-4 rounded-2xl relative overflow-hidden">
-<p class="text-xs font-medium text-slate-400 mb-1">Total Retirado</p>
-<h3 class="text-xl font-black text-cyan-400 font-mono" id="metric-withdrawn">$0.00</h3>
-</div>
-</div>
-<!-- SECCIÓN DE REQUISITOS OBLIGATORIOS PARA RETIRAR DINERO -->
-<div class="glass-card p-6 rounded-2xl border border-cyan-500/30 bg-slate-900/80 shadow-xl relative overflow-hidden">
-<div class="flex items-center space-x-3 mb-4 border-b border-slate-800 pb-3">
-<div class="w-9 h-9 rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-400 font-bold">
-<i class="fa-solid fa-shield-check text-lg"></i>
-</div>
-<div>
-<h3 class="text-base font-black text-white">Requisitos Obligatorios para Habilitar Retiros</h3>
-<p class="text-xs text-slate-400">Cumple estas 3 condiciones transparentes para realizar tu solicitud de retiro en USDT.</p>
-</div>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-<!-- Requisito 1 -->
-<div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-2">
-<div class="flex justify-between items-center">
-<span class="font-bold text-slate-200"><i class="fa-solid fa-users text-cyan-400 mr-1.5"></i> 1. Invitar 3 Referidos</span>
-<span id="req-ref-badge" class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-bold">0 / 3</span>
-</div>
-<p class="text-[11px] text-slate-400">Invita como mínimo a 3 usuarios con tu enlace. ¡Además ganas el <strong>0.3%</strong> de todas sus ganancias!</p>
-<div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-<div id="req-ref-bar" class="bg-cyan-400 h-full w-0 transition-all duration-500"></div>
-</div>
-</div>
-<!-- Requisito 2 -->
-<div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-2">
-<div class="flex justify-between items-center">
-<span class="font-bold text-slate-200"><i class="fa-solid fa-coins text-emerald-400 mr-1.5"></i> 2. Mínimo $15 Ganados</span>
-<span id="req-yield-badge" class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-bold">$0.00 / $15</span>
-</div>
-<p class="text-[11px] text-slate-400">Debes acumular al menos <strong>$15.00 USDT</strong> en ganancias netas generadas por tus inversiones.</p>
-<div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-<div id="req-yield-bar" class="bg-emerald-400 h-full w-0 transition-all duration-500"></div>
-</div>
-</div>
-<!-- Requisito 3 -->
-<div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-2">
-<div class="flex justify-between items-center">
-<span class="font-bold text-slate-200"><i class="fa-solid fa-money-bill-transfer text-amber-400 mr-1.5"></i> 3. Mínimo $25 por Retiro</span>
-<span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-bold">$25.00 USDT</span>
-</div>
-<p class="text-[11px] text-slate-400">Cada solicitud de retiro debe ser por un valor igual o superior a <strong>$25.00 USDT</strong>.</p>
-<div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-<div class="bg-amber-400 h-full w-full"></div>
-</div>
-</div>
-</div>
-</div>
-<!-- Historial de Transacciones del Usuario -->
-<div class="glass-card p-5 rounded-2xl border border-slate-800">
-<div class="flex justify-between items-center mb-4">
-<h3 class="text-sm font-bold text-white"><i class="fa-solid fa-list-ul text-cyan-400 mr-2"></i> Mis Movimientos</h3>
-</div>
-<div class="overflow-x-auto">
-<table class="w-full text-left text-xs">
-<thead>
-<tr class="text-slate-400 border-b border-slate-800">
-<th class="p-2">Fecha</th>
-<th class="p-2">Tipo</th>
-<th class="p-2">Monto</th>
-<th class="p-2">Estado</th>
-</tr>
-</thead>
-<tbody id="user-tx-history" class="divide-y divide-slate-800/50">
-<!-- JS inserta filas -->
-</tbody>
-</table>
-<div id="no-tx-msg" class="text-center text-slate-500 text-xs py-4 hidden">No hay movimientos recientes.</div>
-</div>
-</div>
-</div>
-<!-- TAB 2: PACKAGES -->
-<div id="tab-packages" class="tab-content hidden space-y-8">
-<div class="text-center max-w-2xl mx-auto space-y-2">
-<h2 class="text-3xl font-black text-white">Nodos de Producción</h2>
-<p class="text-slate-400 text-sm">Activa un plan con tu Saldo Disponible. Los retornos se acreditan al instante en el simulador en vivo.</p>
-</div>
-<!-- Cards -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-<div class="glass-card rounded-2xl p-6 flex flex-col justify-between relative border-slate-800">
-<div class="space-y-4">
-<span class="text-xs font-bold uppercase text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-full">Inicial</span>
-<h3 class="text-xl font-bold text-white">Starter Puna</h3>
-<div class="py-2 border-y border-slate-800/80 space-y-2">
-<div class="flex justify-between text-xs"><span class="text-slate-400">Retorno Mensual:</span><span class="text-emerald-400 font-bold">40.0%</span></div>
-<div class="flex justify-between text-xs"><span class="text-slate-400">Costo Fijo:</span><span class="text-cyan-400 font-mono">$100 USDT</span></div>
-</div>
-</div>
-<button onclick="investInPackage('Starter Puna', 100, 0.40)" class="w-full mt-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold py-3 rounded-xl text-xs transition">
-Invertir $100 USDT
-</button>
-</div>
-<div class="glass-card rounded-2xl p-6 flex flex-col justify-between relative border-cyan-500/50 bg-slate-900/90 shadow-2xl shadow-cyan-500/10">
-<div class="space-y-4">
-<span class="text-xs font-bold uppercase text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-full">Salar Apex</span>
-<h3 class="text-xl font-bold text-white">Apex Extraction</h3>
-<div class="py-2 border-y border-slate-800/80 space-y-2">
-<div class="flex justify-between text-xs"><span class="text-slate-400">Retorno Mensual:</span><span class="text-emerald-400 font-extrabold text-base">50.0%</span></div>
-<div class="flex justify-between text-xs"><span class="text-slate-400">Costo Fijo:</span><span class="text-cyan-400 font-mono">$500 USDT</span></div>
-</div>
-</div>
-<button onclick="investInPackage('Apex Extraction', 500, 0.50)" class="w-full mt-6 glow-button text-slate-950 font-black py-3 rounded-xl text-xs transition">
-Invertir $500 USDT
-</button>
-</div>
-<div class="glass-card rounded-2xl p-6 flex flex-col justify-between relative border-slate-800">
-<div class="space-y-4">
-<span class="text-xs font-bold uppercase text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full">Institucional</span>
-<h3 class="text-xl font-bold text-white">GigaFactory</h3>
-<div class="py-2 border-y border-slate-800/80 space-y-2">
-<div class="flex justify-between text-xs"><span class="text-slate-400">Retorno Mensual:</span><span class="text-emerald-400 font-bold">60.0%</span></div>
-<div class="flex justify-between text-xs"><span class="text-slate-400">Costo Fijo:</span><span class="text-cyan-400 font-mono">$2,000 USDT</span></div>
-</div>
-</div>
-<button onclick="investInPackage('GigaFactory', 2000, 0.60)" class="w-full mt-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-400 font-bold py-3 rounded-xl text-xs transition">
-Invertir $2,000 USDT
-</button>
-</div>
-</div>
-</div>
-<!-- TAB 3: REFERRALS -->
-<div id="tab-referrals" class="tab-content hidden space-y-6">
-<div class="text-center max-w-2xl mx-auto space-y-2 mb-6">
-<h2 class="text-3xl font-black text-white"><i class="fa-solid fa-user-group text-cyan-400 mr-2"></i> Programa de Referidos</h2>
-<p class="text-slate-400 text-sm">Invita a tus amigos y colegas a invertir en LitioX. Obtén el <strong>0.3% de comisiones continuas</strong> sobre las ganancias generadas por tus invitados.</p>
-</div>
-<!-- Tu Link de Invitación -->
-<div class="glass-card p-6 rounded-2xl border border-cyan-500/30 max-w-2xl mx-auto space-y-4 text-center">
-<span class="text-xs font-bold uppercase text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full">Tu Enlace Personal de Referido</span>
-<div class="flex items-center space-x-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800 mt-2">
-<input type="text" readonly id="user-ref-link-input" value="https://litiox.io/?ref=CARGANDO" class="bg-transparent text-cyan-300 font-mono text-xs w-full outline-none px-2">
-<button onclick="copyReferralLink()" class="glow-button px-4 py-2 rounded-lg text-xs font-bold text-slate-950 whitespace-nowrap">
-<i class="fa-solid fa-copy mr-1"></i> Copiar Link
-</button>
-</div>
-<p class="text-[11px] text-slate-400">Requisito para retirar: Tener al menos <strong>3 referidos registrados</strong> con tu enlace.</p>
-</div>
-<!-- Métricas de Referidos -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-<div class="glass-card p-5 rounded-2xl text-center border border-slate-800">
-<span class="text-xs text-slate-400">Referidos Registrados</span>
-<div class="text-3xl font-black text-cyan-400 font-mono mt-1" id="ref-count-display">0 / 3</div>
-<p class="text-[10px] text-slate-500 mt-1" id="ref-status-text">Faltan 3 referidos para cumplir el requisito de retiro</p>
-</div>
-<div class="glass-card p-5 rounded-2xl text-center border border-slate-800">
-<span class="text-xs text-slate-400">Comisiones Obtenidas (0.3%)</span>
-<div class="text-3xl font-black text-emerald-400 font-mono mt-1" id="ref-earnings-display">$0.00 USDT</div>
-<p class="text-[10px] text-slate-500 mt-1">Acreditadas automáticamente a tu balance</p>
-</div>
-</div>
-</div>
-<!-- TAB 4: TELEMETRY -->
-<div id="tab-telemetry" class="tab-content hidden space-y-6">
-<div class="flex flex-col md:flex-row justify-between md:items-end mb-4 border-b border-slate-800 pb-4">
-<div>
-<h2 class="text-2xl font-black text-white"><i class="fa-solid fa-satellite-dish text-cyan-400 mr-2"></i> Telemetría de Extracción</h2>
-<p class="text-xs text-slate-400 mt-1">Datos en tiempo real de plantas extractivas en el Salar de Olaroz.</p>
-</div>
-<div class="mt-4 md:mt-0 bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs flex space-x-4">
-<div><span class="text-slate-500">Pureza:</span> <span class="text-emerald-400 font-bold">99.9%</span></div>
-<div><span class="text-slate-500">Estado:</span> <span class="text-cyan-400 font-bold animate-pulse">ÓPTIMO</span></div>
-</div>
-</div>
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-<div class="lg:col-span-2 glass-card p-5 rounded-2xl border border-slate-800">
-<h3 class="text-sm font-bold text-white mb-4">Presión de Bombeo vs Volumen (Litros/seg)</h3>
-<div class="w-full h-72">
-<canvas id="telemetryChart"></canvas>
-</div>
-</div>
-<div class="lg:col-span-1 space-y-4">
-<div class="glass-card p-4 rounded-xl border border-slate-800">
-<h4 class="text-xs text-slate-400 font-semibold mb-2">Extracción Pozo A-14</h4>
-<div class="flex items-end justify-between">
-<span class="text-2xl font-black text-white font-mono" id="tel-vol">42.8 L/s</span>
-<i class="fa-solid fa-arrow-trend-up text-emerald-400"></i>
-</div>
-<div class="w-full bg-slate-800 h-1 mt-2 rounded-full"><div class="bg-cyan-400 h-full rounded-full w-[85%]"></div></div>
-</div>
-<div class="glass-card p-4 rounded-xl border border-slate-800">
-<h4 class="text-xs text-slate-400 font-semibold mb-2">Concentración de Carbonato</h4>
-<div class="flex items-end justify-between">
-<span class="text-2xl font-black text-white font-mono">840 mg/L</span>
-<span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">Estable</span>
-</div>
-</div>
-</div>
-</div>
-</div>
-<!-- TAB 5: NOSOTROS Y EQUIPO DIRECTIVO -->
-<div id="tab-team" class="tab-content hidden space-y-12">
-<!-- Encabezado de la Sección -->
-<div class="text-center max-w-3xl mx-auto space-y-3">
-<div class="inline-flex items-center space-x-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
-<i class="fa-solid fa-earth-asia text-emerald-400 mr-1"></i> Tecnología Surcoreana & Minería Global
-</div>
-<h2 class="text-3xl md:text-5xl font-black text-white tracking-tight">Nosotros</h2>
-<p class="text-slate-300 text-sm md:text-base leading-relaxed">
-Conoce a los pioneros surcoreanos que están revolucionando la tokenización de materias primas estratégicas combinando biotecnología extractiva de última generación y finanzas descentralizadas.
-</p>
-</div>
-<!-- GRIDS DE LOS 4 FUNDADORES COREANOS -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-<!-- Fundador 1 -->
-<div class="glass-card rounded-3xl p-6 border border-slate-800/80 hover:border-cyan-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
-<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 to-teal-400"></div>
-<div>
-<div class="w-28 h-28 mx-auto rounded-2xl bg-slate-800 border-2 border-cyan-500/30 shadow-2xl overflow-hidden mb-5 relative group-hover:scale-105 transition-transform duration-300">
-<img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-500" alt="Dr. Sung-Hoon Park">
-</div>
-<div class="text-center">
-<span class="text-[10px] uppercase tracking-widest font-extrabold text-cyan-400 bg-cyan-500/10 px-2.5 py-0.5 rounded-full">CEO & Co-Fundador</span>
-<h3 class="text-xl font-black text-white mt-2">Dr. Sung-Hoon Park</h3>
-<p class="text-slate-400 text-xs font-semibold mb-3">Ex-Director de I+D en Samsung SDI</p>
-<p class="text-xs text-slate-300 leading-relaxed text-left border-t border-slate-800/80 pt-3 mt-1">
-Doctor en Ingenieria Minera y Mineralogía Aplicada por KAIST (Daejeon, Corea del Sur). Pionero en sistemas de Extracción Directa de Litio (DLE). Cuenta con más de 16 años de experiencia optimizando salares en Asia y Sudamérica.
-</p>
-</div>
-</div>
-<div class="mt-4 pt-3 border-t border-slate-800/60 flex justify-center space-x-3 text-slate-400 text-xs">
-<span class="text-[11px] font-mono text-cyan-300"><i class="fa-solid fa-graduation-cap text-cyan-400 mr-1"></i> KAIST PhD</span>
-</div>
-</div>
-<!-- Fundador 2 -->
-<div class="glass-card rounded-3xl p-6 border border-slate-800/80 hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
-<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
-<div>
-<div class="w-28 h-28 mx-auto rounded-2xl bg-slate-800 border-2 border-emerald-500/30 shadow-2xl overflow-hidden mb-5 relative group-hover:scale-105 transition-transform duration-300">
-<img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-500" alt="Min-Soo Kim">
-</div>
-<div class="text-center">
-<span class="text-[10px] uppercase tracking-widest font-extrabold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">CTO & Co-Fundador</span>
-<h3 class="text-xl font-black text-white mt-2">Min-Soo Kim</h3>
-<p class="text-slate-400 text-xs font-semibold mb-3">Líder Blockchain & IoT Seúl</p>
-<p class="text-xs text-slate-300 leading-relaxed text-left border-t border-slate-800/80 pt-3 mt-1">
-Graduado Magna Cum Laude de la Universidad Nacional de Seúl (SNU). Arquitecto principal de oráculos de telemetría IoT. Ha liderado protocolos de alta frecuencia y auditoría de contratos inteligentes auditados en redes Web3.
-</p>
-</div>
-</div>
-<div class="mt-4 pt-3 border-t border-slate-800/60 flex justify-center space-x-3 text-slate-400 text-xs">
-<span class="text-[11px] font-mono text-emerald-300"><i class="fa-solid fa-code text-emerald-400 mr-1"></i> SNU B.S. CS</span>
-</div>
-</div>
-<!-- Fundador 3 -->
-<div class="glass-card rounded-3xl p-6 border border-slate-800/80 hover:border-amber-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
-<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-orange-400"></div>
-<div>
-<div class="w-28 h-28 mx-auto rounded-2xl bg-slate-800 border-2 border-amber-500/30 shadow-2xl overflow-hidden mb-5 relative group-hover:scale-105 transition-transform duration-300">
-<img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-500" alt="Seo-Yeon Choi">
-</div>
-<div class="text-center">
-<span class="text-[10px] uppercase tracking-widest font-extrabold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full">CFO & Finanzas</span>
-<h3 class="text-xl font-black text-white mt-2">Seo-Yeon Choi</h3>
-<p class="text-slate-400 text-xs font-semibold mb-3">Especialista Financiera Cuantitativa</p>
-<p class="text-xs text-slate-300 leading-relaxed text-left border-t border-slate-800/80 pt-3 mt-1">
-Ex-Vicepresidenta de Mercados de Capitales en KTB Investment Securities en Singapur. Posee una maestría en Finanzas Cuantitativas por Yonsei University. Diseñó el modelo de yield sostenible respaldado en materias primas.
-</p>
-</div>
-</div>
-<div class="mt-4 pt-3 border-t border-slate-800/60 flex justify-center space-x-3 text-slate-400 text-xs">
-<span class="text-[11px] font-mono text-amber-300"><i class="fa-solid fa-chart-pie text-amber-400 mr-1"></i> Yonsei M.S. Finance</span>
-</div>
-</div>
-<!-- Fundador 4 -->
-<div class="glass-card rounded-3xl p-6 border border-slate-800/80 hover:border-blue-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
-<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-cyan-400"></div>
-<div>
-<div class="w-28 h-28 mx-auto rounded-2xl bg-slate-800 border-2 border-blue-500/30 shadow-2xl overflow-hidden mb-5 relative group-hover:scale-105 transition-transform duration-300">
-<img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop&q=80" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-500" alt="Dr. Do-Yoon Lee">
-</div>
-<div class="text-center">
-<span class="text-[10px] uppercase tracking-widest font-extrabold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-full">CIO & Innovación</span>
-<h3 class="text-xl font-black text-white mt-2">Dr. Do-Yoon Lee</h3>
-<p class="text-slate-400 text-xs font-semibold mb-3">Investigador Baterías de Nueva Generación</p>
-<p class="text-xs text-slate-300 leading-relaxed text-left border-t border-slate-800/80 pt-3 mt-1">
-Doctor por POSTECH (Pohang University of Science and Technology). Autor de 14 patentes en síntesis de carbonato e hidróxido de litio grado batería (99.9% pureza), asegurando contratos directos de compra con automotrices globales.
-</p>
-</div>
-</div>
-<div class="mt-4 pt-3 border-t border-slate-800/60 flex justify-center space-x-3 text-slate-400 text-xs">
-<span class="text-[11px] font-mono text-blue-300"><i class="fa-solid fa-atom text-blue-400 mr-1"></i> POSTECH PhD</span>
-</div>
-</div>
-</div>
-<!-- DESCRIPCIÓN DE LA EMPRESA & POR QUÉ ELEGIR EL LITIO -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch pt-4">
-<!-- Tarjeta: ¿Quiénes Somos? -->
-<div class="lg:col-span-6 glass-card p-8 rounded-3xl border border-slate-800 flex flex-col justify-between space-y-6 relative overflow-hidden">
-<div class="space-y-4">
-<div class="inline-flex items-center space-x-2 text-cyan-400 text-xs font-bold uppercase tracking-widest">
-<i class="fa-solid fa-building-shield"></i>
-<span>Sobre LitioX Corporation</span>
-</div>
-<h3 class="text-2xl md:text-3xl font-black text-white leading-tight">
-El Puente entre la Alta Tecnología Asiática y el Oro Blanco Sudamericano
-</h3>
-<p class="text-slate-300 text-xs md:text-sm leading-relaxed">
-<strong>LitioX</strong> es una plataforma de inversión descentralizada de última generación, nacida de la alianza estratégica entre científicos e inversores surcoreanos y operadores mineros locales en el <i>Triángulo del Litio</i> (Salar de Olaroz, Jujuy y Salta).
-</p>
-<p class="text-slate-300 text-xs md:text-sm leading-relaxed">
-Tokenizamos los flujos de caja y contratos de venta del mineral extraído en tiempo real. Mediante nuestros pozos de Extracción Directa de Litio (DLE), reducimos el tiempo de cristalización de 18 meses a solo <strong>24 horas</strong>, permitiendo márgenes de ganancia sin precedentes que se distribuyen diariamente a nuestros inversores en USDT.
-</p>
-</div>
-<div class="grid grid-cols-3 gap-3 pt-4 border-t border-slate-800 text-center">
-<div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
-<span class="text-xl font-black text-cyan-400 block">99.9%</span>
-<span class="text-[10px] text-slate-400 font-medium">Pureza Batería</span>
-</div>
-<div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
-<span class="text-xl font-black text-emerald-400 block">< 24h</span>
-<span class="text-[10px] text-slate-400 font-medium">Ciclo DLE</span>
-</div>
-<div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
-<span class="text-xl font-black text-amber-400 block">100%</span>
-<span class="text-[10px] text-slate-400 font-medium">On-Chain Audit</span>
-</div>
-</div>
-</div>
-<!-- Tarjeta: ¿Por qué invertir en Litio Hoy? -->
-<div class="lg:col-span-6 glass-card p-8 rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/30 flex flex-col justify-between space-y-6 relative overflow-hidden shadow-2xl">
-<div class="space-y-4">
-<div class="inline-flex items-center space-x-2 text-emerald-400 text-xs font-bold uppercase tracking-widest">
-<i class="fa-solid fa-arrow-trend-up"></i>
-<span>Máxima Rentabilidad Global</span>
-</div>
-<h3 class="text-2xl md:text-3xl font-black text-white leading-tight">
-¿Por qué Invertir en Litio Hoy? El Mineral más Rentable del Siglo XXI
-</h3>
-<ul class="space-y-3 text-xs md:text-sm text-slate-300">
-<li class="flex items-start space-x-3">
-<i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i>
-<span><strong>Demanda Imparable por Vehículos Eléctricos e IA:</strong> Las gigafábricas de baterías y los centros de datos demandan más del 300% de la producción global actual.</span>
-</li>
-<li class="flex items-start space-x-3">
-<i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i>
-<span><strong>Costos Minimos DLE:</strong> Gracias a la tecnología de patentes coreanas de LitioX, el costo de producción por tonelada es de solo $4,200 USD, mientras que se vende a más de $24,000 USD/Ton.</span>
-</li>
-<li class="flex items-start space-x-3">
-<i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i>
-<span><strong>Retorno Inmediato y Liquidez en USDT:</strong> A diferencia de las acciones tradicionales de minería que tardan años en repartir dividendos, LitioX acredita utilidades en tiempo real.</span>
-</li>
-</ul>
-</div>
-<div class="bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-2xl flex items-center space-x-4">
-<div class="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-2xl flex-shrink-0">
-<i class="fa-solid fa-piggy-bank"></i>
-</div>
-<p class="text-xs text-emerald-200">
-<strong>Rentabilidad Garantizada:</strong> La escasez de litio de alta pureza convierte a esta materia prima en el activo de mayor apreciación sostenida para esta década.
-</p>
-</div>
-</div>
-</div>
-<!-- SECCIÓN DE CONFIABILIDAD Y GARANTÍA QUE GENERA CONFIANZA -->
-<div class="glass-card p-8 rounded-3xl border border-cyan-500/30 bg-slate-900/90 shadow-2xl relative overflow-hidden">
-<div class="text-center max-w-2xl mx-auto mb-8 space-y-2">
-<h3 class="text-2xl font-black text-white"><i class="fa-solid fa-shield-halved text-cyan-400 mr-2"></i> Nuestra Confiabilidad es tu Garantía</h3>
-<p class="text-xs text-slate-400">Diseñado bajo los estándares de auditoría corporativa de Corea del Sur e infraestructura blockchain inalterable.</p>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-<div class="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-2">
-<div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-lg mb-2">
-<i class="fa-solid fa-satellite"></i>
-</div>
-<h4 class="text-sm font-bold text-white">Telemetría Transparente</h4>
-<p class="text-xs text-slate-400 leading-relaxed">Monitoreo en vivo conectado a los sensores IoT de los salares. Puedes verificar la producción de litros por segundo y presión de bombeo en tiempo real desde la pestaña <i>Salares</i>.</p>
-</div>
-<div class="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-2">
-<div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg mb-2">
-<i class="fa-solid fa-lock-keyhole"></i>
-</div>
-<h4 class="text-sm font-bold text-white">Respaldo Físico & Liquidez</h4>
-<p class="text-xs text-slate-400 leading-relaxed">Cada depósito en USDT es custodiado en smart contracts auditados con colateral en stock físico de Carbonato de Litio Grado Batería almacenado en depósitos fiscales.</p>
-</div>
-<div class="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-2">
-<div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg mb-2">
-<i class="fa-solid fa-handshake-simple"></i>
-</div>
-<h4 class="text-sm font-bold text-white">Cumplimiento & Seguridad</h4>
-<p class="text-xs text-slate-400 leading-relaxed">Procesamiento seguro automatizado mediante Supabase Cloud Database y pagos en USDT (BEP-20) con trazabilidad blockchain directa.</p>
-</div>
-</div>
-</div>
-</div>
-<!-- TAB 6: PANEL ADMINISTRADOR -->
-<div id="tab-admin" class="tab-content hidden space-y-6">
-<div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-<div class="flex items-center space-x-4">
-<div class="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-400 text-2xl">
-<i class="fa-solid fa-user-shield"></i>
-</div>
-<div>
-<h2 class="text-lg font-black text-white">Panel Administrador Global</h2>
-<p class="text-xs text-slate-400">Control multiusuario en la nube con Supabase</p>
-<div id="admin-status-indicator" class="text-xs mt-1 font-mono">
-<span class="text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Conectando...</span>
-</div>
-</div>
-</div>
-<button onclick="loadAdminPanel()" class="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center shadow-lg">
-<i class="fa-solid fa-rotate mr-2"></i> Recargar Nube
-</button>
-</div>
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-<!-- Depósitos Pendientes -->
-<div class="glass-card p-5 rounded-2xl border border-slate-800">
-<h3 class="font-bold text-white mb-4 flex items-center justify-between">
-<span class="flex items-center"><i class="fa-solid fa-arrow-down-to-line text-emerald-400 mr-2"></i> Depósitos Pendientes</span>
-<span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-mono">EN VIVO</span>
-</h3>
-<div class="overflow-x-auto">
-<table class="w-full text-left text-xs">
-<thead>
-<tr class="text-slate-400 border-b border-slate-800 uppercase text-[10px]">
-<th class="p-3">Usuario</th>
-<th class="p-3">Monto</th>
-<th class="p-3">Tx Hash</th>
-<th class="p-3 text-right">Acción</th>
-</tr>
-</thead>
-<tbody id="admin-deposits-body" class="divide-y divide-slate-800/50">
-<!-- Carga dinámicamente -->
-</tbody>
-</table>
-<div id="admin-no-deps" class="text-center text-slate-500 text-xs py-6 hidden">
-<i class="fa-solid fa-circle-check text-slate-600 text-2xl mb-2 block"></i>
-No hay depósitos pendientes.
-</div>
-</div>
-</div>
-<!-- Retiros Pendientes -->
-<div class="glass-card p-5 rounded-2xl border border-slate-800">
-<h3 class="font-bold text-white mb-4 flex items-center justify-between">
-<span class="flex items-center"><i class="fa-solid fa-arrow-up-from-bracket text-rose-400 mr-2"></i> Retiros Solicitados</span>
-<span class="text-[10px] bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded font-mono">EN VIVO</span>
-</h3>
-<div class="overflow-x-auto">
-<table class="w-full text-left text-xs">
-<thead>
-<tr class="text-slate-400 border-b border-slate-800 uppercase text-[10px]">
-<th class="p-3">Usuario</th>
-<th class="p-3">Monto</th>
-<th class="p-3">Billetera</th>
-<th class="p-3 text-right">Acción</th>
-</tr>
-</thead>
-<tbody id="admin-withdrawals-body" class="divide-y divide-slate-800/50">
-<!-- Carga dinámicamente -->
-</tbody>
-</table>
-<div id="admin-no-wits" class="text-center text-slate-500 text-xs py-6 hidden">
-<i class="fa-solid fa-circle-check text-slate-600 text-2xl mb-2 block"></i>
-No hay solicitudes de retiro pendientes.
-</div>
-</div>
-</div>
-</div>
-</div>
-</main>
-</div>
-<!-- MODAL: DEPOSITAR -->
-<div id="deposit-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-<div class="glass-card max-w-md w-full rounded-2xl p-6 border border-slate-800 space-y-4 relative">
-<button onclick="closeModal('deposit-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-<div class="text-center mb-4">
-<h3 class="font-black text-white text-lg">Depositar USDT</h3>
-<p class="text-[10px] bg-slate-800 inline-block px-2 py-0.5 rounded text-amber-400 font-mono mt-1">Red BNB Smart Chain (BEP-20)</p>
-</div>
-<div class="bg-slate-900 p-4 rounded-xl border border-slate-700 text-center">
-<p class="text-xs text-slate-400 mb-2">Envía tus fondos a la dirección oficial:</p>
-<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=0xf23130692008d8b470b963ac67be6453085e31c5&color=00f2fe&bgcolor=0f172a" class="mx-auto rounded-lg mb-3 border border-cyan-500/30 p-1" alt="QR">
-<div class="flex items-center space-x-2 bg-slate-950 p-2 rounded-lg">
-<input type="text" readonly value="0xf23130692008d8b470b963ac67be6453085e31c5" class="bg-transparent text-cyan-400 text-[10px] w-full outline-none font-mono text-center">
-<button onclick="copyText('0xf23130692008d8b470b963ac67be6453085e31c5')" class="text-slate-400 hover:text-white px-2"><i class="fa-solid fa-copy"></i></button>
-</div>
-</div>
-<div class="space-y-3">
-<div>
-<label class="text-[10px] text-slate-400">Monto Enviado (USDT)</label>
-<input type="number" id="real-deposit-amount" placeholder="Ej: 500" class="w-full bg-slate-900 border border-slate-700 text-white text-sm rounded-xl p-3 font-mono mt-1">
-</div>
-<div>
-<label class="text-[10px] text-slate-400">Hash de la Transacción (TxID)</label>
-<input type="text" id="real-deposit-hash" placeholder="Pega el Hash de blockchain aquí..." class="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-xl p-3 font-mono mt-1">
-</div>
-<button onclick="submitRealDeposit()" class="w-full glow-button text-slate-950 font-black py-3 rounded-xl text-xs mt-2">Notificar Pago</button>
-</div>
-</div>
-</div>
-<!-- MODAL: RETIRAR -->
-<div id="withdraw-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-<div class="glass-card max-w-md w-full rounded-2xl p-6 border border-slate-800 space-y-4 relative">
-<button onclick="closeModal('withdraw-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-<div class="text-center mb-2">
-<h3 class="font-black text-white text-lg">Solicitar Retiro de USDT</h3>
-<p class="text-[10px] text-slate-400 mt-0.5">Retiros procesados en USDT (BEP-20)</p>
-</div>
-<!-- Resumen de Requisitos en Modal -->
-<div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 space-y-2 text-[11px]">
-<div class="flex justify-between items-center text-slate-300">
-<span><i class="fa-solid fa-users text-cyan-400 mr-1"></i> Referidos Obligatorios (mín. 3):</span>
-<span id="modal-req-ref" class="font-bold text-amber-400">0 / 3</span>
-</div>
-<div class="flex justify-between items-center text-slate-300">
-<span><i class="fa-solid fa-coins text-emerald-400 mr-1"></i> Ganancia Mínima ($15 USDT):</span>
-<span id="modal-req-yield" class="font-bold text-amber-400">$0.00 / $15</span>
-</div>
-</div>
-<div class="flex justify-between items-center bg-slate-900 p-3 rounded-xl border border-slate-700">
-<span class="text-xs text-slate-400">Saldo Disponible:</span>
-<span class="text-sm font-bold text-emerald-400 font-mono" id="withdraw-available-balance">$0.00</span>
-</div>
-<div class="space-y-3">
-<div>
-<label class="text-[10px] text-slate-400">Tu Billetera USDT (BEP-20)</label>
-<input type="text" id="withdraw-wallet-address" placeholder="0x..." class="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-xl p-3 font-mono mt-1">
-</div>
-<div>
-<label class="text-[10px] text-slate-400">Monto a Retirar (Mínimo $25 USDT)</label>
-<input type="number" id="withdraw-amount" placeholder="Ej: 50" class="w-full bg-slate-900 border border-slate-700 text-white text-sm rounded-xl p-3 font-mono mt-1">
-</div>
-<button onclick="submitRealWithdrawal()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl text-xs mt-2 transition">Solicitar Retiro</button>
-</div>
-</div>
-</div>
-<!-- TOAST CONTAINER -->
-<div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none flex flex-col items-end"></div>
-<!-- MAIN JAVASCRIPT LOGIC -->
-<script>
-// CONFIGURACIÓN DE SUPABASE
-const SUPABASE_URL = 'https://bmbfjsxgwxfjuphvhvya.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_0XRTTJKzV38S0-4AlDwmcw_wkfihwB-';
-let supabaseClient = null;
-if (window.supabase) {
-supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-} else {
-alert("Error crítico: No se pudo cargar la librería de Supabase.");
-}
-const ADMIN_EMAILS = ['matiasmpv24@gmail.com', 'matiasjalil26@gmail.com'];
-// Estado Global del Usuario
-let userState = {
-id: '',
-email: '', fullName: '', balance: 0.00, stakedTotal: 0.00, totalWithdrawn: 0.00,
-totalYieldEarned: 0.00, refCode: '', referredBy: '', referralCount: 0, accumulatedYieldSession: 0.00
-};
-let yieldInterval;
-let adminPollingInterval = null;
-let userSyncInterval = null;
-let pendingReferralCodeFromUrl = '';
-function generateUUID() {
-if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-return v.toString(16);
-});
-}
-window.onload = function() {
-const urlParams = new URLSearchParams(window.location.search);
-const refParam = urlParams.get('ref');
-if (refParam) {
-pendingReferralCodeFromUrl = refParam.toUpperCase();
-document.getElementById('referral-banner-notice').classList.remove('hidden');
-toggleAuthMode('register');
-}
-initTelemetryChart();
-checkSession();
-};
-async function checkSession() {
-try {
-const { data: { session } } = await supabaseClient.auth.getSession();
-if (session && session.user) {
-userState.id = session.user.id;
-await loadUserProfile(session.user.email);
-}
-} catch (e) {
-console.warn("No active session found or error checking session", e);
-}
-}
-function toggleAuthMode(mode) {
-const forms = ['login', 'register', 'forgot'];
-forms.forEach(f => document.getElementById(⁠${f}-form⁠).classList.add('hidden'));
-document.getElementById('auth-tabs').classList.remove('hidden');
-if (mode === 'login' || mode === 'register') {
-document.getElementById(⁠${mode}-form⁠).classList.remove('hidden');
-document.getElementById(⁠tab-${mode}-btn⁠).className = 'flex-1 py-2.5 rounded-lg text-cyan-400 bg-slate-800 transition';
-const other = mode === 'login' ? 'register' : 'login';
-document.getElementById(⁠tab-${other}-btn⁠).className = 'flex-1 py-2.5 rounded-lg text-slate-400 hover:text-white transition';
-} else if (mode === 'forgot') {
-document.getElementById('forgot-form').classList.remove('hidden');
-document.getElementById('auth-tabs').classList.add('hidden');
-}
-}
-function generateRefCode() { return 'LITIO-' + Math.random().toString(36).substring(2, 7).toUpperCase(); }
-function setButtonLoading(btnId, isLoading, defaultText, defaultIcon) {
-const btnText = document.getElementById(⁠${btnId}-text⁠);
-const btnIcon = document.getElementById(⁠${btnId}-icon⁠);
-const btn = document.getElementById(⁠${btnId}-submit⁠);
-if (!btnText || !btnIcon || !btn) return;
-if (isLoading) {
-btn.disabled = true;
-btn.classList.add('opacity-70', 'cursor-not-allowed');
-btnText.innerText = 'Procesando...';
-btnIcon.className = 'fa-solid fa-spinner fa-spin';
-} else {
-btn.disabled = false;
-btn.classList.remove('opacity-70', 'cursor-not-allowed');
-btnText.innerText = defaultText;
-btnIcon.className = ⁠fa-solid ${defaultIcon}⁠;
-}
-}
-// --- AUTENTICACIÓN ---
-async function handleLogin(e) {
-e.preventDefault();
-const email = document.getElementById('login-email').value.toLowerCase().trim();
-const pass = document.getElementById('login-password').value;
-setButtonLoading('login-btn', true, 'Ingresar a la Plataforma', 'fa-arrow-right-to-bracket');
-try {
-const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
-if (error) {
-showToast("Error al iniciar sesión. Revisa tus credenciales.", "error");
-} else if (data && data.user) {
-userState.id = data.user.id;
-await loadUserProfile(email);
-}
-} catch (err) {
-showToast("Ocurrió un error inesperado al conectar.", "error");
-} finally {
-setButtonLoading('login-btn', false, 'Ingresar a la Plataforma', 'fa-arrow-right-to-bracket');
-}
-}
-async function handleRegister(e) {
-e.preventDefault();
-const email = document.getElementById('reg-email').value.toLowerCase().trim();
-const pass = document.getElementById('reg-password').value;
-const fname = document.getElementById('reg-fullname').value;
-setButtonLoading('reg-btn', true, 'Crear Cuenta Gratis', 'fa-user-plus');
-try {
-// 1. Attempt to sign up in Auth
-const { data, error } = await supabaseClient.auth.signUp({ email, password: pass });
-if (error) {
-if (error.message.includes("Database error saving new user") || error.message.includes("already registered")) {
-showToast("El correo ya existe o hubo un conflicto en la base de datos de Auth. Intenta recuperar la contraseña.", "error");
-} else {
-showToast(error.message, "error");
-}
-return;
-}
-if (data && data.user) {
-userState.id = data.user.id;
-// 2. Prepare profile data
-const myRefCode = generateRefCode();
-const newProfile = {
-email: email,
-full_name: fname,
-balance: 0.00,
-staked_total: 0.00,
-total_withdrawn: 0.00,
-total_yield_earned: 0.00,
-ref_code: myRefCode,
-referred_by: pendingReferralCodeFromUrl || null,
-referral_count: 0
-};
-// 3. Insert into profiles table
-const { error: profileError } = await supabaseClient.from('profiles').insert([newProfile]);
-if (profileError) {
-console.error("Error al crear perfil en la tabla custom:", profileError);
-if (profileError.code === '23505') {
-showToast("El perfil ya existía. Iniciando sesión...", "success");
-await loadUserProfile(email);
-return;
-} else {
-showToast("La cuenta se creó en Auth, pero falló al guardar el perfil. Contacta soporte.", "warning");
-}
-}
-// 4. Handle Referrals - El Trigger de Supabase se encarga de esto si está configurado.
-// Lo dejamos aquí como fallback si no configuraste el trigger.
-if (pendingReferralCodeFromUrl && !profileError) {
-const { data: referrers } = await supabaseClient.from('profiles').select('*').eq('ref_code', pendingReferralCodeFromUrl);
-if (referrers && referrers.length > 0) {
-const refUser = referrers[0];
-await supabaseClient.from('profiles').update({ referral_count: (refUser.referral_count || 0) + 1 }).eq('email', refUser.email);
-}
-}
-showToast('¡Cuenta creada correctamente! Iniciando sesión...', 'success');
-await loadUserProfile(email);
-} else {
-showToast("Ocurrió un error al registrar el usuario en Auth.", "error");
-}
-} catch (err) {
-console.error("Registro fallido:", err);
-showToast("Ocurrió un error inesperado durante el registro.", "error");
-} finally {
-setButtonLoading('reg-btn', false, 'Crear Cuenta Gratis', 'fa-user-plus');
-}
-}
-async function handleForgotPassword(e) {
-e.preventDefault();
-const email = document.getElementById('forgot-email').value;
-const btn = e.target.querySelector('button[type="submit"]');
-const originalText = btn.innerHTML;
-btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
-btn.disabled = true;
-try {
-const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
-if (error) throw error;
-showToast('Si el correo existe, enviamos las instrucciones.', 'success');
-setTimeout(() => toggleAuthMode('login'), 2000);
-} catch (err) {
-showToast(err.message, 'error');
-} finally {
-btn.innerHTML = originalText;
-btn.disabled = false;
-}
-}
-function enterDemoMode() {
-userState.id = 'demo-user-id';
-userState.email = 'invitado@demo.com';
-userState.fullName = 'Usuario Demo';
-userState.balance = 1500;
-userState.stakedTotal = 500;
-userState.totalWithdrawn = 0;
-userState.totalYieldEarned = 25.00;
-userState.refCode = 'DEMO-1234';
-userState.referralCount = 3;
-completeLogin(userState.email);
-}
-// --- CARGA DE DATOS 100% DESDE LA NUBE ---
-async function loadUserProfile(email) {
-const cleanEmail = email.toLowerCase().trim();
-const { data, error } = await supabaseClient.from('profiles').select('*').eq('email', cleanEmail).single();
-if (data) {
-const prevBalance = userState.balance;
-userState.email = cleanEmail;
-userState.balance = parseFloat(data.balance || 0);
-userState.stakedTotal = parseFloat(data.staked_total || 0);
-userState.totalWithdrawn = parseFloat(data.total_withdrawn || 0);
-userState.totalYieldEarned = parseFloat(data.total_yield_earned || 0);
-userState.refCode = data.ref_code;
-userState.referredBy = data.referred_by || '';
-userState.referralCount = parseInt(data.referral_count || 0);
-userState.fullName = data.full_name || cleanEmail.split('@')[0];
-if(prevBalance !== userState.balance && prevBalance > 0 && document.getElementById('dashboard-view').classList.contains('flex')) {
-document.getElementById('card-metric-balance').classList.add('bg-emerald-900/40', 'border-emerald-500/50');
-setTimeout(() => { document.getElementById('card-metric-balance').classList.remove('bg-emerald-900/40', 'border-emerald-500/50'); }, 2000);
-}
-if(document.getElementById('auth-view').classList.contains('hidden') === false) {
-completeLogin(cleanEmail);
-}
-} else {
-console.error("Perfil no encontrado o error RLS:", error);
-if (userState.id) {
-showToast("Creando perfil de usuario faltante...", "warning");
-const newProfile = {
-email: cleanEmail,
-full_name: cleanEmail.split('@')[0],
-balance: 0, staked_total: 0, total_withdrawn: 0, total_yield_earned: 0,
-ref_code: generateRefCode(), referral_count: 0
-};
-await supabaseClient.from('profiles').insert([newProfile]);
-const { data: retryData } = await supabaseClient.from('profiles').select('*').eq('email', cleanEmail).single();
-if (retryData) {
-loadUserProfile(cleanEmail);
-return;
-}
-}
-showToast("Fallo al cargar el perfil. Puede que necesites iniciar sesión nuevamente.", "error");
-handleLogout();
-}
-}
-async function syncUserDataBackground() {
-if (!userState.email || userState.email === 'invitado@demo.com') return;
-await loadUserProfile(userState.email);
-updateDashboardUI();
-if(!document.getElementById('tab-dashboard').classList.contains('hidden')) {
-loadUserTransactions();
-}
-}
-function completeLogin(email) {
-document.getElementById('auth-view').classList.add('hidden');
-document.getElementById('dashboard-view').classList.replace('hidden', 'flex');
-document.getElementById('user-welcome-label').innerText = ⁠Usuario: ${userState.fullName}⁠;
-const isAdmin = ADMIN_EMAILS.some(a => email.toLowerCase() === a.toLowerCase());
-if (isAdmin) {
-document.getElementById('nav-admin').classList.remove('hidden');
-document.getElementById('nav-admin-mobile').classList.remove('hidden');
-showToast('Modo Administrador Activado', 'warning');
-}
-const currentOrigin = window.location.origin + window.location.pathname;
-document.getElementById('user-ref-link-input').value = ⁠${currentOrigin}?ref=${userState.refCode}⁠;
-updateDashboardUI();
-loadUserTransactions();
-startLiveYieldGenerator();
-if(userSyncInterval) clearInterval(userSyncInterval);
-if(userState.email !== 'invitado@demo.com') {
-userSyncInterval = setInterval(syncUserDataBackground, 4000);
-}
-}
-function handleLogout() {
-if(yieldInterval) clearInterval(yieldInterval);
-if(adminPollingInterval) clearInterval(adminPollingInterval);
-if(userSyncInterval) clearInterval(userSyncInterval);
-supabaseClient.auth.signOut();
-document.getElementById('dashboard-view').classList.replace('flex', 'hidden');
-document.getElementById('auth-view').classList.remove('hidden');
-document.getElementById('nav-admin').classList.add('hidden');
-document.getElementById('nav-admin-mobile').classList.add('hidden');
-document.getElementById('login-email').value = '';
-document.getElementById('login-password').value = '';
-switchTab('dashboard');
-userState.id = '';
-userState.email = '';
-}
-function switchTab(tabId) {
-if (adminPollingInterval) { clearInterval(adminPollingInterval); adminPollingInterval = null; }
-document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-document.getElementById(⁠tab-${tabId}⁠).classList.remove('hidden');
-document.querySelectorAll('.nav-btn').forEach(btn => {
-btn.classList.remove('text-cyan-400', 'bg-slate-800/80', 'active');
-if(!btn.id.includes('admin')) btn.classList.add('text-slate-400');
-});
-const activeBtn = document.getElementById(⁠nav-${tabId}⁠);
-if(activeBtn && tabId !== 'admin') {
-activeBtn.classList.remove('text-slate-400');
-activeBtn.classList.add('text-cyan-400', 'bg-slate-800/80', 'active');
-}
-if(tabId === 'admin') {
-loadAdminPanel();
-adminPollingInterval = setInterval(loadAdminPanel, 4000);
-}
-}
-function updateDashboardUI() {
-document.getElementById('header-balance-display').innerText = ⁠$${userState.balance.toFixed(2)}⁠;
-document.getElementById('metric-balance').innerText = ⁠$${userState.balance.toFixed(2)}⁠;
-document.getElementById('metric-staked').innerText = ⁠$${userState.stakedTotal.toFixed(2)}⁠;
-document.getElementById('hero-staked-amount').innerText = ⁠$${userState.stakedTotal.toFixed(2)}⁠;
-document.getElementById('metric-withdrawn').innerText = ⁠$${userState.totalWithdrawn.toFixed(2)}⁠;
-document.getElementById('metric-yield-earned').innerText = ⁠$${userState.totalYieldEarned.toFixed(2)}⁠;
-document.getElementById('req-ref-badge').innerText = ⁠${userState.referralCount} / 3⁠;
-const refPct = Math.min((userState.referralCount / 3) * 100, 100);
-document.getElementById('req-ref-bar').style.width = ⁠${refPct}%⁠;
-document.getElementById('req-yield-badge').innerText = ⁠$${userState.totalYieldEarned.toFixed(2)} / $15⁠;
-const yieldPct = Math.min((userState.totalYieldEarned / 15) * 100, 100);
-document.getElementById('req-yield-bar').style.width = ⁠${yieldPct}%⁠;
-document.getElementById('modal-req-ref').innerText = ⁠${userState.referralCount} / 3⁠;
-document.getElementById('modal-req-yield').innerText = ⁠$${userState.totalYieldEarned.toFixed(2)} / $15⁠;
-document.getElementById('ref-count-display').innerText = ⁠${userState.referralCount} / 3⁠;
-document.getElementById('ref-earnings-display').innerText = ⁠$${(userState.totalYieldEarned * 0.003).toFixed(2)} USDT⁠;
-if (userState.referralCount >= 3) {
-document.getElementById('ref-status-text').innerText = '¡Requisito de referidos CUMPLIDO!';
-document.getElementById('ref-status-text').className = 'text-[10px] text-emerald-400 font-bold mt-1';
-}
-}
-function openDepositModal() { document.getElementById('deposit-modal').classList.remove('hidden'); }
-function openWithdrawModal() {
-document.getElementById('withdraw-available-balance').innerText = ⁠$${userState.balance.toFixed(2)}⁠;
-document.getElementById('withdraw-modal').classList.remove('hidden');
-}
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-// --- SISTEMA DE TRANSACCIONES (NUBE) ---
-async function submitRealDeposit() {
-const amountInput = document.getElementById('real-deposit-amount').value;
-const hash = document.getElementById('real-deposit-hash').value.trim();
-if (!amountInput) return showToast('Ingresa un monto válido', 'error');
-const amount = parseFloat(amountInput);
-if (isNaN(amount) || amount < 10) return showToast('El mínimo de depósito es $10 USDT', 'error');
-if (!hash || hash.length < 10) return showToast('Ingresa un Hash válido', 'error');
-if (!userState.id && userState.email !== 'invitado@demo.com') {
-return showToast('Error de sesión. Por favor, vuelve a iniciar sesión.', 'error');
-}
-const tx = {
-id: generateUUID(),
-user_id: userState.id || 'demo',
-user_email: userState.email.toLowerCase(),
-type: 'deposit',
-amount: amount,
-hash: hash,
-wallet: '',
-status: 'pending'
-};
-const { error } = await supabaseClient.from('transactions').insert([tx]);
-if (error) {
-showToast(⁠Error al enviar: ${error.message}⁠, 'error');
-console.error(error);
-return;
-}
-document.getElementById('real-deposit-amount').value = '';
-document.getElementById('real-deposit-hash').value = '';
-closeModal('deposit-modal');
-showToast('Depósito enviado a revisión.', 'success');
-loadUserTransactions();
-}
-async function submitRealWithdrawal() {
-const amountInput = document.getElementById('withdraw-amount').value;
-const wallet = document.getElementById('withdraw-wallet-address').value.trim();
-if (!amountInput) return showToast('Ingresa un monto válido', 'error');
-const amount = parseFloat(amountInput);
-if (userState.referralCount < 3) return showToast(⁠Necesitas 3 referidos (Llevas ${userState.referralCount})⁠, 'error');
-if (userState.totalYieldEarned < 15) return showToast(⁠Mínimo $15 en ganancias (Llevas $${userState.totalYieldEarned.toFixed(2)})⁠, 'error');
-if (isNaN(amount) || amount < 25) return showToast('El monto mínimo es $25 USDT', 'error');
-if (amount > userState.balance) return showToast('Saldo insuficiente', 'error');
-if (!userState.id && userState.email !== 'invitado@demo.com') {
-return showToast('Error de sesión. Por favor, vuelve a iniciar sesión.', 'error');
-}
-// 1. Restar Saldo (Retención) en la nube
-userState.balance -= amount;
-await updateUserProfileInCloud({ balance: userState.balance });
-updateDashboardUI();
-// 2. Crear Transacción
-const tx = {
-id: generateUUID(),
-user_id: userState.id || 'demo',
-user_email: userState.email.toLowerCase(),
-type: 'withdraw',
-amount: amount,
-hash: '',
-wallet: wallet,
-status: 'pending'
-};
-const { error } = await supabaseClient.from('transactions').insert([tx]);
-if (error) {
-showToast(⁠Error Nube: ${error.message}⁠, 'error');
-userState.balance += amount;
-await updateUserProfileInCloud({ balance: userState.balance });
-updateDashboardUI();
-return;
-}
-document.getElementById('withdraw-amount').value = '';
-document.getElementById('withdraw-wallet-address').value = '';
-closeModal('withdraw-modal');
-showToast('Retiro enviado. Fondos en retención.', 'success');
-loadUserTransactions();
-}
-async function loadUserTransactions() {
-if(userState.email === 'invitado@demo.com') return;
-const tbody = document.getElementById('user-tx-history');
-const { data, error } = await supabaseClient.from('transactions')
-.select('*')
-.eq('user_email', userState.email.toLowerCase())
-.order('created_at', { ascending: false });
-if (error) return console.error(error);
-let newHtml = '';
-if(!data || data.length === 0) {
-document.getElementById('no-tx-msg').classList.remove('hidden');
-} else {
-document.getElementById('no-tx-msg').classList.add('hidden');
-data.forEach(tx => {
-const statusColor = tx.status === 'approved' ? 'text-emerald-400' : (tx.status === 'rejected' ? 'text-rose-400' : 'text-amber-400');
-const statusText = tx.status === 'approved' ? 'Aprobado' : (tx.status === 'rejected' ? 'Rechazado' : 'Pendiente');
-const typeText = tx.type === 'deposit' ? 'Depósito' : 'Retiro';
-let displayDate = 'N/A';
-if (tx.created_at) {
-const d = new Date(tx.created_at);
-displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
-}
-newHtml += ⁠<tr class="border-b border-slate-800/40"> <td class="p-2.5 text-slate-300">${displayDate}</td> <td class="p-2.5 font-medium text-white">${typeText}</td> <td class="p-2.5 font-mono font-bold">$${parseFloat(tx.amount).toFixed(2)}</td> <td class="p-2.5 ${statusColor} font-bold text-[11px]">${statusText}</td> </tr>⁠;
-});
-}
-if(tbody.innerHTML !== newHtml) tbody.innerHTML = newHtml;
-}
-// --- PANEL ADMINISTRADOR ---
-async function loadAdminPanel() {
-const depBody = document.getElementById('admin-deposits-body');
-const witBody = document.getElementById('admin-withdrawals-body');
-const statusIndicator = document.getElementById('admin-status-indicator');
-const { data, error } = await supabaseClient.from('transactions').select('*').order('created_at', { ascending: false });
-if (error) {
-statusIndicator.innerHTML = ⁠<span class="text-rose-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Error Nube: ${error.message}</span>⁠;
-return;
-}
-statusIndicator.innerHTML = ⁠<span class="text-emerald-400 font-bold"><i class="fa-solid fa-wifi mr-1"></i> Nube Sincronizada (${data.length} txs)</span>⁠;
-const pendingDeps = data.filter(tx => tx.type === 'deposit' && tx.status === 'pending');
-const pendingWits = data.filter(tx => tx.type === 'withdraw' && tx.status === 'pending');
-if (pendingDeps.length === 0) document.getElementById('admin-no-deps').classList.remove('hidden');
-else document.getElementById('admin-no-deps').classList.add('hidden');
-if (pendingWits.length === 0) document.getElementById('admin-no-wits').classList.remove('hidden');
-else document.getElementById('admin-no-wits').classList.add('hidden');
-let newDepHtml = '';
-pendingDeps.forEach(tx => {
-let displayDate = 'Sin fecha';
-if (tx.created_at) {
-const d = new Date(tx.created_at);
-displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
-}
-newDepHtml += ⁠<tr class="border-b border-slate-800/60 hover:bg-slate-800/40 transition"> <td class="p-3"><div class="font-bold text-white text-xs">${tx.user_email}</div><div class="text-[10px] text-slate-500">${displayDate}</div></td> <td class="p-3 font-mono text-emerald-400 font-black text-xs">+$${parseFloat(tx.amount).toFixed(2)}</td> <td class="p-3"><div class="text-[10px] text-cyan-300 font-mono truncate max-w-[120px]" title="${tx.hash}">${tx.hash}</div></td> <td class="p-3 text-right"> <div class="inline-flex space-x-1"> <button onclick="resolveTx('${tx.id}', 'approved')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center shadow-lg"><i class="fa-solid fa-check mr-1"></i> Aprobar</button> <button onclick="resolveTx('${tx.id}', 'rejected')" class="bg-rose-500/80 hover:bg-rose-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center"><i class="fa-solid fa-xmark mr-1"></i> Rechazar</button> </div> </td> </tr>⁠;
-});
-if(depBody.innerHTML !== newDepHtml) depBody.innerHTML = newDepHtml;
-let newWitHtml = '';
-pendingWits.forEach(tx => {
-let displayDate = 'Sin fecha';
-if (tx.created_at) {
-const d = new Date(tx.created_at);
-displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
-}
-newWitHtml += ⁠<tr class="border-b border-slate-800/60 hover:bg-slate-800/40 transition"> <td class="p-3"><div class="font-bold text-white text-xs">${tx.user_email}</div><div class="text-[10px] text-slate-500">${displayDate}</div></td> <td class="p-3 font-mono text-rose-400 font-black text-xs">-$${parseFloat(tx.amount).toFixed(2)}</td> <td class="p-3"><div class="text-[10px] text-amber-300 font-mono truncate max-w-[120px]" title="${tx.wallet}">${tx.wallet}</div></td> <td class="p-3 text-right"> <div class="inline-flex space-x-1"> <button onclick="resolveTx('${tx.id}', 'approved')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center shadow-lg"><i class="fa-solid fa-check mr-1"></i> Aprobar</button> <button onclick="resolveTx('${tx.id}', 'rejected')" class="bg-rose-500/80 hover:bg-rose-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center"><i class="fa-solid fa-xmark mr-1"></i> Rechazar</button> </div> </td> </tr>⁠;
-});
-if(witBody.innerHTML !== newWitHtml) witBody.innerHTML = newWitHtml;
-}
-async function resolveTx(id, newStatus) {
-const { data: tx, error: errTx } = await supabaseClient.from('transactions').select('*').eq('id', id).single();
-if(errTx || !tx) return showToast('No se encontró la transacción', 'error');
-const { error: updErr } = await supabaseClient.from('transactions').update({ status: newStatus }).eq('id', id);
-if(updErr) return showToast('Error al actualizar transacción', 'error');
-const targetEmail = tx.user_email.toLowerCase();
-const numAmount = parseFloat(tx.amount);
-if (tx.type === 'deposit' && newStatus === 'approved') {
-await adjustUserBalance(targetEmail, numAmount, 'balance');
-}
-else if (tx.type === 'withdraw' && newStatus === 'rejected') {
-await adjustUserBalance(targetEmail, numAmount, 'balance');
-}
-else if (tx.type === 'withdraw' && newStatus === 'approved') {
-await adjustUserBalance(targetEmail, numAmount, 'total_withdrawn');
-}
-showToast(⁠Transacción ${newStatus === 'approved' ? 'Aprobada' : 'Rechazada'} correctamente⁠, 'success');
-await loadAdminPanel();
-}
-async function adjustUserBalance(targetEmail, amountToAdd, columnToUpdate) {
-const email = targetEmail.toLowerCase().trim();
-const { data } = await supabaseClient.from('profiles').select(columnToUpdate).eq('email', email).single();
-if (data) {
-const newValue = (parseFloat(data[columnToUpdate]) || 0) + amountToAdd;
-await supabaseClient.from('profiles').update({ [columnToUpdate]: newValue }).eq('email', email);
-}
-}
-async function updateUserProfileInCloud(fields) {
-if (userState.email === 'invitado@demo.com') return;
-await supabaseClient.from('profiles').update(fields).eq('email', userState.email.toLowerCase());
-}
-// ==================== CÓDIGO FALTANTE COMPLETADO ABAJO ====================
-function investInPackage(name, cost, monthlyRoi) {
-if (userState.balance < cost) {
-return showToast('Saldo insuficiente. Deposita USDT para activar este plan.', 'error');
-}
-userState.balance -= cost;
-userState.stakedTotal += cost;
-updateUserProfileInCloud({
-balance: userState.balance,
-staked_total: userState.stakedTotal
-});
-updateDashboardUI();
-showToast(⁠¡Activaste el plan ${name} exitosamente!⁠, 'success');
-switchTab('dashboard');
-}
-function claimDailyEarnings() {
-if (userState.accumulatedYieldSession <= 0) {
-return showToast('No hay ganancias acumuladas aún.', 'warning');
-}
-const amount = userState.accumulatedYieldSession;
-userState.balance += amount;
-userState.totalYieldEarned += amount;
-userState.accumulatedYieldSession = 0;
-document.getElementById('live-accumulated-yield').innerText = '$0.000000';
-updateUserProfileInCloud({
-balance: userState.balance,
-total_yield_earned: userState.totalYieldEarned
-});
-updateDashboardUI();
-showToast(⁠$${amount.toFixed(2)} USDT añadidos a tu saldo disponible.⁠, 'success');
-}
-function startLiveYieldGenerator() {
-if (yieldInterval) clearInterval(yieldInterval);
-yieldInterval = setInterval(() => {
-if (userState.stakedTotal > 0) {
-// Calculo: (Total Invertido * 50% mensual / 30 dias) / 864000 ticks de 100ms
-const yieldPerTick = (userState.stakedTotal * 0.50 / 30) / 864000;
-userState.accumulatedYieldSession += yieldPerTick;
-document.getElementById('live-accumulated-yield').innerText = ⁠$${userState.accumulatedYieldSession.toFixed(6)}⁠;
-}
-}, 100);
-// Reloj de Pago diario (Visual)
-setInterval(() => {
-const now = new Date();
-const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-const diff = endOfDay - now;
-const h = Math.floor(diff / 1000 / 60 / 60).toString().padStart(2, '0');
-const m = Math.floor((diff / 1000 / 60) % 60).toString().padStart(2, '0');
-const s = Math.floor((diff / 1000) % 60).toString().padStart(2, '0');
-const el = document.getElementById('time-to-payout');
-if (el) el.innerText = ⁠${h}:${m}:${s}⁠;
-}, 1000);
-}
-function copyReferralLink() {
-const link = document.getElementById('user-ref-link-input').value;
-copyText(link);
-}
-function copyText(text) {
-navigator.clipboard.writeText(text).then(() => {
-showToast('¡Copiado al portapapeles!', 'success');
-}).catch(err => {
-showToast('Error al copiar el texto.', 'error');
-});
-}
-function showToast(message, type = 'info') {
-const container = document.getElementById('toast-container');
-const toast = document.createElement('div');
-let icon = 'fa-info-circle text-cyan-400';
-let border = 'border-cyan-500/30';
-if (type === 'success') {
-icon = 'fa-check-circle text-emerald-400';
-border = 'border-emerald-500/30';
-} else if (type === 'error') {
-icon = 'fa-xmark-circle text-rose-400';
-border = 'border-rose-500/30';
-} else if (type === 'warning') {
-icon = 'fa-exclamation-triangle text-amber-400';
-border = 'border-amber-500/30';
-}
-toast.className = ⁠toast-enter bg-slate-900/95 backdrop-blur-md border ${border} text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3⁠;
-toast.innerHTML = ⁠<i class="fa-solid ${icon} text-lg"></i><span class="text-xs font-medium">${message}</span>⁠;
-container.appendChild(toast);
-setTimeout(() => {
-toast.classList.replace('toast-enter', 'toast-leave');
-setTimeout(() => toast.remove(), 300);
-}, 3000);
-}
-function initTelemetryChart() {
-const ctx = document.getElementById('telemetryChart');
-if (!ctx) return;
-const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
-gradient.addColorStop(0, 'rgba(0, 242, 254, 0.4)');
-gradient.addColorStop(1, 'rgba(0, 242, 254, 0.0)');
-new Chart(ctx, {
-type: 'line',
-data: {
-labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
-datasets: [{
-label: 'Volumen (L/s)',
-data: [38.5, 39.2, 41.5, 42.8, 42.1, 40.5, 42.8],
-borderColor: '#00f2fe',
-backgroundColor: gradient,
-borderWidth: 2,
-tension: 0.4,
-fill: true,
-pointBackgroundColor: '#0f172a',
-pointBorderColor: '#00f2fe',
-pointRadius: 4
-}]
-},
-options: {
-responsive: true,
-maintainAspectRatio: false,
-plugins: { legend: { display: false } },
-scales: {
-y: { min: 30, grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#64748b', font: { size: 10 } } },
-x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 10 } } }
-}
-}
-});
-}
-</script>
-</body>
-</html>
+
+    <!-- ==================== VISTA 1: AUTENTICACIÓN ==================== -->
+    <div id="auth-view" class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-10 right-10 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="w-full max-w-md glass-card rounded-3xl p-8 border border-slate-800 relative z-10 shadow-2xl">
+            <div class="text-center space-y-3 mb-8">
+                <div class="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 via-teal-400 to-emerald-400 p-0.5 shadow-xl shadow-cyan-500/20">
+                    <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
+                        <i class="fa-solid fa-bolt text-cyan-400 text-2xl"></i>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black tracking-wider text-white">LITIO<span class="text-cyan-400">X</span></h1>
+                    <p class="text-xs text-slate-400">Protocolo Descentralizado de Rendimiento Minero</p>
+                </div>
+            </div>
+
+            <!-- Tabs Auth -->
+            <div id="auth-tabs" class="flex bg-slate-900/90 p-1 rounded-xl border border-slate-800 mb-6 text-xs font-semibold">
+                <button id="tab-login-btn" onclick="toggleAuthMode('login')" class="flex-1 py-2.5 rounded-lg text-cyan-400 bg-slate-800 transition">Iniciar Sesión</button>
+                <button id="tab-register-btn" onclick="toggleAuthMode('register')" class="flex-1 py-2.5 rounded-lg text-slate-400 hover:text-white transition">Registrarse</button>
+            </div>
+
+            <!-- FORMULARIO: LOGIN -->
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-400 font-medium mb-1">Correo Electrónico</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-envelope absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
+                        <input type="email" id="login-email" required placeholder="tu@email.com" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-end mb-1">
+                        <label class="block text-xs text-slate-400 font-medium">Contraseña</label>
+                        <button type="button" onclick="toggleAuthMode('forgot')" class="text-[10px] text-cyan-400 hover:underline">¿Olvidaste tu contraseña?</button>
+                    </div>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
+                        <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                    </div>
+                </div>
+                <button type="submit" id="login-btn-submit" class="w-full glow-button text-slate-950 font-black py-3 rounded-xl text-xs flex items-center justify-center space-x-2 mt-2">
+                    <span id="login-btn-text">Ingresar a la Plataforma</span>
+                    <i class="fa-solid fa-arrow-right-to-bracket" id="login-btn-icon"></i>
+                </button>
+            </form>
+
+            <!-- FORMULARIO: REGISTRO -->
+            <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+                <div id="referral-banner-notice" class="hidden bg-cyan-500/10 border border-cyan-500/30 p-2.5 rounded-xl text-center">
+                    <p class="text-[11px] text-cyan-300 font-semibold"><i class="fa-solid fa-user-plus mr-1"></i> Te estás registrando con un enlace de invitación</p>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 font-medium mb-1">Nombre Completo</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
+                        <input type="text" id="reg-fullname" required placeholder="Ej. Juan Pérez" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 font-medium mb-1">Correo Electrónico</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-envelope absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
+                        <input type="email" id="reg-email" required placeholder="tu@email.com" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 font-medium mb-1">Contraseña</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
+                        <input type="password" id="reg-password" minlength="6" required placeholder="Mínimo 6 caracteres" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                    </div>
+                </div>
+                <button type="submit" id="reg-btn-submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl text-xs transition flex items-center justify-center space-x-2">
+                    <span id="reg-btn-text">Crear Cuenta Gratis</span>
+                    <i class="fa-solid fa-user-plus" id="reg-btn-icon"></i>
+                </button>
+            </form>
+
+            <!-- FORMULARIO: RECUPERAR CONTRASEÑA -->
+            <form id="forgot-form" onsubmit="handleForgotPassword(event)" class="space-y-4 hidden">
+                <div class="text-center mb-2">
+                    <h3 class="text-white text-sm font-bold">Recuperar Acceso</h3>
+                    <p class="text-[10px] text-slate-400 mt-1">Ingresa tu correo para enviarte las instrucciones de restablecimiento.</p>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 font-medium mb-1">Correo Electrónico</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-envelope absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
+                        <input type="email" id="forgot-email" required placeholder="tu@email.com" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs transition flex items-center justify-center space-x-2">
+                    <span>Enviar Correo de Recuperación</span>
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+                <button type="button" onclick="toggleAuthMode('login')" class="w-full text-[10px] text-slate-400 hover:text-white transition text-center mt-2">
+                    Volver a Iniciar Sesión
+                </button>
+            </form>
+
+            <div id="demo-divider" class="relative my-6 text-center">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-800"></div></div>
+                <span class="relative bg-slate-950 px-3 text-[10px] text-slate-500 uppercase font-mono tracking-wider">o prueba rápida</span>
+            </div>
+            <button id="demo-btn" onclick="enterDemoMode()" class="w-full bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-flask text-cyan-400"></i>
+                <span>Ingresar como Invitado (Modo Demo)</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== VISTA 2: PANEL PRINCIPAL (DASHBOARD) ==================== -->
+    <div id="dashboard-view" class="hidden flex-col min-h-screen">
+        
+        <!-- Ticker superior -->
+        <div class="bg-slate-950 border-b border-slate-800 text-xs py-2 px-4 overflow-hidden whitespace-nowrap flex items-center justify-between text-slate-400">
+            <div class="flex items-center space-x-6 animate-marquee">
+                <span class="flex items-center"><i class="fa-solid fa-circle text-[8px] text-emerald-400 mr-2 pulse-dot"></i> RED $LITH MAINNET: <span class="text-white font-semibold ml-1">$1.00 USDT</span></span>
+                <span class="text-slate-500">|</span>
+                <span>PRECIO LITIO C2/N3 (Salar de Olaroz): <span class="text-emerald-400 font-medium">$24,850 USD/Ton (+3.4%)</span></span>
+                <span class="text-slate-500">|</span>
+                <span>CAPACIDAD EXTRACTIVA: <span class="text-cyan-400 font-medium">18,450 Ton/Año</span></span>
+            </div>
+            <div class="hidden md:flex items-center space-x-4 text-xs">
+                <span class="text-slate-300"><i class="fa-solid fa-clock mr-1"></i> PAGO DIARIO: <span id="time-to-payout" class="font-mono text-cyan-400">08:42:15</span></span>
+            </div>
+        </div>
+
+        <!-- Encabezado y Navegación Principal -->
+        <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 lg:px-8 py-3.5">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('dashboard')">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-teal-400 to-emerald-400 p-0.5 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                        <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                            <i class="fa-solid fa-bolt text-cyan-400 text-lg"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-1.5">
+                            <span class="text-xl font-black tracking-wider text-white">LITIO<span class="text-cyan-400">X</span></span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 tracking-tight" id="user-welcome-label">Hola, Usuario</p>
+                    </div>
+                </div>
+
+                <nav class="hidden md:flex items-center space-x-1 bg-slate-950/60 p-1.5 rounded-xl border border-slate-800">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn active px-3 py-2 rounded-lg text-xs font-semibold transition-all text-cyan-400 bg-slate-800/80">
+                        <i class="fa-solid fa-chart-line mr-1"></i> Inicio
+                    </button>
+                    <button onclick="switchTab('packages')" id="nav-packages" class="nav-btn px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
+                        <i class="fa-solid fa-cubes-stacked mr-1"></i> Planes
+                    </button>
+                    <button onclick="switchTab('referrals')" id="nav-referrals" class="nav-btn px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
+                        <i class="fa-solid fa-user-group mr-1"></i> Referidos
+                    </button>
+                    <button onclick="switchTab('telemetry')" id="nav-telemetry" class="nav-btn px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
+                        <i class="fa-solid fa-satellite-dish mr-1"></i> Salares
+                    </button>
+                    <button onclick="switchTab('team')" id="nav-team" class="nav-btn px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
+                        <i class="fa-solid fa-users text-cyan-400 mr-1"></i> Nosotros
+                    </button>
+                    <button onclick="switchTab('admin')" id="nav-admin" class="hidden nav-btn px-3 py-2 rounded-lg text-xs font-bold text-amber-400 hover:bg-amber-500/10 transition-all border border-amber-500/30">
+                        <i class="fa-solid fa-user-shield mr-1"></i> Panel Admin
+                    </button>
+                </nav>
+
+                <div class="flex items-center space-x-3">
+                    <div class="hidden sm:flex flex-col items-end mr-2 relative group">
+                        <span class="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Saldo (USDT)</span>
+                        <div class="flex items-center space-x-1">
+                            <i class="fa-solid fa-circle text-[6px] text-emerald-400 pulse-dot" title="Sincronizado con Supabase"></i>
+                            <span class="text-sm font-extrabold text-white font-mono transition-all duration-300" id="header-balance-display">$0.00</span>
+                        </div>
+                    </div>
+                    <button onclick="openDepositModal()" class="glow-button px-4 py-2 rounded-xl text-xs font-bold text-slate-950 flex items-center space-x-2">
+                        <i class="fa-solid fa-wallet"></i><span>Depositar</span>
+                    </button>
+                    <button onclick="openWithdrawModal()" class="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold transition">
+                        Retirar
+                    </button>
+                    <button onclick="handleLogout()" class="text-slate-400 hover:text-rose-400 p-2 text-sm transition ml-1" title="Cerrar Sesión">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Bar Mobile -->
+        <div class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 border-t border-slate-800 py-2 px-3 backdrop-blur-lg flex justify-around items-center">
+            <button onclick="switchTab('dashboard')" class="mobile-nav-btn flex flex-col items-center text-cyan-400 text-[10px] font-medium">
+                <i class="fa-solid fa-chart-line text-lg mb-0.5"></i><span>Inicio</span>
+            </button>
+            <button onclick="switchTab('packages')" class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px] font-medium">
+                <i class="fa-solid fa-cubes-stacked text-lg mb-0.5"></i><span>Invertir</span>
+            </button>
+            <button onclick="switchTab('referrals')" class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px] font-medium">
+                <i class="fa-solid fa-user-group text-lg mb-0.5"></i><span>Referidos</span>
+            </button>
+            <button onclick="switchTab('telemetry')" class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px] font-medium">
+                <i class="fa-solid fa-satellite-dish text-lg mb-0.5"></i><span>Salares</span>
+            </button>
+            <button onclick="switchTab('team')" class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px] font-medium">
+                <i class="fa-solid fa-users text-lg mb-0.5"></i><span>Nosotros</span>
+            </button>
+            <button onclick="switchTab('admin')" id="nav-admin-mobile" class="hidden mobile-nav-btn flex flex-col items-center text-amber-400 text-[10px] font-bold">
+                <i class="fa-solid fa-shield text-lg mb-0.5"></i><span>Admin</span>
+            </button>
+        </div>
+
+        <!-- CONTENEDOR PRINCIPAL -->
+        <main class="max-w-7xl mx-auto px-4 lg:px-8 py-6 w-full flex-grow mb-16 md:mb-0">
+
+            <!-- TAB 1: DASHBOARD OVERVIEW -->
+            <div id="tab-dashboard" class="tab-content space-y-6">
+                <!-- Hero Banner -->
+                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-teal-950/60 border border-slate-800 p-6 md:p-8">
+                    <div class="absolute -right-12 -bottom-12 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                        <div class="lg:col-span-7 space-y-4">
+                            <div class="inline-flex items-center space-x-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 px-3 py-1 rounded-full text-xs font-semibold">
+                                <i class="fa-solid fa-bolt text-amber-400"></i>
+                                <span>Rendimiento Fijo por Producción Minera</span>
+                            </div>
+                            <h1 class="text-2xl md:text-4xl font-extrabold text-white tracking-tight leading-tight">
+                                Genera hasta <span class="bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent">50% Mensual</span> respaldado por Litio
+                            </h1>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                LitioX monetiza la extracción directa en los salares de Jujuy y Salta. Cada token representa cuotas de producción con distribución de utilidades en USDT.
+                            </p>
+                            <div class="flex flex-wrap gap-3 pt-2">
+                                <button onclick="switchTab('packages')" class="glow-button px-6 py-3 rounded-xl font-bold text-slate-950 text-sm flex items-center space-x-2">
+                                    <span>Ver Pools de Minería</span>
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Generador de ganancias -->
+                        <div class="lg:col-span-5 bg-slate-950/80 border border-slate-800 rounded-2xl p-5 shadow-2xl relative">
+                            <div class="flex justify-between items-center mb-3 border-b border-slate-800/80 pb-2">
+                                <span class="text-xs text-slate-400 font-semibold uppercase flex items-center">
+                                    <i class="fa-solid fa-microchip text-emerald-400 mr-2"></i> Generador de Ganancias
+                                </span>
+                                <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono">EN VIVO</span>
+                            </div>
+                            <div class="space-y-3">
+                                <div>
+                                    <span class="text-xs text-slate-400">Ganancia Diaria Generándose (USDT)</span>
+                                    <div class="text-3xl font-black text-emerald-400 font-mono flex items-baseline space-x-1 mt-1">
+                                        <span id="live-accumulated-yield">$0.000000</span>
+                                        <span class="text-xs font-normal text-slate-400">USDT</span>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 pt-2 text-xs">
+                                    <div class="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl">
+                                        <span class="text-slate-400 block text-[10px]">Tasa Promedio</span>
+                                        <span class="text-white font-bold text-sm">~ 1.66% / Día</span>
+                                    </div>
+                                    <div class="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl">
+                                        <span class="text-slate-400 block text-[10px]">Total Invertido (Staked)</span>
+                                        <span class="text-cyan-400 font-bold text-sm font-mono" id="hero-staked-amount">$0.00</span>
+                                    </div>
+                                </div>
+                                <button onclick="claimDailyEarnings()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                                    <span>Acreditar al Saldo Disponible</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjetero métricas -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass-card p-4 rounded-2xl relative overflow-hidden">
+                        <p class="text-xs font-medium text-slate-400 mb-1">Inversión Activa</p>
+                        <h3 class="text-xl font-black text-white font-mono" id="metric-staked">$0.00</h3>
+                    </div>
+                    <div class="glass-card p-4 rounded-2xl relative overflow-hidden transition-colors duration-500" id="card-metric-balance">
+                        <p class="text-xs font-medium text-slate-400 mb-1">Saldo Disponible</p>
+                        <h3 class="text-xl font-black text-emerald-400 font-mono" id="metric-balance">$0.00</h3>
+                    </div>
+                    <div class="glass-card p-4 rounded-2xl relative overflow-hidden">
+                        <p class="text-xs font-medium text-slate-400 mb-1">Ganancias Acumuladas</p>
+                        <h3 class="text-xl font-black text-amber-400 font-mono" id="metric-yield-earned">$0.00</h3>
+                    </div>
+                    <div class="glass-card p-4 rounded-2xl relative overflow-hidden">
+                        <p class="text-xs font-medium text-slate-400 mb-1">Total Retirado</p>
+                        <h3 class="text-xl font-black text-cyan-400 font-mono" id="metric-withdrawn">$0.00</h3>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN DE REQUISITOS OBLIGATORIOS PARA RETIRAR DINERO -->
+                <div class="glass-card p-6 rounded-2xl border border-cyan-500/30 bg-slate-900/80 shadow-xl relative overflow-hidden">
+                    <div class="flex items-center space-x-3 mb-4 border-b border-slate-800 pb-3">
+                        <div class="w-9 h-9 rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-400 font-bold">
+                            <i class="fa-solid fa-shield-check text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-black text-white">Requisitos Obligatorios para Habilitar Retiros</h3>
+                            <p class="text-xs text-slate-400">Cumple estas 3 condiciones transparentes para realizar tu solicitud de retiro en USDT.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <!-- Requisito 1 -->
+                        <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-slate-200"><i class="fa-solid fa-users text-cyan-400 mr-1.5"></i> 1. Invitar 3 Referidos</span>
+                                <span id="req-ref-badge" class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-bold">0 / 3</span>
+                            </div>
+                            <p class="text-[11px] text-slate-400">Invita como mínimo a 3 usuarios con tu enlace. ¡Además ganas el <strong>0.3%</strong> de todas sus ganancias!</p>
+                            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div id="req-ref-bar" class="bg-cyan-400 h-full w-0 transition-all duration-500"></div>
+                            </div>
+                        </div>
+
+                        <!-- Requisito 2 -->
+                        <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-slate-200"><i class="fa-solid fa-coins text-emerald-400 mr-1.5"></i> 2. Mínimo $15 Ganados</span>
+                                <span id="req-yield-badge" class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-bold">$0.00 / $15</span>
+                            </div>
+                            <p class="text-[11px] text-slate-400">Debes acumular al menos <strong>$15.00 USDT</strong> en ganancias netas generadas por tus inversiones.</p>
+                            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div id="req-yield-bar" class="bg-emerald-400 h-full w-0 transition-all duration-500"></div>
+                            </div>
+                        </div>
+
+                        <!-- Requisito 3 -->
+                        <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-slate-200"><i class="fa-solid fa-money-bill-transfer text-amber-400 mr-1.5"></i> 3. Mínimo $25 por Retiro</span>
+                                <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-bold">$25.00 USDT</span>
+                            </div>
+                            <p class="text-[11px] text-slate-400">Cada solicitud de retiro debe ser por un valor igual o superior a <strong>$25.00 USDT</strong>.</p>
+                            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-amber-400 h-full w-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Historial de Transacciones del Usuario -->
+                <div class="glass-card p-5 rounded-2xl border border-slate-800">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-list-ul text-cyan-400 mr-2"></i> Mis Movimientos</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead>
+                                <tr class="text-slate-400 border-b border-slate-800">
+                                    <th class="p-2">Fecha</th>
+                                    <th class="p-2">Tipo</th>
+                                    <th class="p-2">Monto</th>
+                                    <th class="p-2">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="user-tx-history" class="divide-y divide-slate-800/50">
+                                <!-- JS inserta filas -->
+                            </tbody>
+                        </table>
+                        <div id="no-tx-msg" class="text-center text-slate-500 text-xs py-4 hidden">No hay movimientos recientes.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: PACKAGES -->
+            <div id="tab-packages" class="tab-content hidden space-y-8">
+                <div class="text-center max-w-2xl mx-auto space-y-2">
+                    <h2 class="text-3xl font-black text-white">Nodos de Producción</h2>
+                    <p class="text-slate-400 text-sm">Activa un plan con tu Saldo Disponible. Los retornos se acreditan al instante en el simulador en vivo.</p>
+                </div>
+                <!-- Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="glass-card rounded-2xl p-6 flex flex-col justify-between relative border-slate-800">
+                        <div class="space-y-4">
+                            <span class="text-xs font-bold uppercase text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-full">Inicial</span>
+                            <h3 class="text-xl font-bold text-white">Starter Puna</h3>
+                            <div class="py-2 border-y border-slate-800/80 space-y-2">
+                                <div class="flex justify-between text-xs"><span class="text-slate-400">Retorno Mensual:</span><span class="text-emerald-400 font-bold">40.0%</span></div>
+                                <div class="flex justify-between text-xs"><span class="text-slate-400">Costo Fijo:</span><span class="text-cyan-400 font-mono">$100 USDT</span></div>
+                            </div>
+                        </div>
+                        <button onclick="investInPackage('Starter Puna', 100, 0.40)" class="w-full mt-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold py-3 rounded-xl text-xs transition">
+                            Invertir $100 USDT
+                        </button>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-6 flex flex-col justify-between relative border-cyan-500/50 bg-slate-900/90 shadow-2xl shadow-cyan-500/10">
+                        <div class="space-y-4">
+                            <span class="text-xs font-bold uppercase text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-full">Salar Apex</span>
+                            <h3 class="text-xl font-bold text-white">Apex Extraction</h3>
+                            <div class="py-2 border-y border-slate-800/80 space-y-2">
+                                <div class="flex justify-between text-xs"><span class="text-slate-400">Retorno Mensual:</span><span class="text-emerald-400 font-extrabold text-base">50.0%</span></div>
+                                <div class="flex justify-between text-xs"><span class="text-slate-400">Costo Fijo:</span><span class="text-cyan-400 font-mono">$500 USDT</span></div>
+                            </div>
+                        </div>
+                        <button onclick="investInPackage('Apex Extraction', 500, 0.50)" class="w-full mt-6 glow-button text-slate-950 font-black py-3 rounded-xl text-xs transition">
+                            Invertir $500 USDT
+                        </button>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-6 flex flex-col justify-between relative border-slate-800">
+                        <div class="space-y-4">
+                            <span class="text-xs font-bold uppercase text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full">Institucional</span>
+                            <h3 class="text-xl font-bold text-white">GigaFactory</h3>
+                            <div class="py-2 border-y border-slate-800/80 space-y-2">
+                                <div class="flex justify-between text-xs"><span class="text-slate-400">Retorno Mensual:</span><span class="text-emerald-400 font-bold">60.0%</span></div>
+                                <div class="flex justify-between text-xs"><span class="text-slate-400">Costo Fijo:</span><span class="text-cyan-400 font-mono">$2,000 USDT</span></div>
+                            </div>
+                        </div>
+                        <button onclick="investInPackage('GigaFactory', 2000, 0.60)" class="w-full mt-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-400 font-bold py-3 rounded-xl text-xs transition">
+                            Invertir $2,000 USDT
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: REFERRALS -->
+            <div id="tab-referrals" class="tab-content hidden space-y-6">
+                <div class="text-center max-w-2xl mx-auto space-y-2 mb-6">
+                    <h2 class="text-3xl font-black text-white"><i class="fa-solid fa-user-group text-cyan-400 mr-2"></i> Programa de Referidos</h2>
+                    <p class="text-slate-400 text-sm">Invita a tus amigos y colegas a invertir en LitioX. Obtén el <strong>0.3% de comisiones continuas</strong> sobre las ganancias generadas por tus invitados.</p>
+                </div>
+
+                <!-- Tu Link de Invitación -->
+                <div class="glass-card p-6 rounded-2xl border border-cyan-500/30 max-w-2xl mx-auto space-y-4 text-center">
+                    <span class="text-xs font-bold uppercase text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full">Tu Enlace Personal de Referido</span>
+                    <div class="flex items-center space-x-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800 mt-2">
+                        <input type="text" readonly id="user-ref-link-input" value="https://litiox.io/?ref=CARGANDO" class="bg-transparent text-cyan-300 font-mono text-xs w-full outline-none px-2">
+                        <button onclick="copyReferralLink()" class="glow-button px-4 py-2 rounded-lg text-xs font-bold text-slate-950 whitespace-nowrap">
+                            <i class="fa-solid fa-copy mr-1"></i> Copiar Link
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Requisito para retirar: Tener al menos <strong>3 referidos registrados</strong> con tu enlace.</p>
+                </div>
+
+                <!-- Métricas de Referidos -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+                    <div class="glass-card p-5 rounded-2xl text-center border border-slate-800">
+                        <span class="text-xs text-slate-400">Referidos Registrados</span>
+                        <div class="text-3xl font-black text-cyan-400 font-mono mt-1" id="ref-count-display">0 / 3</div>
+                        <p class="text-[10px] text-slate-500 mt-1" id="ref-status-text">Faltan 3 referidos para cumplir el requisito de retiro</p>
+                    </div>
+                    <div class="glass-card p-5 rounded-2xl text-center border border-slate-800">
+                        <span class="text-xs text-slate-400">Comisiones Obtenidas (0.3%)</span>
+                        <div class="text-3xl font-black text-emerald-400 font-mono mt-1" id="ref-earnings-display">$0.00 USDT</div>
+                        <p class="text-[10px] text-slate-500 mt-1">Acreditadas automáticamente a tu balance</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: TELEMETRY -->
+            <div id="tab-telemetry" class="tab-content hidden space-y-6">
+                <div class="flex flex-col md:flex-row justify-between md:items-end mb-4 border-b border-slate-800 pb-4">
+                    <div>
+                        <h2 class="text-2xl font-black text-white"><i class="fa-solid fa-satellite-dish text-cyan-400 mr-2"></i> Telemetría de Extracción</h2>
+                        <p class="text-xs text-slate-400 mt-1">Datos en tiempo real de plantas extractivas en el Salar de Olaroz.</p>
+                    </div>
+                    <div class="mt-4 md:mt-0 bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs flex space-x-4">
+                        <div><span class="text-slate-500">Pureza:</span> <span class="text-emerald-400 font-bold">99.9%</span></div>
+                        <div><span class="text-slate-500">Estado:</span> <span class="text-cyan-400 font-bold animate-pulse">ÓPTIMO</span></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 glass-card p-5 rounded-2xl border border-slate-800">
+                        <h3 class="text-sm font-bold text-white mb-4">Presión de Bombeo vs Volumen (Litros/seg)</h3>
+                        <div class="w-full h-72">
+                            <canvas id="telemetryChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-1 space-y-4">
+                        <div class="glass-card p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-xs text-slate-400 font-semibold mb-2">Extracción Pozo A-14</h4>
+                            <div class="flex items-end justify-between">
+                                <span class="text-2xl font-black text-white font-mono" id="tel-vol">42.8 L/s</span>
+                                <i class="fa-solid fa-arrow-trend-up text-emerald-400"></i>
+                            </div>
+                            <div class="w-full bg-slate-800 h-1 mt-2 rounded-full"><div class="bg-cyan-400 h-full rounded-full w-[85%]"></div></div>
+                        </div>
+                        <div class="glass-card p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-xs text-slate-400 font-semibold mb-2">Concentración de Carbonato</h4>
+                            <div class="flex items-end justify-between">
+                                <span class="text-2xl font-black text-white font-mono">840 mg/L</span>
+                                <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">Estable</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: NOSOTROS Y EQUIPO DIRECTIVO -->
+            <div id="tab-team" class="tab-content hidden space-y-12">
+                
+                <!-- Encabezado de la Sección -->
+                <div class="text-center max-w-3xl mx-auto space-y-3">
+                    <div class="inline-flex items-center space-x-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
+                        <i class="fa-solid fa-earth-asia text-emerald-400 mr-1"></i> Tecnología Surcoreana & Minería Global
+                    </div>
+                    <h2 class="text-3xl md:text-5xl font-black text-white tracking-tight">Nosotros</h2>
+                    <p class="text-slate-300 text-sm md:text-base leading-relaxed">
+                        Conoce a los pioneros surcoreanos que están revolucionando la tokenización de materias primas estratégicas combinando biotecnología extractiva de última generación y finanzas descentralizadas.
+                    </p>
+                </div>
+
+                <!-- GRIDS DE LOS 4 FUNDADORES COREANOS -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    
+                    <!-- Fundador 1 -->
+                    <div class="glass-card rounded-3xl p-6 border border-slate-800/80 hover:border-cyan-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 to-teal-400"></div>
+                        <div>
+                            <div class="w-28 h-28 mx-auto rounded-2xl bg-slate-800 border-2 border-cyan-500/30 shadow-2xl overflow-hidden mb-5 relative group-hover:scale-105 transition-transform duration-300">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-500" alt="Dr. Sung-Hoon Park">
+                            </div>
+                            <div class="text-center">
+                                <span class="text-[10px] uppercase tracking-widest font-extrabold text-cyan-400 bg-cyan-500/10 px-2.5 py-0.5 rounded-full">CEO & Co-Fundador</span>
+                                <h3 class="text-xl font-black text-white mt-2">Dr. Sung-Hoon Park</h3>
+                                <p class="text-slate-400 text-xs font-semibold mb-3">Ex-Director de I+D en Samsung SDI</p>
+                                <p class="text-xs text-slate-300 leading-relaxed text-left border-t border-slate-800/80 pt-3 mt-1">
+                                    Doctor en Ingenieria Minera y Mineralogía Aplicada por KAIST (Daejeon, Corea del Sur). Pionero en sistemas de Extracción Directa de Litio (DLE). Cuenta con más de 16 años de experiencia optimizando salares en Asia y Sudamérica.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-800/60 flex justify-center space-x-3 text-slate-400 text-xs">
+                            <span class="text-[11px] font-mono text-cyan-300"><i class="fa-solid fa-graduation-cap text-cyan-400 mr-1"></i> KAIST PhD</span>
+                        </div>
+                    </div>
+
+                    <!-- Fundador 2 -->
+                    <div class="glass-card rounded-3xl p-6 border border-slate-800/80 hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
+                        <div>
+                            <div class="w-28 h-28 mx-auto rounded-2xl bg-slate-800 border-2 border-emerald-500/30 shadow-2xl overflow-hidden mb-5 relative group-hover:scale-105 transition-transform duration-300">
+                                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-500" alt="Min-Soo Kim">
+                            </div>
+                            <div class="text-center">
+                                <span class="text-[10px] uppercase tracking-widest font-extrabold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">CTO & Co-Fundador</span>
+                                <h3 class="text-xl font-black text-white mt-2">Min-Soo Kim</h3>
+                                <p class="text-slate-400 text-xs font-semibold mb-3">Líder Blockchain & IoT Seúl</p>
+                                <p class="text-xs text-slate-300 leading-relaxed text-left border-t border-slate-800/80 pt-3 mt-1">
+                                    Graduado Magna Cum Laude de la Universidad Nacional de Seúl (SNU). Arquitecto principal de oráculos de telemetría IoT. Ha liderado protocolos de alta frecuencia y auditoría de contratos inteligentes auditados en redes Web3.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-800/60 flex justify-center space-x-3 text-slate-400 text-xs">
+                            <span class="text-[11px] font-mono text-emerald-300"><i class="fa-solid fa-code text-emerald-400 mr-1"></i> SNU B.S. CS</span>
+                        </div>
+                    </div>
+
+                    <!-- Fundador 3 -->
+                    <div class="glass-card rounded-3xl p-6 border border-slate-800/80 hover:border-amber-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-orange-400"></div>
+                        <div>
+                            <div class="w-28 h-28 mx-auto rounded-2xl bg-slate-800 border-2 border-amber-500/30 shadow-2xl overflow-hidden mb-5 relative group-hover:scale-105 transition-transform duration-300">
+                                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-500" alt="Seo-Yeon Choi">
+                            </div>
+                            <div class="text-center">
+                                <span class="text-[10px] uppercase tracking-widest font-extrabold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full">CFO & Finanzas</span>
+                                <h3 class="text-xl font-black text-white mt-2">Seo-Yeon Choi</h3>
+                                <p class="text-slate-400 text-xs font-semibold mb-3">Especialista Financiera Cuantitativa</p>
+                                <p class="text-xs text-slate-300 leading-relaxed text-left border-t border-slate-800/80 pt-3 mt-1">
+                                    Ex-Vicepresidenta de Mercados de Capitales en KTB Investment Securities en Singapur. Posee una maestría en Finanzas Cuantitativas por Yonsei University. Diseñó el modelo de yield sostenible respaldado en materias primas.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-800/60 flex justify-center space-x-3 text-slate-400 text-xs">
+                            <span class="text-[11px] font-mono text-amber-300"><i class="fa-solid fa-chart-pie text-amber-400 mr-1"></i> Yonsei M.S. Finance</span>
+                        </div>
+                    </div>
+
+                    <!-- Fundador 4 -->
+                    <div class="glass-card rounded-3xl p-6 border border-slate-800/80 hover:border-blue-500/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-cyan-400"></div>
+                        <div>
+                            <div class="w-28 h-28 mx-auto rounded-2xl bg-slate-800 border-2 border-blue-500/30 shadow-2xl overflow-hidden mb-5 relative group-hover:scale-105 transition-transform duration-300">
+                                <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop&q=80" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-500" alt="Dr. Do-Yoon Lee">
+                            </div>
+                            <div class="text-center">
+                                <span class="text-[10px] uppercase tracking-widest font-extrabold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-full">CIO & Innovación</span>
+                                <h3 class="text-xl font-black text-white mt-2">Dr. Do-Yoon Lee</h3>
+                                <p class="text-slate-400 text-xs font-semibold mb-3">Investigador Baterías de Nueva Generación</p>
+                                <p class="text-xs text-slate-300 leading-relaxed text-left border-t border-slate-800/80 pt-3 mt-1">
+                                    Doctor por POSTECH (Pohang University of Science and Technology). Autor de 14 patentes en síntesis de carbonato e hidróxido de litio grado batería (99.9% pureza), asegurando contratos directos de compra con automotrices globales.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-800/60 flex justify-center space-x-3 text-slate-400 text-xs">
+                            <span class="text-[11px] font-mono text-blue-300"><i class="fa-solid fa-atom text-blue-400 mr-1"></i> POSTECH PhD</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- DESCRIPCIÓN DE LA EMPRESA & POR QUÉ ELEGIR EL LITIO -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch pt-4">
+                    
+                    <!-- Tarjeta: ¿Quiénes Somos? -->
+                    <div class="lg:col-span-6 glass-card p-8 rounded-3xl border border-slate-800 flex flex-col justify-between space-y-6 relative overflow-hidden">
+                        <div class="space-y-4">
+                            <div class="inline-flex items-center space-x-2 text-cyan-400 text-xs font-bold uppercase tracking-widest">
+                                <i class="fa-solid fa-building-shield"></i>
+                                <span>Sobre LitioX Corporation</span>
+                            </div>
+                            <h3 class="text-2xl md:text-3xl font-black text-white leading-tight">
+                                El Puente entre la Alta Tecnología Asiática y el Oro Blanco Sudamericano
+                            </h3>
+                            <p class="text-slate-300 text-xs md:text-sm leading-relaxed">
+                                <strong>LitioX</strong> es una plataforma de inversión descentralizada de última generación, nacida de la alianza estratégica entre científicos e inversores surcoreanos y operadores mineros locales en el <i>Triángulo del Litio</i> (Salar de Olaroz, Jujuy y Salta).
+                            </p>
+                            <p class="text-slate-300 text-xs md:text-sm leading-relaxed">
+                                Tokenizamos los flujos de caja y contratos de venta del mineral extraído en tiempo real. Mediante nuestros pozos de Extracción Directa de Litio (DLE), reducimos el tiempo de cristalización de 18 meses a solo <strong>24 horas</strong>, permitiendo márgenes de ganancia sin precedentes que se distribuyen diariamente a nuestros inversores en USDT.
+                            </p>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-3 pt-4 border-t border-slate-800 text-center">
+                            <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                                <span class="text-xl font-black text-cyan-400 block">99.9%</span>
+                                <span class="text-[10px] text-slate-400 font-medium">Pureza Batería</span>
+                            </div>
+                            <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                                <span class="text-xl font-black text-emerald-400 block">&lt; 24h</span>
+                                <span class="text-[10px] text-slate-400 font-medium">Ciclo DLE</span>
+                            </div>
+                            <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                                <span class="text-xl font-black text-amber-400 block">100%</span>
+                                <span class="text-[10px] text-slate-400 font-medium">On-Chain Audit</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tarjeta: ¿Por qué invertir en Litio Hoy? -->
+                    <div class="lg:col-span-6 glass-card p-8 rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/30 flex flex-col justify-between space-y-6 relative overflow-hidden shadow-2xl">
+                        <div class="space-y-4">
+                            <div class="inline-flex items-center space-x-2 text-emerald-400 text-xs font-bold uppercase tracking-widest">
+                                <i class="fa-solid fa-arrow-trend-up"></i>
+                                <span>Máxima Rentabilidad Global</span>
+                            </div>
+                            <h3 class="text-2xl md:text-3xl font-black text-white leading-tight">
+                                ¿Por qué Invertir en Litio Hoy? El Mineral más Rentable del Siglo XXI
+                            </h3>
+                            <ul class="space-y-3 text-xs md:text-sm text-slate-300">
+                                <li class="flex items-start space-x-3">
+                                    <i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i>
+                                    <span><strong>Demanda Imparable por Vehículos Eléctricos e IA:</strong> Las gigafábricas de baterías y los centros de datos demandan más del 300% de la producción global actual.</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i>
+                                    <span><strong>Costos Minimos DLE:</strong> Gracias a la tecnología de patentes coreanas de LitioX, el costo de producción por tonelada es de solo $4,200 USD, mientras que se vende a más de $24,000 USD/Ton.</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i>
+                                    <span><strong>Retorno Inmediato y Liquidez en USDT:</strong> A diferencia de las acciones tradicionales de minería que tardan años en repartir dividendos, LitioX acredita utilidades en tiempo real.</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-2xl flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-2xl flex-shrink-0">
+                                <i class="fa-solid fa-piggy-bank"></i>
+                            </div>
+                            <p class="text-xs text-emerald-200">
+                                <strong>Rentabilidad Garantizada:</strong> La escasez de litio de alta pureza convierte a esta materia prima en el activo de mayor apreciación sostenida para esta década.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- SECCIÓN DE CONFIABILIDAD Y GARANTÍA QUE GENERA CONFIANZA -->
+                <div class="glass-card p-8 rounded-3xl border border-cyan-500/30 bg-slate-900/90 shadow-2xl relative overflow-hidden">
+                    <div class="text-center max-w-2xl mx-auto mb-8 space-y-2">
+                        <h3 class="text-2xl font-black text-white"><i class="fa-solid fa-shield-halved text-cyan-400 mr-2"></i> Nuestra Confiabilidad es tu Garantía</h3>
+                        <p class="text-xs text-slate-400">Diseñado bajo los estándares de auditoría corporativa de Corea del Sur e infraestructura blockchain inalterable.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                        <div class="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-2">
+                            <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-lg mb-2">
+                                <i class="fa-solid fa-satellite"></i>
+                            </div>
+                            <h4 class="text-sm font-bold text-white">Telemetría Transparente</h4>
+                            <p class="text-xs text-slate-400 leading-relaxed">Monitoreo en vivo conectado a los sensores IoT de los salares. Puedes verificar la producción de litros por segundo y presión de bombeo en tiempo real desde la pestaña <i>Salares</i>.</p>
+                        </div>
+
+                        <div class="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-2">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg mb-2">
+                                <i class="fa-solid fa-lock-keyhole"></i>
+                            </div>
+                            <h4 class="text-sm font-bold text-white">Respaldo Físico & Liquidez</h4>
+                            <p class="text-xs text-slate-400 leading-relaxed">Cada depósito en USDT es custodiado en smart contracts auditados con colateral en stock físico de Carbonato de Litio Grado Batería almacenado en depósitos fiscales.</p>
+                        </div>
+
+                        <div class="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-2">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg mb-2">
+                                <i class="fa-solid fa-handshake-simple"></i>
+                            </div>
+                            <h4 class="text-sm font-bold text-white">Cumplimiento & Seguridad</h4>
+                            <p class="text-xs text-slate-400 leading-relaxed">Procesamiento seguro automatizado mediante Supabase Cloud Database y pagos en USDT (BEP-20) con trazabilidad blockchain directa.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- TAB 6: PANEL ADMINISTRADOR -->
+            <div id="tab-admin" class="tab-content hidden space-y-6">
+                <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-400 text-2xl">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-black text-white">Panel Administrador Global</h2>
+                            <p class="text-xs text-slate-400">Control multiusuario en la nube con Supabase</p>
+                            <div id="admin-status-indicator" class="text-xs mt-1 font-mono">
+                                <span class="text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Conectando...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="loadAdminPanel()" class="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center shadow-lg">
+                        <i class="fa-solid fa-rotate mr-2"></i> Recargar Nube
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Depósitos Pendientes -->
+                    <div class="glass-card p-5 rounded-2xl border border-slate-800">
+                        <h3 class="font-bold text-white mb-4 flex items-center justify-between">
+                            <span class="flex items-center"><i class="fa-solid fa-arrow-down-to-line text-emerald-400 mr-2"></i> Depósitos Pendientes</span>
+                            <span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-mono">EN VIVO</span>
+                        </h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="text-slate-400 border-b border-slate-800 uppercase text-[10px]">
+                                        <th class="p-3">Usuario</th>
+                                        <th class="p-3">Monto</th>
+                                        <th class="p-3">Tx Hash</th>
+                                        <th class="p-3 text-right">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-deposits-body" class="divide-y divide-slate-800/50">
+                                    <!-- Carga dinámicamente -->
+                                </tbody>
+                            </table>
+                            <div id="admin-no-deps" class="text-center text-slate-500 text-xs py-6 hidden">
+                                <i class="fa-solid fa-circle-check text-slate-600 text-2xl mb-2 block"></i>
+                                No hay depósitos pendientes.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Retiros Pendientes -->
+                    <div class="glass-card p-5 rounded-2xl border border-slate-800">
+                        <h3 class="font-bold text-white mb-4 flex items-center justify-between">
+                            <span class="flex items-center"><i class="fa-solid fa-arrow-up-from-bracket text-rose-400 mr-2"></i> Retiros Solicitados</span>
+                            <span class="text-[10px] bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded font-mono">EN VIVO</span>
+                        </h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="text-slate-400 border-b border-slate-800 uppercase text-[10px]">
+                                        <th class="p-3">Usuario</th>
+                                        <th class="p-3">Monto</th>
+                                        <th class="p-3">Billetera</th>
+                                        <th class="p-3 text-right">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-withdrawals-body" class="divide-y divide-slate-800/50">
+                                    <!-- Carga dinámicamente -->
+                                </tbody>
+                            </table>
+                            <div id="admin-no-wits" class="text-center text-slate-500 text-xs py-6 hidden">
+                                <i class="fa-solid fa-circle-check text-slate-600 text-2xl mb-2 block"></i>
+                                No hay solicitudes de retiro pendientes.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL: DEPOSITAR -->
+    <div id="deposit-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-slate-800 space-y-4 relative">
+            <button onclick="closeModal('deposit-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="text-center mb-4">
+                <h3 class="font-black text-white text-lg">Depositar USDT</h3>
+                <p class="text-[10px] bg-slate-800 inline-block px-2 py-0.5 rounded text-amber-400 font-mono mt-1">Red BNB Smart Chain (BEP-20)</p>
+            </div>
+            
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 text-center">
+                <p class="text-xs text-slate-400 mb-2">Envía tus fondos a la dirección oficial:</p>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=0xf23130692008d8b470b963ac67be6453085e31c5&color=00f2fe&bgcolor=0f172a" class="mx-auto rounded-lg mb-3 border border-cyan-500/30 p-1" alt="QR">
+                <div class="flex items-center space-x-2 bg-slate-950 p-2 rounded-lg">
+                    <input type="text" readonly value="0xf23130692008d8b470b963ac67be6453085e31c5" class="bg-transparent text-cyan-400 text-[10px] w-full outline-none font-mono text-center">
+                    <button onclick="copyText('0xf23130692008d8b470b963ac67be6453085e31c5')" class="text-slate-400 hover:text-white px-2"><i class="fa-solid fa-copy"></i></button>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[10px] text-slate-400">Monto Enviado (USDT)</label>
+                    <input type="number" id="real-deposit-amount" placeholder="Ej: 500" class="w-full bg-slate-900 border border-slate-700 text-white text-sm rounded-xl p-3 font-mono mt-1">
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400">Hash de la Transacción (TxID)</label>
+                    <input type="text" id="real-deposit-hash" placeholder="Pega el Hash de blockchain aquí..." class="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-xl p-3 font-mono mt-1">
+                </div>
+                <button onclick="submitRealDeposit()" class="w-full glow-button text-slate-950 font-black py-3 rounded-xl text-xs mt-2">Notificar Pago</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: RETIRAR -->
+    <div id="withdraw-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-slate-800 space-y-4 relative">
+            <button onclick="closeModal('withdraw-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="text-center mb-2">
+                <h3 class="font-black text-white text-lg">Solicitar Retiro de USDT</h3>
+                <p class="text-[10px] text-slate-400 mt-0.5">Retiros procesados en USDT (BEP-20)</p>
+            </div>
+
+            <!-- Resumen de Requisitos en Modal -->
+            <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 space-y-2 text-[11px]">
+                <div class="flex justify-between items-center text-slate-300">
+                    <span><i class="fa-solid fa-users text-cyan-400 mr-1"></i> Referidos Obligatorios (mín. 3):</span>
+                    <span id="modal-req-ref" class="font-bold text-amber-400">0 / 3</span>
+                </div>
+                <div class="flex justify-between items-center text-slate-300">
+                    <span><i class="fa-solid fa-coins text-emerald-400 mr-1"></i> Ganancia Mínima ($15 USDT):</span>
+                    <span id="modal-req-yield" class="font-bold text-amber-400">$0.00 / $15</span>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center bg-slate-900 p-3 rounded-xl border border-slate-700">
+                <span class="text-xs text-slate-400">Saldo Disponible:</span>
+                <span class="text-sm font-bold text-emerald-400 font-mono" id="withdraw-available-balance">$0.00</span>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[10px] text-slate-400">Tu Billetera USDT (BEP-20)</label>
+                    <input type="text" id="withdraw-wallet-address" placeholder="0x..." class="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-xl p-3 font-mono mt-1">
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400">Monto a Retirar (Mínimo $25 USDT)</label>
+                    <input type="number" id="withdraw-amount" placeholder="Ej: 50" class="w-full bg-slate-900 border border-slate-700 text-white text-sm rounded-xl p-3 font-mono mt-1">
+                </div>
+                <button onclick="submitRealWithdrawal()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl text-xs mt-2 transition">Solicitar Retiro</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none flex flex-col items-end"></div>
+
+    <!-- MAIN JAVASCRIPT LOGIC -->
+    <script>
+        // CONFIGURACIÓN DE SUPABASE
+        const SUPABASE_URL = 'https://bmbfjsxgwxfjuphvhvya.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_0XRTTJKzV38S0-4AlDwmcw_wkfihwB-';
+        let supabaseClient = null;
+
+        if (window.supabase) {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } else {
+            alert("Error crítico: No se pudo cargar la librería de Supabase.");
+        }
+
+        const ADMIN_EMAILS = ['matiasmpv24@gmail.com', 'matiasjalil26@gmail.com'];
+
+        // Estado Global del Usuario
+        let userState = { 
+            id: '', 
+            email: '', fullName: '', balance: 0.00, stakedTotal: 0.00, totalWithdrawn: 0.00,
+            totalYieldEarned: 0.00, refCode: '', referredBy: '', referralCount: 0, accumulatedYieldSession: 0.00
+        };
+
+        let yieldInterval;
+        let adminPollingInterval = null;
+        let userSyncInterval = null; 
+        let pendingReferralCodeFromUrl = '';
+
+        function generateUUID() {
+            if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const refParam = urlParams.get('ref');
+            if (refParam) {
+                pendingReferralCodeFromUrl = refParam.toUpperCase();
+                document.getElementById('referral-banner-notice').classList.remove('hidden');
+                toggleAuthMode('register');
+            }
+            initTelemetryChart();
+            checkSession();
+        };
+        
+        async function checkSession() {
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session && session.user) {
+                    userState.id = session.user.id;
+                    await loadUserProfile(session.user.email);
+                }
+            } catch (e) {
+                console.warn("No active session found or error checking session", e);
+            }
+        }
+
+        function toggleAuthMode(mode) {
+            const forms = ['login', 'register', 'forgot'];
+            forms.forEach(f => document.getElementById(`${f}-form`).classList.add('hidden'));
+            document.getElementById('auth-tabs').classList.remove('hidden');
+            
+            if (mode === 'login' || mode === 'register') {
+                document.getElementById(`${mode}-form`).classList.remove('hidden');
+                document.getElementById(`tab-${mode}-btn`).className = 'flex-1 py-2.5 rounded-lg text-cyan-400 bg-slate-800 transition';
+                const other = mode === 'login' ? 'register' : 'login';
+                document.getElementById(`tab-${other}-btn`).className = 'flex-1 py-2.5 rounded-lg text-slate-400 hover:text-white transition';
+            } else if (mode === 'forgot') {
+                document.getElementById('forgot-form').classList.remove('hidden');
+                document.getElementById('auth-tabs').classList.add('hidden');
+            }
+        }
+
+        function generateRefCode() { return 'LITIO-' + Math.random().toString(36).substring(2, 7).toUpperCase(); }
+
+        function setButtonLoading(btnId, isLoading, defaultText, defaultIcon) {
+            const btnText = document.getElementById(`${btnId}-text`);
+            const btnIcon = document.getElementById(`${btnId}-icon`);
+            const btn = document.getElementById(`${btnId}-submit`);
+            
+            if (!btnText || !btnIcon || !btn) return;
+            
+            if (isLoading) {
+                btn.disabled = true;
+                btn.classList.add('opacity-70', 'cursor-not-allowed');
+                btnText.innerText = 'Procesando...';
+                btnIcon.className = 'fa-solid fa-spinner fa-spin';
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-70', 'cursor-not-allowed');
+                btnText.innerText = defaultText;
+                btnIcon.className = `fa-solid ${defaultIcon}`;
+            }
+        }
+
+        // --- AUTENTICACIÓN ---
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.toLowerCase().trim();
+            const pass = document.getElementById('login-password').value;
+
+            setButtonLoading('login-btn', true, 'Ingresar a la Plataforma', 'fa-arrow-right-to-bracket');
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+                
+                if (error) {
+                    showToast("Error al iniciar sesión. Revisa tus credenciales.", "error");
+                } else if (data && data.user) {
+                    userState.id = data.user.id;
+                    await loadUserProfile(email);
+                }
+            } catch (err) {
+                showToast("Ocurrió un error inesperado al conectar.", "error");
+            } finally {
+                setButtonLoading('login-btn', false, 'Ingresar a la Plataforma', 'fa-arrow-right-to-bracket');
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const email = document.getElementById('reg-email').value.toLowerCase().trim();
+            const pass = document.getElementById('reg-password').value;
+            const fname = document.getElementById('reg-fullname').value;
+
+            setButtonLoading('reg-btn', true, 'Crear Cuenta Gratis', 'fa-user-plus');
+
+            try {
+                // 1. Attempt to sign up in Auth
+                const { data, error } = await supabaseClient.auth.signUp({ email, password: pass });
+                
+                if (error) {
+                    if (error.message.includes("Database error saving new user") || error.message.includes("already registered")) {
+                         showToast("El correo ya existe o hubo un conflicto en la base de datos de Auth. Intenta recuperar la contraseña.", "error");
+                    } else {
+                        showToast(error.message, "error");
+                    }
+                    return;
+                }
+                
+                if (data && data.user) {
+                    userState.id = data.user.id;
+                    
+                    // 2. Prepare profile data
+                    const myRefCode = generateRefCode();
+                    const newProfile = {
+                        email: email,
+                        full_name: fname,
+                        balance: 0.00,
+                        staked_total: 0.00,
+                        total_withdrawn: 0.00,
+                        total_yield_earned: 0.00,
+                        ref_code: myRefCode,
+                        referred_by: pendingReferralCodeFromUrl || null,
+                        referral_count: 0
+                    };
+
+                    // 3. Insert into profiles table
+                    const { error: profileError } = await supabaseClient.from('profiles').insert([newProfile]);
+                    
+                    if (profileError) {
+                        console.error("Error al crear perfil en la tabla custom:", profileError);
+                        if (profileError.code === '23505') {
+                            showToast("El perfil ya existía. Iniciando sesión...", "success");
+                            await loadUserProfile(email);
+                            return;
+                        } else {
+                            showToast("La cuenta se creó en Auth, pero falló al guardar el perfil. Contacta soporte.", "warning");
+                        }
+                    }
+
+                    // 4. Handle Referrals
+                    if (pendingReferralCodeFromUrl && !profileError) {
+                        const { data: referrers } = await supabaseClient.from('profiles').select('*').eq('ref_code', pendingReferralCodeFromUrl);
+                        if (referrers && referrers.length > 0) {
+                            const refUser = referrers[0];
+                            await supabaseClient.from('profiles').update({ referral_count: (refUser.referral_count || 0) + 1 }).eq('email', refUser.email);
+                        }
+                    }
+
+                    showToast('¡Cuenta creada correctamente! Iniciando sesión...', 'success');
+                    await loadUserProfile(email);
+                } else {
+                     showToast("Ocurrió un error al registrar el usuario en Auth.", "error");
+                }
+                
+            } catch (err) {
+                console.error("Registro fallido:", err);
+                showToast("Ocurrió un error inesperado durante el registro.", "error");
+            } finally {
+                setButtonLoading('reg-btn', false, 'Crear Cuenta Gratis', 'fa-user-plus');
+            }
+        }
+
+        async function handleForgotPassword(e) {
+            e.preventDefault();
+            const email = document.getElementById('forgot-email').value;
+            
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+            btn.disabled = true;
+
+            try {
+                const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+                if (error) throw error;
+                showToast('Si el correo existe, enviamos las instrucciones.', 'success');
+                setTimeout(() => toggleAuthMode('login'), 2000);
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function enterDemoMode() {
+            userState.id = 'demo-user-id';
+            userState.email = 'invitado@demo.com';
+            userState.fullName = 'Usuario Demo';
+            userState.balance = 1500;
+            userState.stakedTotal = 500;
+            userState.totalWithdrawn = 0;
+            userState.totalYieldEarned = 25.00;
+            userState.refCode = 'DEMO-1234';
+            userState.referralCount = 3;
+            completeLogin(userState.email);
+        }
+
+        // --- CARGA DE DATOS 100% DESDE LA NUBE ---
+        async function loadUserProfile(email) {
+            const cleanEmail = email.toLowerCase().trim();
+            const { data, error } = await supabaseClient.from('profiles').select('*').eq('email', cleanEmail).single();
+            
+            if (data) {
+                const prevBalance = userState.balance;
+                userState.email = cleanEmail;
+                userState.balance = parseFloat(data.balance || 0);
+                userState.stakedTotal = parseFloat(data.staked_total || 0);
+                userState.totalWithdrawn = parseFloat(data.total_withdrawn || 0);
+                userState.totalYieldEarned = parseFloat(data.total_yield_earned || 0);
+                userState.refCode = data.ref_code;
+                userState.referredBy = data.referred_by || '';
+                userState.referralCount = parseInt(data.referral_count || 0);
+                userState.fullName = data.full_name || cleanEmail.split('@')[0];
+
+                if(prevBalance !== userState.balance && prevBalance > 0 && document.getElementById('dashboard-view').classList.contains('flex')) {
+                    document.getElementById('card-metric-balance').classList.add('bg-emerald-900/40', 'border-emerald-500/50');
+                    setTimeout(() => { document.getElementById('card-metric-balance').classList.remove('bg-emerald-900/40', 'border-emerald-500/50'); }, 2000);
+                }
+                
+                if(document.getElementById('auth-view').classList.contains('hidden') === false) {
+                    completeLogin(cleanEmail);
+                }
+            } else {
+                console.error("Perfil no encontrado o error RLS:", error);
+                if (userState.id) {
+                     showToast("Creando perfil de usuario faltante...", "warning");
+                     const newProfile = {
+                        email: cleanEmail,
+                        full_name: cleanEmail.split('@')[0],
+                        balance: 0, staked_total: 0, total_withdrawn: 0, total_yield_earned: 0,
+                        ref_code: generateRefCode(), referral_count: 0
+                     };
+                     await supabaseClient.from('profiles').insert([newProfile]);
+                     const { data: retryData } = await supabaseClient.from('profiles').select('*').eq('email', cleanEmail).single();
+                     if (retryData) {
+                         loadUserProfile(cleanEmail);
+                         return;
+                     }
+                }
+                showToast("Fallo al cargar el perfil. Puede que necesites iniciar sesión nuevamente.", "error");
+                handleLogout();
+            }
+        }
+
+        async function syncUserDataBackground() {
+            if (!userState.email || userState.email === 'invitado@demo.com') return;
+            await loadUserProfile(userState.email);
+            updateDashboardUI();
+            if(!document.getElementById('tab-dashboard').classList.contains('hidden')) {
+                loadUserTransactions();
+            }
+        }
+
+        function completeLogin(email) {
+            document.getElementById('auth-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.replace('hidden', 'flex');
+            document.getElementById('user-welcome-label').innerText = `Usuario: ${userState.fullName}`;
+            
+            const isAdmin = ADMIN_EMAILS.some(a => email.toLowerCase() === a.toLowerCase());
+            if (isAdmin) {
+                document.getElementById('nav-admin').classList.remove('hidden');
+                document.getElementById('nav-admin-mobile').classList.remove('hidden');
+                showToast('Modo Administrador Activado', 'warning');
+            }
+
+            const currentOrigin = window.location.origin + window.location.pathname;
+            document.getElementById('user-ref-link-input').value = `${currentOrigin}?ref=${userState.refCode}`;
+
+            updateDashboardUI();
+            loadUserTransactions();
+            startLiveYieldGenerator();
+
+            if(userSyncInterval) clearInterval(userSyncInterval);
+            if(userState.email !== 'invitado@demo.com') {
+                userSyncInterval = setInterval(syncUserDataBackground, 4000);
+            }
+        }
+
+        function handleLogout() {
+            if(yieldInterval) clearInterval(yieldInterval);
+            if(adminPollingInterval) clearInterval(adminPollingInterval);
+            if(userSyncInterval) clearInterval(userSyncInterval);
+            
+            supabaseClient.auth.signOut();
+
+            document.getElementById('dashboard-view').classList.replace('flex', 'hidden');
+            document.getElementById('auth-view').classList.remove('hidden');
+            document.getElementById('nav-admin').classList.add('hidden');
+            document.getElementById('nav-admin-mobile').classList.add('hidden');
+            
+            document.getElementById('login-email').value = '';
+            document.getElementById('login-password').value = '';
+            
+            switchTab('dashboard');
+            userState.id = '';
+            userState.email = '';
+        }
+
+        function switchTab(tabId) {
+            if (adminPollingInterval) { clearInterval(adminPollingInterval); adminPollingInterval = null; }
+
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-cyan-400', 'bg-slate-800/80', 'active');
+                if(!btn.id.includes('admin')) btn.classList.add('text-slate-400');
+            });
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if(activeBtn && tabId !== 'admin') {
+                activeBtn.classList.remove('text-slate-400');
+                activeBtn.classList.add('text-cyan-400', 'bg-slate-800/80', 'active');
+            }
+
+            if(tabId === 'admin') {
+                loadAdminPanel();
+                adminPollingInterval = setInterval(loadAdminPanel, 4000); 
+            }
+        }
+
+        function updateDashboardUI() {
+            document.getElementById('header-balance-display').innerText = `$${userState.balance.toFixed(2)}`;
+            document.getElementById('metric-balance').innerText = `$${userState.balance.toFixed(2)}`;
+            document.getElementById('metric-staked').innerText = `$${userState.stakedTotal.toFixed(2)}`;
+            document.getElementById('hero-staked-amount').innerText = `$${userState.stakedTotal.toFixed(2)}`;
+            document.getElementById('metric-withdrawn').innerText = `$${userState.totalWithdrawn.toFixed(2)}`;
+            document.getElementById('metric-yield-earned').innerText = `$${userState.totalYieldEarned.toFixed(2)}`;
+
+            document.getElementById('req-ref-badge').innerText = `${userState.referralCount} / 3`;
+            const refPct = Math.min((userState.referralCount / 3) * 100, 100);
+            document.getElementById('req-ref-bar').style.width = `${refPct}%`;
+
+            document.getElementById('req-yield-badge').innerText = `$${userState.totalYieldEarned.toFixed(2)} / $15`;
+            const yieldPct = Math.min((userState.totalYieldEarned / 15) * 100, 100);
+            document.getElementById('req-yield-bar').style.width = `${yieldPct}%`;
+
+            document.getElementById('modal-req-ref').innerText = `${userState.referralCount} / 3`;
+            document.getElementById('modal-req-yield').innerText = `$${userState.totalYieldEarned.toFixed(2)} / $15`;
+
+            document.getElementById('ref-count-display').innerText = `${userState.referralCount} / 3`;
+            document.getElementById('ref-earnings-display').innerText = `$${(userState.totalYieldEarned * 0.003).toFixed(2)} USDT`;
+            if (userState.referralCount >= 3) {
+                document.getElementById('ref-status-text').innerText = '¡Requisito de referidos CUMPLIDO!';
+                document.getElementById('ref-status-text').className = 'text-[10px] text-emerald-400 font-bold mt-1';
+            }
+        }
+
+        function openDepositModal() { document.getElementById('deposit-modal').classList.remove('hidden'); }
+        function openWithdrawModal() { 
+            document.getElementById('withdraw-available-balance').innerText = `$${userState.balance.toFixed(2)}`;
+            document.getElementById('withdraw-modal').classList.remove('hidden'); 
+        }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // --- SISTEMA DE TRANSACCIONES (NUBE) ---
+        async function submitRealDeposit() {
+            const amountInput = document.getElementById('real-deposit-amount').value;
+            const hash = document.getElementById('real-deposit-hash').value.trim();
+
+            if (!amountInput) return showToast('Ingresa un monto válido', 'error');
+            const amount = parseFloat(amountInput);
+
+            if (isNaN(amount) || amount < 10) return showToast('El mínimo de depósito es $10 USDT', 'error');
+            if (!hash || hash.length < 10) return showToast('Ingresa un Hash válido', 'error');
+
+            if (!userState.id && userState.email !== 'invitado@demo.com') {
+                return showToast('Error de sesión. Por favor, vuelve a iniciar sesión.', 'error');
+            }
+
+            const tx = {
+                id: generateUUID(),
+                user_id: userState.id || 'demo',
+                user_email: userState.email.toLowerCase(),
+                type: 'deposit',
+                amount: amount,
+                hash: hash,
+                wallet: '',
+                status: 'pending'
+            };
+            
+            const { error } = await supabaseClient.from('transactions').insert([tx]);
+            
+            if (error) {
+                showToast(`Error al enviar: ${error.message}`, 'error');
+                console.error(error);
+                return;
+            }
+
+            document.getElementById('real-deposit-amount').value = '';
+            document.getElementById('real-deposit-hash').value = '';
+            closeModal('deposit-modal');
+            showToast('Depósito enviado a revisión.', 'success');
+            loadUserTransactions();
+        }
+
+        async function submitRealWithdrawal() {
+            const amountInput = document.getElementById('withdraw-amount').value;
+            const wallet = document.getElementById('withdraw-wallet-address').value.trim();
+
+            if (!amountInput) return showToast('Ingresa un monto válido', 'error');
+            const amount = parseFloat(amountInput);
+
+            if (userState.referralCount < 3) return showToast(`Necesitas 3 referidos (Llevas ${userState.referralCount})`, 'error');
+            if (userState.totalYieldEarned < 15) return showToast(`Mínimo $15 en ganancias (Llevas $${userState.totalYieldEarned.toFixed(2)})`, 'error');
+            if (isNaN(amount) || amount < 25) return showToast('El monto mínimo es $25 USDT', 'error');
+            if (amount > userState.balance) return showToast('Saldo insuficiente', 'error');
+
+            if (!userState.id && userState.email !== 'invitado@demo.com') {
+                return showToast('Error de sesión. Por favor, vuelve a iniciar sesión.', 'error');
+            }
+
+            // 1. Restar Saldo (Retención) en la nube
+            userState.balance -= amount;
+            await updateUserProfileInCloud({ balance: userState.balance });
+            updateDashboardUI();
+
+            // 2. Crear Transacción
+            const tx = {
+                id: generateUUID(),
+                user_id: userState.id || 'demo',
+                user_email: userState.email.toLowerCase(),
+                type: 'withdraw',
+                amount: amount,
+                hash: '',
+                wallet: wallet,
+                status: 'pending'
+            };
+            
+            const { error } = await supabaseClient.from('transactions').insert([tx]);
+            
+            if (error) {
+                showToast(`Error Nube: ${error.message}`, 'error');
+                userState.balance += amount;
+                await updateUserProfileInCloud({ balance: userState.balance });
+                updateDashboardUI();
+                return;
+            }
+
+            document.getElementById('withdraw-amount').value = '';
+            document.getElementById('withdraw-wallet-address').value = '';
+            closeModal('withdraw-modal');
+            showToast('Retiro enviado. Fondos en retención.', 'success');
+            loadUserTransactions();
+        }
+
+        async function loadUserTransactions() {
+            if(userState.email === 'invitado@demo.com') return;
+
+            const tbody = document.getElementById('user-tx-history');
+            const { data, error } = await supabaseClient.from('transactions')
+                .select('*')
+                .eq('user_email', userState.email.toLowerCase())
+                .order('created_at', { ascending: false });
+
+            if (error) return console.error(error);
+
+            let newHtml = '';
+            if(!data || data.length === 0) {
+                document.getElementById('no-tx-msg').classList.remove('hidden');
+            } else {
+                document.getElementById('no-tx-msg').classList.add('hidden');
+                data.forEach(tx => {
+                    const statusColor = tx.status === 'approved' ? 'text-emerald-400' : (tx.status === 'rejected' ? 'text-rose-400' : 'text-amber-400');
+                    const statusText = tx.status === 'approved' ? 'Aprobado' : (tx.status === 'rejected' ? 'Rechazado' : 'Pendiente');
+                    const typeText = tx.type === 'deposit' ? 'Depósito' : 'Retiro';
+                    
+                    let displayDate = 'N/A';
+                    if (tx.created_at) {
+                        const d = new Date(tx.created_at);
+                        displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
+                    }
+
+                    newHtml += `
+                        <tr class="border-b border-slate-800/40">
+                            <td class="p-2.5 text-slate-300">${displayDate}</td>
+                            <td class="p-2.5 font-medium text-white">${typeText}</td>
+                            <td class="p-2.5 font-mono font-bold">$${parseFloat(tx.amount).toFixed(2)}</td>
+                            <td class="p-2.5 ${statusColor} font-bold text-[11px]">${statusText}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            if(tbody.innerHTML !== newHtml) tbody.innerHTML = newHtml;
+        }
+
+        // --- PANEL ADMINISTRADOR ---
+        async function loadAdminPanel() {
+            const depBody = document.getElementById('admin-deposits-body');
+            const witBody = document.getElementById('admin-withdrawals-body');
+            const statusIndicator = document.getElementById('admin-status-indicator');
+
+            const { data, error } = await supabaseClient.from('transactions').select('*').order('created_at', { ascending: false });
+            
+            if (error) {
+                statusIndicator.innerHTML = `<span class="text-rose-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Error Nube: ${error.message}</span>`;
+                return;
+            }
+
+            statusIndicator.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-wifi mr-1"></i> Nube Sincronizada (${data.length} txs)</span>`;
+
+            const pendingDeps = data.filter(tx => tx.type === 'deposit' && tx.status === 'pending');
+            const pendingWits = data.filter(tx => tx.type === 'withdraw' && tx.status === 'pending');
+
+            if (pendingDeps.length === 0) document.getElementById('admin-no-deps').classList.remove('hidden');
+            else document.getElementById('admin-no-deps').classList.add('hidden');
+
+            if (pendingWits.length === 0) document.getElementById('admin-no-wits').classList.remove('hidden');
+            else document.getElementById('admin-no-wits').classList.add('hidden');
+
+            let newDepHtml = '';
+            pendingDeps.forEach(tx => {
+                let displayDate = 'Sin fecha';
+                if (tx.created_at) {
+                    const d = new Date(tx.created_at);
+                    displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
+                }
+                newDepHtml += `
+                    <tr class="border-b border-slate-800/60 hover:bg-slate-800/40 transition">
+                        <td class="p-3"><div class="font-bold text-white text-xs">${tx.user_email}</div><div class="text-[10px] text-slate-500">${displayDate}</div></td>
+                        <td class="p-3 font-mono text-emerald-400 font-black text-xs">+$${parseFloat(tx.amount).toFixed(2)}</td>
+                        <td class="p-3"><div class="text-[10px] text-cyan-300 font-mono truncate max-w-[120px]" title="${tx.hash}">${tx.hash}</div></td>
+                        <td class="p-3 text-right">
+                            <div class="inline-flex space-x-1">
+                                <button onclick="resolveTx('${tx.id}', 'approved')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center shadow-lg"><i class="fa-solid fa-check mr-1"></i> Aprobar</button>
+                                <button onclick="resolveTx('${tx.id}', 'rejected')" class="bg-rose-500/80 hover:bg-rose-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center"><i class="fa-solid fa-xmark mr-1"></i> Rechazar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            if(depBody.innerHTML !== newDepHtml) depBody.innerHTML = newDepHtml;
+
+            let newWitHtml = '';
+            pendingWits.forEach(tx => {
+                let displayDate = 'Sin fecha';
+                if (tx.created_at) {
+                     const d = new Date(tx.created_at);
+                     displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
+                }
+                newWitHtml += `
+                    <tr class="border-b border-slate-800/60 hover:bg-slate-800/40 transition">
+                        <td class="p-3"><div class="font-bold text-white text-xs">${tx.user_email}</div><div class="text-[10px] text-slate-500">${displayDate}</div></td>
+                        <td class="p-3 font-mono text-rose-400 font-black text-xs">-$${parseFloat(tx.amount).toFixed(2)}</td>
+                        <td class="p-3"><div class="text-[10px] text-amber-300 font-mono truncate max-w-[120px]" title="${tx.wallet}">${tx.wallet}</div></td>
+                        <td class="p-3 text-right">
+                            <div class="inline-flex space-x-1">
+                                <button onclick="resolveTx('${tx.id}', 'approved')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center shadow-lg"><i class="fa-solid fa-check mr-1"></i> Aprobar</button>
+                                <button onclick="resolveTx('${tx.id}', 'rejected')" class="bg-rose-500/80 hover:bg-rose-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center"><i class="fa-solid fa-xmark mr-1"></i> Rechazar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            if(witBody.innerHTML !== newWitHtml) witBody.innerHTML = newWitHtml;
+        }
+
+        async function resolveTx(id, newStatus) {
+            const { data: tx, error: errTx } = await supabaseClient.from('transactions').select('*').eq('id', id).single();
+            if(errTx || !tx) return showToast('No se encontró la transacción', 'error');
+
+            const { error: updErr } = await supabaseClient.from('transactions').update({ status: newStatus }).eq('id', id);
+            if(updErr) return showToast('Error al actualizar transacción', 'error');
+
+            const targetEmail = tx.user_email.toLowerCase();
+            const numAmount = parseFloat(tx.amount);
+
+            if (tx.type === 'deposit' && newStatus === 'approved') {
+                await adjustUserBalance(targetEmail, numAmount, 'balance');
+            }
+            else if (tx.type === 'withdraw' && newStatus === 'rejected') {
+                await adjustUserBalance(targetEmail, numAmount, 'balance');
+            }
+            else if (tx.type === 'withdraw' && newStatus === 'approved') {
+                await adjustUserBalance(targetEmail, numAmount, 'total_withdrawn');
+            }
+
+            showToast(`Transacción ${newStatus === 'approved' ? 'Aprobada' : 'Rechazada'} correctamente`, 'success');
+            await loadAdminPanel();
+        }
+
+        async function adjustUserBalance(targetEmail, amountToAdd, columnToUpdate) {
+            const email = targetEmail.toLowerCase().trim();
+            const { data } = await supabaseClient.from('profiles').select(columnToUpdate).eq('email', email).single();
+            if (data) {
+                const newValue = (parseFloat(data[columnToUpdate]) || 0) + amountToAdd;
+                await supabaseClient.from('profiles').update({ [columnToUpdate]: newValue }).eq('email', email);
+            }
+        }
+
+        async function updateUserProfileInCloud(fields) {
+            if (userState.email === 'invitado@demo.com') return;
+            await supabaseClient.from('profiles').update(fields).eq('email', userState.email.toLowerCase());
+        }
+
+        function investInPackage(name, cost, monthlyRoi) {
+            if (userState.balance < cost) {
+                return showToast('Saldo insuficiente. Deposita USDT para activar este plan.', 'error');
+            }
+            userState.balance -= cost;
+            userState.stakedTotal += cost;
+
+            updateUserProfileInCloud({ balance: userState.balance, staked_total: userState.stakedTotal });
+
+            updateDashboardUI();
+            showToast(`¡Plan ${name} activado correctamente!`, 'success');
+            switchTab('dashboard');
+        }
+
+        function startLiveYieldGenerator() {
+            if(yieldInterval) clearInterval(yieldInterval);
+            
+            yieldInterval = setInterval(() => {
+                if (userState.stakedTotal > 0) {
+                    const dailyYield = userState.stakedTotal * 0.0166;
+                    const yieldPerSecond = dailyYield / 86400;
+                    userState.accumulatedYieldSession += (yieldPerSecond * 10);
+                    document.getElementById('live-accumulated-yield').innerText = `$${userState.accumulatedYieldSession.toFixed(6)}`;
+                }
+            }, 1000);
+        }
+
+        function claimDailyEarnings() {
+            if (userState.accumulatedYieldSession < 0.01) {
+                return showToast('Monto mínimo para acreditar: $0.01 USDT', 'warning');
+            }
+            const amount = userState.accumulatedYieldSession;
+            userState.balance += amount;
+            userState.totalYieldEarned += amount;
+            userState.accumulatedYieldSession = 0;
+
+            updateUserProfileInCloud({ 
+                balance: userState.balance, 
+                total_yield_earned: userState.totalYieldEarned 
+            });
+
+            document.getElementById('live-accumulated-yield').innerText = `$0.000000`;
+            updateDashboardUI();
+            showToast(`+$${amount.toFixed(4)} USDT acreditados a tu saldo`, 'success');
+        }
+
+        function copyReferralLink() {
+            navigator.clipboard.writeText(document.getElementById('user-ref-link-input').value);
+            showToast('¡Enlace de referido copiado!', 'success');
+        }
+
+        function copyText(text) {
+            navigator.clipboard.writeText(text);
+            showToast('Dirección copiada', 'success');
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = type === 'success' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' : 
+                          (type === 'error' ? 'bg-rose-500/20 text-rose-400 border-rose-500/50' : (type === 'warning' ? 'bg-amber-500/20 text-amber-400 border-amber-500/50' : 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50'));
+            const icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-circle-exclamation' : 'fa-bell');
+
+            toast.className = `toast-enter flex items-center p-3 rounded-lg border ${colors} backdrop-blur-md text-xs font-semibold shadow-lg pointer-events-auto max-w-xs`;
+            toast.innerHTML = `<i class="fa-solid ${icon} mr-2 text-sm"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.replace('toast-enter', 'toast-leave');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function initTelemetryChart() {
+            const ctx = document.getElementById('telemetryChart');
+            if(!ctx) return;
+            const labels = Array.from({length: 12}, (_, i) => `T-${12-i}h`);
+            const volData = [38, 40, 39, 41, 42.5, 41, 42.8, 43.1, 42.9, 42.5, 42.7, 42.8];
+            const pressureData = [120, 122, 119, 125, 128, 124, 130, 132, 129, 128, 129, 130];
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Volumen (L/s)', data: volData, borderColor: '#00f2fe', backgroundColor: 'rgba(0, 242, 254, 0.1)', borderWidth: 2, tension: 0.4, fill: true, yAxisID: 'y' },
+                        { label: 'Presión (PSI)', data: pressureData, borderColor: '#10b981', borderDash: [5, 5], borderWidth: 2, tension: 0.4, yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
+                    scales: {
+                        x: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 9 } } },
+                        y: { type: 'linear', display: true, position: 'left', grid: { color: '#1e293b' }, ticks: { color: '#00f2fe', font: { size: 10 } } },
+                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#10b981', font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+    </script>
+	◦	</body>
+	◦	</html>
