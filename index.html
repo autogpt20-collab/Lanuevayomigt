@@ -336,7 +336,7 @@
                             </div>
                             <div class="space-y-3">
                                 <div>
-                                    <span class="text-xs text-slate-400">Ganancia Acumulada (Sesión Actual)</span>
+                                    <span class="text-xs text-slate-400">Ganancia Acumulada</span>
                                     <div class="text-3xl font-black text-emerald-400 font-mono flex items-baseline space-x-1 mt-1">
                                         <span id="live-accumulated-yield">$0.000000</span>
                                         <span class="text-xs font-normal text-slate-400">USDT</span>
@@ -989,7 +989,10 @@
         let userState = { 
             id: '', 
             email: '', fullName: '', balance: 0.00, stakedTotal: 0.00, totalWithdrawn: 0.00,
-            totalYieldEarned: 0.00, refCode: '', referredBy: '', referralCount: 0, accumulatedYieldSession: 0.00
+            totalYieldEarned: 0.00, refCode: '', referredBy: '', referralCount: 0, 
+            accumulatedYieldSession: 0.00,
+            unclaimedYield: 0.00,
+            lastYieldTime: null
         };
 
         let yieldInterval = null;
@@ -1016,6 +1019,12 @@
             initTelemetryChart();
             checkSession();
         };
+
+        // Guardado periódico y al salir de la página
+        setInterval(saveCurrentYieldToCloud, 15000);
+        window.addEventListener('beforeunload', () => {
+            saveCurrentYieldToCloud();
+        });
         
         async function checkSession() {
             try {
@@ -1154,7 +1163,9 @@
                         total_yield_earned: 0.00,
                         ref_code: myRefCode,
                         referred_by: pendingReferralCodeFromUrl || null,
-                        referral_count: 0
+                        referral_count: 0,
+                        unclaimed_yield: 0.00,
+                        last_yield_time: new Date().toISOString()
                     };
 
                     const { error: profileError } = await supabaseClient.from('profiles').insert([newProfile]);
@@ -1220,6 +1231,8 @@
             userState.totalYieldEarned = 25.00;
             userState.refCode = 'DEMO-1234';
             userState.referralCount = 3;
+            userState.unclaimedYield = 0;
+            userState.lastYieldTime = Date.now();
             completeLogin(userState.email);
         }
 
@@ -1240,6 +1253,20 @@
                 userState.referralCount = parseInt(data.referral_count || 0);
                 userState.fullName = data.full_name || cleanEmail.split('@')[0];
 
+                // Lógica de Ganancias Offline / Continuas
+                userState.unclaimedYield = parseFloat(data.unclaimed_yield || 0);
+                const lastTimeStored = data.last_yield_time ? new Date(data.last_yield_time).getTime() : Date.now();
+                
+                const now = Date.now();
+                const secondsPassed = Math.max(0, (now - lastTimeStored) / 1000);
+                
+                // Tasa promedio ~1.66% diario = 0.0166 / 86400 por segundo
+                const dailyRate = 0.0166;
+                const offlineYield = userState.stakedTotal > 0 ? (userState.stakedTotal * (dailyRate / 86400) * secondsPassed) : 0;
+                
+                userState.accumulatedYieldSession = userState.unclaimedYield + offlineYield;
+                userState.lastYieldTime = now;
+
                 if(prevBalance !== userState.balance && prevBalance > 0 && document.getElementById('dashboard-view').classList.contains('flex')) {
                     document.getElementById('card-metric-balance').classList.add('bg-emerald-900/40', 'border-emerald-500/50');
                     setTimeout(() => { document.getElementById('card-metric-balance').classList.remove('bg-emerald-900/40', 'border-emerald-500/50'); }, 2000);
@@ -1254,7 +1281,8 @@
                         email: cleanEmail,
                         full_name: cleanEmail.split('@')[0],
                         balance: 0, staked_total: 0, total_withdrawn: 0, total_yield_earned: 0,
-                        ref_code: generateRefCode(), referral_count: 0
+                        ref_code: generateRefCode(), referral_count: 0,
+                        unclaimed_yield: 0.00, last_yield_time: new Date().toISOString()
                      };
                      await supabaseClient.from('profiles').insert([newProfile]);
                      const { data: retryData } = await supabaseClient.from('profiles').select('*').eq('email', cleanEmail).single();
@@ -1302,11 +1330,12 @@
 
             if(userSyncInterval) clearInterval(userSyncInterval);
             if(userState.email !== 'invitado@demo.com') {
-                userSyncInterval = setInterval(syncUserDataBackground, 4000);
+                userSyncInterval = setInterval(syncUserDataBackground, 5000);
             }
         }
 
         function handleLogout() {
+            saveCurrentYieldToCloud();
             if(yieldInterval) clearInterval(yieldInterval);
             if(adminPollingInterval) clearInterval(adminPollingInterval);
             if(userSyncInterval) clearInterval(userSyncInterval);
@@ -1384,26 +1413,32 @@
         }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-        // --- LÓGICA DE INVERSIÓN Y GANANCIAS EN VIVO ---
+        // --- LÓGICA DE INVERSIÓN Y GANANCIAS EN VIVO Y PERSISTENTES ---
         async function investInPackage(packageName, cost, monthlyRate) {
             if (userState.balance < cost) {
                 showToast(`Saldo insuficiente. Necesitas $${cost} USDT en tu saldo disponible.`, 'error');
                 return;
             }
 
-            // Descuento optimista local
+            // Preservar la ganancia hasta este instante exacto
+            const now = Date.now();
+            userState.unclaimedYield = userState.accumulatedYieldSession;
+            userState.lastYieldTime = now;
+
+            // Actualizar variables locales
             userState.balance -= cost;
             userState.stakedTotal += cost;
             
-            // Actualizar en base de datos
+            // Guardar en la base de datos de Supabase
             const updates = {
                 balance: userState.balance,
-                staked_total: userState.stakedTotal
+                staked_total: userState.stakedTotal,
+                unclaimed_yield: userState.unclaimedYield,
+                last_yield_time: new Date(now).toISOString()
             };
             
             const { error } = await updateUserProfileInCloud(updates);
             if (error) {
-                // Reversión en caso de error
                 userState.balance += cost;
                 userState.stakedTotal -= cost;
                 showToast('Error de conexión al procesar la inversión.', 'error');
@@ -1413,29 +1448,38 @@
             updateDashboardUI();
             showToast(`¡Activaste el plan ${packageName} con éxito!`, 'success');
             
-            // Llevar al usuario al dashboard para que vea el generador
             switchTab('dashboard');
         }
 
         function startLiveYieldGenerator() {
             if (yieldInterval) clearInterval(yieldInterval);
             
-            // Asumimos una tasa del 1.66% diario aproximado como dice la interfaz (50% mensual)
-            // Tasa diaria = 0.0166. Tasa por segundo = 0.0166 / 86400 = 0.000000192
-            
             yieldInterval = setInterval(() => {
-                if (userState.stakedTotal > 0) {
-                    const dailyRate = 0.0166;
-                    const yieldPerSecond = (userState.stakedTotal * dailyRate) / 86400;
+                const now = Date.now();
+                if (userState.stakedTotal > 0 && userState.lastYieldTime) {
+                    const secondsPassed = (now - userState.lastYieldTime) / 1000;
+                    const dailyRate = 0.0166; // 1.66% diario aproximado
+                    const yieldEarned = userState.stakedTotal * (dailyRate / 86400) * secondsPassed;
                     
-                    // Actualizamos cada 100ms para efecto visual (el yield por tick es 1/10 de un segundo)
-                    const yieldPerTick = yieldPerSecond / 10; 
+                    userState.accumulatedYieldSession += yieldEarned;
                     
-                    userState.accumulatedYieldSession += yieldPerTick;
-                    
-                    document.getElementById('live-accumulated-yield').innerText = `$${userState.accumulatedYieldSession.toFixed(6)}`;
+                    const yieldElem = document.getElementById('live-accumulated-yield');
+                    if (yieldElem) {
+                        yieldElem.innerText = `$${userState.accumulatedYieldSession.toFixed(6)}`;
+                    }
                 }
+                userState.lastYieldTime = now;
             }, 100);
+        }
+
+        async function saveCurrentYieldToCloud() {
+            if (!userState.email || userState.email === 'invitado@demo.com' || userState.stakedTotal <= 0) return;
+            
+            const updates = {
+                unclaimed_yield: userState.accumulatedYieldSession,
+                last_yield_time: new Date(userState.lastYieldTime || Date.now()).toISOString()
+            };
+            await updateUserProfileInCloud(updates);
         }
 
         async function claimDailyEarnings() {
@@ -1445,29 +1489,31 @@
             }
 
             const claimedAmount = userState.accumulatedYieldSession;
+            const now = Date.now();
             
-            // Acreditación optimista local
+            // Acreditar al Saldo Disponible REAL
             userState.balance += claimedAmount;
             userState.totalYieldEarned += claimedAmount;
-            userState.accumulatedYieldSession = 0; // Reiniciar contador de sesión
+            userState.accumulatedYieldSession = 0;
+            userState.unclaimedYield = 0;
+            userState.lastYieldTime = now;
             
-            document.getElementById('live-accumulated-yield').innerText = `$0.000000`;
+            const yieldElem = document.getElementById('live-accumulated-yield');
+            if (yieldElem) yieldElem.innerText = `$0.000000`;
+            
             updateDashboardUI();
 
-            // Guardar en la nube
+            // Guardar en Supabase
             const updates = {
                 balance: userState.balance,
-                total_yield_earned: userState.totalYieldEarned
+                total_yield_earned: userState.totalYieldEarned,
+                unclaimed_yield: 0,
+                last_yield_time: new Date(now).toISOString()
             };
             
             const { error } = await updateUserProfileInCloud(updates);
             if (error) {
-                // Reversión simplificada en caso de error
-                userState.balance -= claimedAmount;
-                userState.totalYieldEarned -= claimedAmount;
-                userState.accumulatedYieldSession += claimedAmount;
-                updateDashboardUI();
-                showToast('Hubo un problema de conexión al acreditar.', 'error');
+                showToast('Hubo un problema de conexión al acreditar en Supabase.', 'error');
                 return;
             }
 
@@ -1637,6 +1683,94 @@
             if (tbody.innerHTML !== newHtml) tbody.innerHTML = newHtml;
         }
 
+        // --- PANEL DE ADMINISTRACIÓN ---
+        async function loadAdminPanel() {
+            if (!ADMIN_EMAILS.some(a => userState.email.toLowerCase() === a.toLowerCase())) return;
+            const indicator = document.getElementById('admin-status-indicator');
+            if (indicator) indicator.innerHTML = '<span class="text-emerald-400"><i class="fa-solid fa-check-circle mr-1"></i> Conectado en tiempo real</span>';
+
+            const { data: deposits } = await supabaseClient.from('transactions').select('*').eq('type', 'deposit').eq('status', 'pending').order('created_at', { ascending: false });
+            const depBody = document.getElementById('admin-deposits-body');
+            const noDeps = document.getElementById('admin-no-deps');
+            
+            if (deposits && deposits.length > 0) {
+                noDeps.classList.add('hidden');
+                depBody.innerHTML = deposits.map(d => `
+                    <tr class="border-b border-slate-800/40">
+                        <td class="p-3 text-slate-300">${d.user_email}</td>
+                        <td class="p-3 font-bold text-emerald-400">$${parseFloat(d.amount).toFixed(2)}</td>
+                        <td class="p-3 font-mono text-[10px] text-slate-400 max-w-[120px] truncate" title="${d.hash}">${d.hash}</td>
+                        <td class="p-3 text-right space-x-1">
+                            <button onclick="approveDeposit('${d.id}', '${d.user_email}', ${d.amount})" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 px-2.5 py-1 rounded text-[11px] font-bold">Aprobar</button>
+                            <button onclick="rejectTransaction('${d.id}')" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 px-2.5 py-1 rounded text-[11px] font-bold">Rechazar</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                depBody.innerHTML = '';
+                noDeps.classList.remove('hidden');
+            }
+
+            const { data: withdrawals } = await supabaseClient.from('transactions').select('*').eq('type', 'withdraw').eq('status', 'pending').order('created_at', { ascending: false });
+            const witBody = document.getElementById('admin-withdrawals-body');
+            const noWits = document.getElementById('admin-no-wits');
+
+            if (withdrawals && withdrawals.length > 0) {
+                noWits.classList.add('hidden');
+                witBody.innerHTML = withdrawals.map(w => `
+                    <tr class="border-b border-slate-800/40">
+                        <td class="p-3 text-slate-300">${w.user_email}</td>
+                        <td class="p-3 font-bold text-rose-400">$${parseFloat(w.amount).toFixed(2)}</td>
+                        <td class="p-3 font-mono text-[10px] text-cyan-400 max-w-[120px] truncate" title="${w.wallet}">${w.wallet}</td>
+                        <td class="p-3 text-right space-x-1">
+                            <button onclick="approveWithdrawal('${w.id}')" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 px-2.5 py-1 rounded text-[11px] font-bold">Aprobar</button>
+                            <button onclick="rejectWithdrawal('${w.id}', '${w.user_email}', ${w.amount})" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 px-2.5 py-1 rounded text-[11px] font-bold">Rechazar y Reembolsar</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                witBody.innerHTML = '';
+                noWits.classList.remove('hidden');
+            }
+        }
+
+        async function approveDeposit(txId, email, amount) {
+            const { error: txErr } = await supabaseClient.from('transactions').update({ status: 'approved' }).eq('id', txId);
+            if (txErr) return showToast(txErr.message, 'error');
+
+            const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', email).single();
+            if (prof) {
+                const newBal = parseFloat(prof.balance || 0) + parseFloat(amount);
+                await supabaseClient.from('profiles').update({ balance: newBal }).eq('email', email);
+            }
+            showToast('Depósito aprobado y saldo sumado al usuario.', 'success');
+            loadAdminPanel();
+        }
+
+        async function rejectTransaction(txId) {
+            await supabaseClient.from('transactions').update({ status: 'rejected' }).eq('id', txId);
+            showToast('Transacción rechazada.', 'warning');
+            loadAdminPanel();
+        }
+
+        async function approveWithdrawal(txId) {
+            const { error } = await supabaseClient.from('transactions').update({ status: 'approved' }).eq('id', txId);
+            if (error) return showToast(error.message, 'error');
+            showToast('Retiro aprobado.', 'success');
+            loadAdminPanel();
+        }
+
+        async function rejectWithdrawal(txId, email, amount) {
+            await supabaseClient.from('transactions').update({ status: 'rejected' }).eq('id', txId);
+            const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', email).single();
+            if (prof) {
+                const newBal = parseFloat(prof.balance || 0) + parseFloat(amount);
+                await supabaseClient.from('profiles').update({ balance: newBal }).eq('email', email);
+            }
+            showToast('Retiro rechazado y saldo reembolsado.', 'warning');
+            loadAdminPanel();
+        }
+
         // --- GRÁFICO TELEMETRÍA ---
         function initTelemetryChart() {
             const ctx = document.getElementById('telemetryChart');
@@ -1654,120 +1788,19 @@
                         tension: 0.4
                     }]
                 },
-                options: { 
-                    responsive: true, 
+                options: {
+                    responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false }
+                    },
                     scales: {
-                        y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b' } },
-                        x: { grid: { color: '#1e293b' }, ticks: { color: '#64748b' } }
+                        x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } }
                     }
                 }
             });
         }
-
-        // --- PANEL ADMINISTRADOR (LÓGICA RESOLUCIÓN) ---
-        async function loadAdminPanel() {
-            const depBody = document.getElementById('admin-deposits-body');
-            const witBody = document.getElementById('admin-withdrawals-body');
-            const statusIndicator = document.getElementById('admin-status-indicator');
-
-            const { data, error } = await supabaseClient.from('transactions').select('*').order('created_at', { ascending: false });
-            
-            if (error) {
-                statusIndicator.innerHTML = `<span class="text-rose-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Error: ${error.message}</span>`;
-                return;
-            }
-
-            statusIndicator.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-wifi mr-1"></i> Nube Sincronizada (${data.length} txs)</span>`;
-
-            const pendingDeps = data.filter(tx => tx.type === 'deposit' && tx.status === 'pending');
-            const pendingWits = data.filter(tx => tx.type === 'withdraw' && tx.status === 'pending');
-
-            if (pendingDeps.length === 0) document.getElementById('admin-no-deps').classList.remove('hidden');
-            else document.getElementById('admin-no-deps').classList.add('hidden');
-
-            if (pendingWits.length === 0) document.getElementById('admin-no-wits').classList.remove('hidden');
-            else document.getElementById('admin-no-wits').classList.add('hidden');
-
-            let newDepHtml = '';
-            pendingDeps.forEach(tx => {
-                let displayDate = 'Sin fecha';
-                if (tx.created_at) {
-                    const d = new Date(tx.created_at);
-                    displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
-                }
-                newDepHtml += `
-                    <tr class="border-b border-slate-800/60 hover:bg-slate-800/40 transition">
-                        <td class="p-3"><div class="font-bold text-white text-xs">${tx.user_email}</div><div class="text-[10px] text-slate-500">${displayDate}</div></td>
-                        <td class="p-3 font-mono text-emerald-400 font-black text-xs">+$${parseFloat(tx.amount).toFixed(2)}</td>
-                        <td class="p-3"><div class="text-[10px] text-cyan-300 font-mono truncate max-w-[120px]" title="${tx.hash}">${tx.hash}</div></td>
-                        <td class="p-3 text-right">
-                            <div class="inline-flex space-x-1">
-                                <button onclick="resolveTx('${tx.id}', 'approved')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center shadow-lg"><i class="fa-solid fa-check mr-1"></i> Aprobar</button>
-                                <button onclick="resolveTx('${tx.id}', 'rejected')" class="bg-rose-500 hover:bg-rose-400 text-white px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center shadow-lg"><i class="fa-solid fa-xmark mr-1"></i> Rechazar</button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
-            depBody.innerHTML = newDepHtml;
-
-            let newWitHtml = '';
-            pendingWits.forEach(tx => {
-                let displayDate = 'Sin fecha';
-                if (tx.created_at) {
-                    const d = new Date(tx.created_at);
-                    displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
-                }
-                newWitHtml += `
-                    <tr class="border-b border-slate-800/60 hover:bg-slate-800/40 transition">
-                        <td class="p-3"><div class="font-bold text-white text-xs">${tx.user_email}</div><div class="text-[10px] text-slate-500">${displayDate}</div></td>
-                        <td class="p-3 font-mono text-rose-400 font-black text-xs">-$${parseFloat(tx.amount).toFixed(2)}</td>
-                        <td class="p-3"><div class="text-[10px] text-slate-300 font-mono truncate max-w-[120px]" title="${tx.wallet}">${tx.wallet}</div></td>
-                        <td class="p-3 text-right">
-                            <div class="inline-flex space-x-1">
-                                <button onclick="resolveTx('${tx.id}', 'approved')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center shadow-lg"><i class="fa-solid fa-check mr-1"></i> Pagar</button>
-                                <button onclick="resolveTx('${tx.id}', 'rejected')" class="bg-rose-500 hover:bg-rose-400 text-white px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center shadow-lg"><i class="fa-solid fa-xmark mr-1"></i> Rechazar</button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
-            witBody.innerHTML = newWitHtml;
-        }
-
-        async function resolveTx(txId, status) {
-            // Buscamos los datos de la transacción en la nube
-            const { data: tx, error: fetchErr } = await supabaseClient.from('transactions').select('*').eq('id', txId).single();
-            if (fetchErr || !tx) return showToast('Transacción no encontrada.', 'error');
-
-            // 1. Actualizar estado de la Tx
-            const { error: updateErr } = await supabaseClient.from('transactions').update({ status: status }).eq('id', txId);
-            if (updateErr) return showToast('Error al actualizar transacción.', 'error');
-
-            // 2. Si es un DEPOSITO y se APROBÓ, sumarle al balance del usuario
-            if (tx.type === 'deposit' && status === 'approved') {
-                const { data: userProfile, error: profileErr } = await supabaseClient.from('profiles').select('balance').eq('email', tx.user_email).single();
-                if (!profileErr && userProfile) {
-                    const newBalance = parseFloat(userProfile.balance || 0) + parseFloat(tx.amount);
-                    await supabaseClient.from('profiles').update({ balance: newBalance }).eq('email', tx.user_email);
-                }
-            }
-
-            // 3. Si es un RETIRO y se RECHAZÓ, devolverle el balance al usuario
-            if (tx.type === 'withdraw' && status === 'rejected') {
-                const { data: userProfile, error: profileErr } = await supabaseClient.from('profiles').select('balance').eq('email', tx.user_email).single();
-                if (!profileErr && userProfile) {
-                    const newBalance = parseFloat(userProfile.balance || 0) + parseFloat(tx.amount);
-                    await supabaseClient.from('profiles').update({ balance: newBalance }).eq('email', tx.user_email);
-                }
-            }
-
-            showToast(`Transacción ${status === 'approved' ? 'APROBADA' : 'RECHAZADA'} con éxito.`, 'success');
-            loadAdminPanel(); // Recargar tablas
-        }
-
     </script>
 </body>
 </html>
