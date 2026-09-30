@@ -24,6 +24,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -394,7 +395,6 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                        <!-- Requisito 1 -->
                         <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-2">
                             <div class="flex justify-between items-center">
                                 <span class="font-bold text-slate-200"><i class="fa-solid fa-users text-cyan-400 mr-1.5"></i> 1. Invitar 3 Referidos</span>
@@ -406,7 +406,6 @@
                             </div>
                         </div>
 
-                        <!-- Requisito 2 -->
                         <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-2">
                             <div class="flex justify-between items-center">
                                 <span class="font-bold text-slate-200"><i class="fa-solid fa-coins text-emerald-400 mr-1.5"></i> 2. Mínimo $15 Ganados</span>
@@ -418,7 +417,6 @@
                             </div>
                         </div>
 
-                        <!-- Requisito 3 -->
                         <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-2">
                             <div class="flex justify-between items-center">
                                 <span class="font-bold text-slate-200"><i class="fa-solid fa-money-bill-transfer text-amber-400 mr-1.5"></i> 3. Mínimo $25 por Retiro</span>
@@ -515,7 +513,6 @@
                     <p class="text-slate-400 text-sm">Invita a tus amigos y colegas a invertir en LitioX. Obtén el <strong>0.3% de comisiones continuas</strong> sobre las ganancias generadas por tus invitados.</p>
                 </div>
 
-                <!-- Tu Link de Invitación -->
                 <div class="glass-card p-6 rounded-2xl border border-cyan-500/30 max-w-2xl mx-auto space-y-4 text-center">
                     <span class="text-xs font-bold uppercase text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full">Tu Enlace Personal de Referido</span>
                     <div class="flex items-center space-x-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800 mt-2">
@@ -527,7 +524,6 @@
                     <p class="text-[11px] text-slate-400">Requisito para retirar: Tener al menos <strong>3 referidos registrados</strong> con tu enlace.</p>
                 </div>
 
-                <!-- Métricas de Referidos -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
                     <div class="glass-card p-5 rounded-2xl text-center border border-slate-800">
                         <span class="text-xs text-slate-400">Referidos Registrados</span>
@@ -541,7 +537,6 @@
                     </div>
                 </div>
 
-                <!-- Lista de Usuarios Referidos -->
                 <div class="glass-card p-5 rounded-2xl border border-slate-800 max-w-3xl mx-auto mt-6">
                     <h3 class="text-sm font-bold text-white mb-4"><i class="fa-solid fa-list-ul text-cyan-400 mr-2"></i> Mis Invitados Registrados</h3>
                     <div class="overflow-x-auto">
@@ -553,7 +548,7 @@
                                 </tr>
                             </thead>
                             <tbody id="referred-users-list" class="divide-y divide-slate-800/50">
-                                <!-- JS inserta las filas aquí automáticamente -->
+                                <!-- Carga vía JS -->
                             </tbody>
                         </table>
                         <div id="no-refs-msg" class="text-center text-slate-500 text-xs py-4 hidden">Aún no tienes invitados registrados.</div>
@@ -603,8 +598,6 @@
 
             <!-- TAB 5: NOSOTROS Y EQUIPO DIRECTIVO -->
             <div id="tab-team" class="tab-content hidden space-y-12">
-                
-                <!-- Encabezado de la Sección -->
                 <div class="text-center max-w-3xl mx-auto space-y-3">
                     <div class="inline-flex items-center space-x-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
                         <i class="fa-solid fa-earth-asia text-emerald-400 mr-1"></i> Tecnología Surcoreana & Minería Global
@@ -614,10 +607,23 @@
                         Conoce a los pioneros surcoreanos que están revolucionando la tokenización de materias primas estratégicas combinando biotecnología extractiva de última generación y finanzas descentralizadas.
                     </p>
                 </div>
-
-                <!-- GRIDS DE LOS 4 FUNDADORES COREANOS -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <!-- Contenido Founders HTML -->
+                <!-- Información resumida para evitar excesivo HTML -->
+                <div class="glass-card p-8 rounded-3xl border border-slate-800 flex flex-col justify-between space-y-6 relative overflow-hidden">
+                    <div class="space-y-4">
+                        <div class="inline-flex items-center space-x-2 text-cyan-400 text-xs font-bold uppercase tracking-widest">
+                            <i class="fa-solid fa-building-shield"></i>
+                            <span>Sobre LitioX Corporation</span>
+                        </div>
+                        <h3 class="text-2xl md:text-3xl font-black text-white leading-tight">
+                            El Puente entre la Alta Tecnología Asiática y el Oro Blanco Sudamericano
+                        </h3>
+                        <p class="text-slate-300 text-xs md:text-sm leading-relaxed">
+                            <strong>LitioX</strong> es una plataforma de inversión descentralizada de última generación, nacida de la alianza estratégica entre científicos e inversores surcoreanos y operadores mineros locales en el <i>Triángulo del Litio</i> (Salar de Olaroz, Jujuy y Salta).
+                        </p>
+                        <p class="text-slate-300 text-xs md:text-sm leading-relaxed">
+                            Tokenizamos los flujos de caja y contratos de venta del mineral extraído en tiempo real. Mediante nuestros pozos de Extracción Directa de Litio (DLE), reducimos el tiempo de cristalización de 18 meses a solo <strong>24 horas</strong>, permitiendo márgenes de ganancia sin precedentes que se distribuyen diariamente a nuestros inversores en USDT.
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -642,7 +648,6 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Depósitos Pendientes -->
                     <div class="glass-card p-5 rounded-2xl border border-slate-800">
                         <h3 class="font-bold text-white mb-4 flex items-center justify-between">
                             <span class="flex items-center"><i class="fa-solid fa-arrow-down-to-line text-emerald-400 mr-2"></i> Depósitos Pendientes</span>
@@ -669,7 +674,6 @@
                         </div>
                     </div>
 
-                    <!-- Retiros Pendientes -->
                     <div class="glass-card p-5 rounded-2xl border border-slate-800">
                         <h3 class="font-bold text-white mb-4 flex items-center justify-between">
                             <span class="flex items-center"><i class="fa-solid fa-arrow-up-from-bracket text-rose-400 mr-2"></i> Retiros Solicitados</span>
@@ -742,7 +746,6 @@
                 <p class="text-[10px] text-slate-400 mt-0.5">Retiros procesados en USDT (BEP-20)</p>
             </div>
 
-            <!-- Resumen de Requisitos en Modal -->
             <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 space-y-2 text-[11px]">
                 <div class="flex justify-between items-center text-slate-300">
                     <span><i class="fa-solid fa-users text-cyan-400 mr-1"></i> Referidos Obligatorios (mín. 3):</span>
@@ -824,6 +827,7 @@
             }
             initTelemetryChart();
             checkSession();
+            updateDailyCountdownClock();
         };
 
         // Guardado periódico y al salir de la página
@@ -1037,6 +1041,7 @@
             userState.unclaimedYield = 0;
             userState.lastYieldTime = Date.now();
             completeLogin(userState.email);
+            showToast('Estás navegando en MODO DEMO.', 'warning');
         }
 
         async function loadUserProfile(email) {
@@ -1057,7 +1062,6 @@
 
                 userState.unclaimedYield = parseFloat(data.unclaimed_yield || 0);
                 const lastTimeStored = data.last_yield_time ? new Date(data.last_yield_time).getTime() : Date.now();
-                
                 const now = Date.now();
                 const secondsPassed = Math.max(0, (now - lastTimeStored) / 1000);
                 
@@ -1103,9 +1107,6 @@
             
             if(!document.getElementById('tab-dashboard').classList.contains('hidden')) {
                 loadUserTransactions();
-            }
-            if(!document.getElementById('tab-referrals').classList.contains('hidden')) {
-                loadReferredUsersList();
             }
         }
 
@@ -1180,7 +1181,6 @@
         }
 
         function updateDashboardUI() {
-            // Completando la parte donde tu código se había cortado
             document.getElementById('header-balance-display').innerText = `$${userState.balance.toFixed(2)}`;
             document.getElementById('metric-balance').innerText = `$${userState.balance.toFixed(2)}`;
             document.getElementById('metric-staked').innerText = `$${userState.stakedTotal.toFixed(2)}`;
@@ -1188,7 +1188,6 @@
             document.getElementById('metric-withdrawn').innerText = `$${userState.totalWithdrawn.toFixed(2)}`;
             document.getElementById('metric-yield-earned').innerText = `$${userState.totalYieldEarned.toFixed(2)}`;
 
-            // Progreso Requisitos
             document.getElementById('req-ref-badge').innerText = `${userState.referralCount} / 3`;
             const refPct = Math.min((userState.referralCount / 3) * 100, 100);
             document.getElementById('req-ref-bar').style.width = `${refPct}%`;
@@ -1196,419 +1195,422 @@
             document.getElementById('req-yield-badge').innerText = `$${userState.totalYieldEarned.toFixed(2)} / $15`;
             const yieldPct = Math.min((userState.totalYieldEarned / 15) * 100, 100);
             document.getElementById('req-yield-bar').style.width = `${yieldPct}%`;
-            
-            // Referrals tab
-            document.getElementById('ref-count-display').innerText = `${userState.referralCount} / 3`;
-            if (userState.referralCount >= 3) {
-                document.getElementById('ref-status-text').innerText = "Requisito cumplido";
-                document.getElementById('ref-status-text').classList.replace('text-slate-500', 'text-emerald-500');
-            }
 
-            // Withdraw modal data
             document.getElementById('modal-req-ref').innerText = `${userState.referralCount} / 3`;
             document.getElementById('modal-req-yield').innerText = `$${userState.totalYieldEarned.toFixed(2)} / $15`;
+
+            document.getElementById('ref-count-display').innerText = `${userState.referralCount} / 3`;
+            document.getElementById('ref-earnings-display').innerText = `$${(userState.totalYieldEarned * 0.003).toFixed(2)} USDT`;
+            if (userState.referralCount >= 3) {
+                document.getElementById('ref-status-text').innerText = '¡Requisito de referidos CUMPLIDO!';
+                document.getElementById('ref-status-text').className = 'text-[10px] text-emerald-400 font-bold mt-1';
+            }
+        }
+
+        function openDepositModal() { document.getElementById('deposit-modal').classList.remove('hidden'); }
+        function openWithdrawModal() { 
             document.getElementById('withdraw-available-balance').innerText = `$${userState.balance.toFixed(2)}`;
+            document.getElementById('withdraw-modal').classList.remove('hidden'); 
         }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-        // --- MANEJO DE MODALES ---
-        function openDepositModal() {
-            document.getElementById('deposit-modal').classList.remove('hidden');
-        }
-
-        function openWithdrawModal() {
-            document.getElementById('withdraw-modal').classList.remove('hidden');
-            updateDashboardUI();
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.add('hidden');
-        }
-
-        // --- SISTEMA DE DEPÓSITOS (PENDIENTE PARA ADMIN) ---
-        async function submitRealDeposit() {
-            const amount = parseFloat(document.getElementById('real-deposit-amount').value);
-            const hash = document.getElementById('real-deposit-hash').value.trim();
-
-            if (isNaN(amount) || amount <= 0) return showToast('Ingresa un monto válido.', 'error');
-            if (!hash) return showToast('Debes pegar el Hash (TxID) de tu envío.', 'error');
-            if (userState.email === 'invitado@demo.com') return showToast('Estás en Modo Demo, no se guardan depósitos.', 'warning');
-
-            const btn = document.querySelector('#deposit-modal button.glow-button');
-            const originalText = btn.innerText;
-            btn.innerText = 'Procesando...';
-            btn.disabled = true;
-
-            const newTx = {
-                user_email: userState.email,
-                type: 'deposit',
-                amount: amount,
-                tx_hash: hash,
-                status: 'pending'
-            };
-
-            try {
-                const { error } = await supabaseClient.from('transactions').insert([newTx]);
-                if (error) throw error;
-                
-                showToast('Depósito registrado. El administrador lo revisará pronto.', 'success');
-                closeModal('deposit-modal');
-                document.getElementById('real-deposit-amount').value = '';
-                document.getElementById('real-deposit-hash').value = '';
-                loadUserTransactions(); // Actualizar tabla del usuario
-            } catch (err) {
-                console.error(err);
-                showToast('Error al enviar el depósito a la nube.', 'error');
-            } finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
-            }
-        }
-
-        // --- SISTEMA DE RETIROS (PENDIENTE PARA ADMIN) ---
-        async function submitRealWithdrawal() {
-            const amount = parseFloat(document.getElementById('withdraw-amount').value);
-            const wallet = document.getElementById('withdraw-wallet-address').value.trim();
-
-            if (isNaN(amount) || amount < 25) return showToast('El retiro mínimo es de $25 USDT', 'error');
-            if (!wallet) return showToast('Ingresa tu dirección de billetera', 'error');
-            if (amount > userState.balance) return showToast('Saldo insuficiente', 'error');
-            if (userState.referralCount < 3) return showToast('No cumples el requisito de referidos', 'error');
-            if (userState.totalYieldEarned < 15) return showToast('No cumples el requisito de ganancias', 'error');
-            
-            if (userState.email === 'invitado@demo.com') return showToast('Acción bloqueada en Modo Demo', 'warning');
-
-            const btn = document.querySelector('#withdraw-modal button');
-            const origText = btn.innerText;
-            btn.innerText = 'Procesando...';
-            btn.disabled = true;
-
-            try {
-                // Descontamos el balance de una vez al solicitarlo
-                const newBalance = userState.balance - amount;
-                await updateUserProfileInCloud({ balance: newBalance });
-                userState.balance = newBalance;
-
-                const newTx = {
-                    user_email: userState.email,
-                    type: 'withdrawal',
-                    amount: amount,
-                    wallet_address: wallet,
-                    status: 'pending'
-                };
-
-                const { error } = await supabaseClient.from('transactions').insert([newTx]);
-                if (error) throw error;
-
-                showToast('Solicitud de retiro enviada.', 'success');
-                closeModal('withdraw-modal');
-                document.getElementById('withdraw-amount').value = '';
-                document.getElementById('withdraw-wallet-address').value = '';
-                
-                updateDashboardUI();
-                loadUserTransactions();
-            } catch (err) {
-                console.error(err);
-                showToast('Error al procesar el retiro.', 'error');
-            } finally {
-                btn.innerText = origText;
-                btn.disabled = false;
-            }
-        }
-
-        // --- INVERTIR EN PAQUETE ---
-        async function investInPackage(name, cost, dailyRate) {
+        async function investInPackage(packageName, cost, dailyRate) {
             if (userState.balance < cost) {
-                showToast(`Saldo insuficiente. Necesitas $${cost} USDT.`, 'error');
+                showToast(`Saldo insuficiente. Necesitas $${cost} USDT en tu saldo disponible.`, 'error');
                 return;
             }
-            if (userState.email === 'invitado@demo.com') {
-                userState.balance -= cost;
-                userState.stakedTotal += cost;
-                updateDashboardUI();
-                showToast(`¡Inversión en ${name} realizada en Demo!`, 'success');
-                return;
-            }
+
+            const now = Date.now();
+            userState.unclaimedYield = userState.accumulatedYieldSession;
+            userState.lastYieldTime = now;
 
             userState.balance -= cost;
             userState.stakedTotal += cost;
-            updateDashboardUI();
             
-            try {
-                await updateUserProfileInCloud({ 
-                    balance: userState.balance, 
-                    staked_total: userState.stakedTotal 
-                });
-                showToast(`¡Inversión exitosa en ${name}!`, 'success');
-            } catch(e) {
-                showToast('Hubo un error de conexión, se revertirán los cambios.', 'error');
+            const updates = {
+                balance: userState.balance,
+                staked_total: userState.stakedTotal,
+                unclaimed_yield: userState.unclaimedYield,
+                last_yield_time: new Date(now).toISOString()
+            };
+            
+            const { error } = await updateUserProfileInCloud(updates);
+            if (error) {
                 userState.balance += cost;
                 userState.stakedTotal -= cost;
-                updateDashboardUI();
-            }
-        }
-
-        // --- SISTEMA DE GANANCIAS EN VIVO ---
-        function startLiveYieldGenerator() {
-            if(yieldInterval) clearInterval(yieldInterval);
-            
-            yieldInterval = setInterval(() => {
-                if (userState.stakedTotal > 0) {
-                    const dailyRate = 0.0166; 
-                    const yieldPerSecond = (userState.stakedTotal * dailyRate) / 86400;
-                    userState.accumulatedYieldSession += yieldPerSecond;
-                    
-                    document.getElementById('live-accumulated-yield').innerText = `$${userState.accumulatedYieldSession.toFixed(6)}`;
-                } else {
-                    document.getElementById('live-accumulated-yield').innerText = `$0.000000`;
-                }
-            }, 1000);
-        }
-
-        async function claimDailyEarnings() {
-            if (userState.accumulatedYieldSession <= 0.001) {
-                showToast("Aún no tienes suficientes ganancias generadas", "error");
+                showToast('Error de conexión al procesar la inversión.', 'error');
                 return;
             }
 
-            const claimed = parseFloat(userState.accumulatedYieldSession.toFixed(6));
-            userState.balance += claimed;
-            userState.totalYieldEarned += claimed;
-            userState.accumulatedYieldSession = 0;
-            userState.lastYieldTime = Date.now();
-
             updateDashboardUI();
-            showToast(`¡Acreditado $${claimed} USDT al saldo!`, "success");
-
-            if(userState.email !== 'invitado@demo.com') {
-                await updateUserProfileInCloud({
-                    balance: userState.balance,
-                    total_yield_earned: userState.totalYieldEarned,
-                    unclaimed_yield: 0,
-                    last_yield_time: new Date(userState.lastYieldTime).toISOString()
-                });
-            }
+            showToast(`¡Activaste el plan ${packageName} con éxito!`, 'success');
+            switchTab('dashboard');
         }
 
-        function saveCurrentYieldToCloud() {
-            if (userState.email && userState.email !== 'invitado@demo.com' && userState.stakedTotal > 0) {
-                supabaseClient.from('profiles').update({ 
-                    unclaimed_yield: userState.accumulatedYieldSession,
-                    last_yield_time: new Date().toISOString()
-                }).eq('email', userState.email).then(() => {});
-            }
-        }
-
-        // --- HISTORIAL TRANSACCIONES USUARIO ---
-        async function loadUserTransactions() {
-            if (userState.email === 'invitado@demo.com') return;
+        function startLiveYieldGenerator() {
+            if (yieldInterval) clearInterval(yieldInterval);
             
-            const tbody = document.getElementById('user-tx-history');
-            const noMsg = document.getElementById('no-tx-msg');
-            
-            try {
-                const { data: txs, error } = await supabaseClient
-                    .from('transactions')
-                    .select('*')
-                    .eq('user_email', userState.email)
-                    .order('created_at', { ascending: false });
-                
-                if (txs && txs.length > 0) {
-                    tbody.innerHTML = '';
-                    txs.forEach(tx => {
-                        let typeIcon = tx.type === 'deposit' ? '<i class="fa-solid fa-arrow-down text-emerald-400"></i>' : '<i class="fa-solid fa-arrow-up text-rose-400"></i>';
-                        let statusColor = tx.status === 'approved' ? 'text-emerald-400' : (tx.status === 'rejected' ? 'text-rose-400' : 'text-amber-400');
-                        let statusText = tx.status === 'approved' ? 'Aprobado' : (tx.status === 'rejected' ? 'Rechazado' : 'Pendiente');
-                        let date = new Date(tx.created_at).toLocaleDateString();
-
-                        tbody.innerHTML += `
-                            <tr class="border-b border-slate-800/50">
-                                <td class="p-2">${date}</td>
-                                <td class="p-2">${typeIcon} ${tx.type === 'deposit' ? 'Depósito' : 'Retiro'}</td>
-                                <td class="p-2 font-mono font-bold">$${tx.amount.toFixed(2)}</td>
-                                <td class="p-2 ${statusColor} font-bold">${statusText}</td>
-                            </tr>
-                        `;
-                    });
-                    noMsg.classList.add('hidden');
-                } else {
-                    tbody.innerHTML = '';
-                    noMsg.classList.remove('hidden');
+            yieldInterval = setInterval(() => {
+                const now = Date.now();
+                if (userState.stakedTotal > 0 && userState.lastYieldTime) {
+                    const secondsPassed = Math.max(0, (now - userState.lastYieldTime) / 1000);
+                    const dailyRate = 0.0166; 
+                    const yieldEarned = userState.stakedTotal * (dailyRate / 86400) * secondsPassed;
+                    
+                    userState.accumulatedYieldSession += yieldEarned;
+                    
+                    const yieldElem = document.getElementById('live-accumulated-yield');
+                    if (yieldElem) {
+                        yieldElem.innerText = `$${userState.accumulatedYieldSession.toFixed(6)}`;
+                    }
                 }
-            } catch (err) {
-                console.error("Error al cargar TXs", err);
+                userState.lastYieldTime = now;
+            }, 1000);
+        }
+
+        async function saveCurrentYieldToCloud() {
+            if (!userState.email || userState.email === 'invitado@demo.com' || userState.stakedTotal <= 0) return;
+            
+            const updates = {
+                unclaimed_yield: userState.accumulatedYieldSession,
+                last_yield_time: new Date(userState.lastYieldTime || Date.now()).toISOString()
+            };
+            await updateUserProfileInCloud(updates);
+        }
+
+        async function claimDailyEarnings() {
+            if (userState.accumulatedYieldSession <= 0.000001) {
+                showToast('Aún no has generado suficientes ganancias para acreditar.', 'error');
+                return;
+            }
+
+            const claimedAmount = userState.accumulatedYieldSession;
+            const now = Date.now();
+            
+            userState.balance += claimedAmount;
+            userState.totalYieldEarned += claimedAmount;
+            userState.accumulatedYieldSession = 0;
+            userState.unclaimedYield = 0;
+            userState.lastYieldTime = now;
+            
+            const yieldElem = document.getElementById('live-accumulated-yield');
+            if (yieldElem) yieldElem.innerText = `$0.000000`;
+            
+            updateDashboardUI();
+
+            const updates = {
+                balance: userState.balance,
+                total_yield_earned: userState.totalYieldEarned,
+                unclaimed_yield: 0,
+                last_yield_time: new Date(now).toISOString()
+            };
+            
+            const { error } = await updateUserProfileInCloud(updates);
+            if (error) {
+                showToast('Hubo un problema de conexión al acreditar en Supabase.', 'error');
+                return;
+            }
+
+            showToast(`¡+$${claimedAmount.toFixed(4)} USDT acreditados a tu saldo!`, 'success');
+        }
+
+        async function submitRealDeposit() {
+            const amountInput = document.getElementById('real-deposit-amount').value;
+            const hash = document.getElementById('real-deposit-hash').value.trim();
+
+            if (!amountInput) return showToast('Ingresa un monto válido', 'error');
+            const amount = parseFloat(amountInput);
+
+            if (isNaN(amount) || amount < 10) return showToast('El mínimo de depósito es $10 USDT', 'error');
+            if (!hash || hash.length < 10) return showToast('Ingresa un Hash válido', 'error');
+
+            if (userState.email === 'invitado@demo.com') {
+                showToast('Modo Demo: Depósito simulado en revisión.', 'success');
+                closeModal('deposit-modal');
+                return;
+            }
+
+            const tx = {
+                id: generateUUID(),
+                user_id: userState.id,
+                user_email: (userState.email || '').toLowerCase(),
+                type: 'deposit',
+                amount: amount,
+                hash: hash,
+                wallet: '',
+                status: 'pending',
+                created_at: new Date().toISOString()
+            };
+            
+            const { error } = await supabaseClient.from('transactions').insert([tx]);
+            
+            if (error) {
+                showToast(`Error de Supabase: Verifica que la tabla exista. (${error.message})`, 'error');
+                return;
+            }
+
+            document.getElementById('real-deposit-amount').value = '';
+            document.getElementById('real-deposit-hash').value = '';
+            closeModal('deposit-modal');
+            showToast('Depósito enviado a revisión.', 'success');
+            loadUserTransactions();
+        }
+
+        async function submitRealWithdrawal() {
+            const amountInput = document.getElementById('withdraw-amount').value;
+            const wallet = document.getElementById('withdraw-wallet-address').value.trim();
+
+            if (!amountInput) return showToast('Ingresa un monto válido', 'error');
+            const amount = parseFloat(amountInput);
+
+            if (userState.referralCount < 3) return showToast(`Necesitas 3 referidos (Llevas ${userState.referralCount})`, 'error');
+            if (userState.totalYieldEarned < 15) return showToast(`Mínimo $15 en ganancias (Llevas $${userState.totalYieldEarned.toFixed(2)})`, 'error');
+            if (isNaN(amount) || amount < 25) return showToast('El monto mínimo es $25 USDT', 'error');
+            if (amount > userState.balance) return showToast('Saldo insuficiente', 'error');
+            if (!wallet || wallet.length < 20) return showToast('Billetera inválida', 'error');
+
+            if (userState.email === 'invitado@demo.com') {
+                showToast('Modo Demo: Retiro simulado en revisión.', 'success');
+                closeModal('withdraw-modal');
+                return;
+            }
+
+            userState.balance -= amount;
+            await updateUserProfileInCloud({ balance: userState.balance });
+            updateDashboardUI();
+
+            const tx = {
+                id: generateUUID(),
+                user_id: userState.id,
+                user_email: (userState.email || '').toLowerCase(),
+                type: 'withdraw',
+                amount: amount,
+                hash: '',
+                wallet: wallet,
+                status: 'pending',
+                created_at: new Date().toISOString()
+            };
+            
+            const { error } = await supabaseClient.from('transactions').insert([tx]);
+            
+            if (error) {
+                showToast(`Error de conexión: ${error.message}`, 'error');
+                userState.balance += amount;
+                await updateUserProfileInCloud({ balance: userState.balance });
+                updateDashboardUI();
+                return;
+            }
+
+            document.getElementById('withdraw-amount').value = '';
+            document.getElementById('withdraw-wallet-address').value = '';
+            closeModal('withdraw-modal');
+            showToast('Retiro enviado. Fondos en retención.', 'success');
+            loadUserTransactions();
+        }
+
+        async function loadUserTransactions() {
+            if(userState.email === 'invitado@demo.com') return;
+
+            const tbody = document.getElementById('user-tx-history');
+            const { data, error } = await supabaseClient.from('transactions')
+                .select('*')
+                .eq('user_email', userState.email.toLowerCase())
+                .order('created_at', { ascending: false });
+
+            if (error) return console.error(error);
+
+            let newHtml = '';
+            if(!data || data.length === 0) {
+                document.getElementById('no-tx-msg').classList.remove('hidden');
+                tbody.innerHTML = '';
+            } else {
+                document.getElementById('no-tx-msg').classList.add('hidden');
+                data.forEach(tx => {
+                    const statusColor = tx.status === 'approved' ? 'text-emerald-400' : (tx.status === 'rejected' ? 'text-rose-400' : 'text-amber-400');
+                    const statusText = tx.status === 'approved' ? 'Aprobado' : (tx.status === 'rejected' ? 'Rechazado' : 'Pendiente');
+                    const typeText = tx.type === 'deposit' ? 'Depósito' : 'Retiro';
+                    
+                    let displayDate = 'N/A';
+                    if (tx.created_at) {
+                        const d = new Date(tx.created_at);
+                        displayDate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour: '2-digit', minute: '2-digit'});
+                    }
+                    newHtml += `
+                        <tr class="border-b border-slate-800/50 hover:bg-slate-800/20 transition">
+                            <td class="p-2">${displayDate}</td>
+                            <td class="p-2">${typeText}</td>
+                            <td class="p-2 font-mono">$${tx.amount.toFixed(2)}</td>
+                            <td class="p-2 font-semibold ${statusColor}">${statusText}</td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = newHtml;
+            }
+        }
+
+        async function loadAdminPanel() {
+            if (!ADMIN_EMAILS.includes(userState.email.toLowerCase())) return;
+            const statusInd = document.getElementById('admin-status-indicator');
+            if (statusInd) statusInd.innerHTML = '<span class="text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i> Conectado y Sincronizado</span>';
+
+            const { data, error } = await supabaseClient.from('transactions').select('*').eq('status', 'pending');
+            if (error) return console.error("Admin load error", error);
+
+            const depsBody = document.getElementById('admin-deposits-body');
+            const witsBody = document.getElementById('admin-withdrawals-body');
+            const deps = data.filter(t => t.type === 'deposit');
+            const wits = data.filter(t => t.type === 'withdraw');
+
+            if (deps.length === 0) {
+                document.getElementById('admin-no-deps').classList.remove('hidden');
+                depsBody.innerHTML = '';
+            } else {
+                document.getElementById('admin-no-deps').classList.add('hidden');
+                let h = '';
+                deps.forEach(t => {
+                    h += `<tr>
+                        <td class="p-3">${t.user_email}</td>
+                        <td class="p-3 font-mono text-emerald-400">$${t.amount.toFixed(2)}</td>
+                        <td class="p-3 font-mono text-[10px] break-all max-w-[100px]">${t.hash}</td>
+                        <td class="p-3 text-right">
+                            <button onclick="adminApproveDeposit('${t.id}', '${t.user_email}', ${t.amount})" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 px-2 py-1 rounded transition mr-1"><i class="fa-solid fa-check"></i></button>
+                            <button onclick="adminRejectTransaction('${t.id}')" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-slate-950 px-2 py-1 rounded transition"><i class="fa-solid fa-xmark"></i></button>
+                        </td>
+                    </tr>`;
+                });
+                depsBody.innerHTML = h;
+            }
+
+            if (wits.length === 0) {
+                document.getElementById('admin-no-wits').classList.remove('hidden');
+                witsBody.innerHTML = '';
+            } else {
+                document.getElementById('admin-no-wits').classList.add('hidden');
+                let h = '';
+                wits.forEach(t => {
+                    h += `<tr>
+                        <td class="p-3">${t.user_email}</td>
+                        <td class="p-3 font-mono text-amber-400">$${t.amount.toFixed(2)}</td>
+                        <td class="p-3 font-mono text-[10px] break-all max-w-[100px]">${t.wallet}</td>
+                        <td class="p-3 text-right">
+                            <button onclick="adminApproveWithdrawal('${t.id}', '${t.user_email}', ${t.amount})" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 px-2 py-1 rounded transition mr-1"><i class="fa-solid fa-check"></i></button>
+                            <button onclick="adminRejectTransaction('${t.id}')" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-slate-950 px-2 py-1 rounded transition"><i class="fa-solid fa-xmark"></i></button>
+                        </td>
+                    </tr>`;
+                });
+                witsBody.innerHTML = h;
+            }
+        }
+
+        async function adminApproveDeposit(id, userEmail, amount) {
+            const { error: txErr } = await supabaseClient.from('transactions').update({ status: 'approved' }).eq('id', id);
+            if (txErr) return showToast('Error al aprobar TX', 'error');
+
+            const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
+            if (prof) {
+                const newBal = parseFloat(prof.balance) + parseFloat(amount);
+                await supabaseClient.from('profiles').update({ balance: newBal }).eq('email', userEmail);
+                showToast('Depósito aprobado y saldo sumado', 'success');
+                loadAdminPanel();
+            }
+        }
+
+        async function adminApproveWithdrawal(id, userEmail, amount) {
+            const { error: txErr } = await supabaseClient.from('transactions').update({ status: 'approved' }).eq('id', id);
+            if (txErr) return showToast('Error al aprobar TX', 'error');
+
+            const { data: prof } = await supabaseClient.from('profiles').select('total_withdrawn').eq('email', userEmail).single();
+            if (prof) {
+                const newWithdrawn = parseFloat(prof.total_withdrawn || 0) + parseFloat(amount);
+                await supabaseClient.from('profiles').update({ total_withdrawn: newWithdrawn }).eq('email', userEmail);
+                showToast('Retiro aprobado', 'success');
+                loadAdminPanel();
+            }
+        }
+
+        async function adminRejectTransaction(id) {
+            const { error } = await supabaseClient.from('transactions').update({ status: 'rejected' }).eq('id', id);
+            if (!error) {
+                showToast('Transacción rechazada', 'success');
+                loadAdminPanel();
             }
         }
 
         async function loadReferredUsersList() {
-             if (userState.email === 'invitado@demo.com') return;
-             const tbody = document.getElementById('referred-users-list');
-             const noMsg = document.getElementById('no-refs-msg');
-
-             const { data: refs } = await supabaseClient.from('profiles').select('full_name, email, created_at').eq('referred_by', userState.refCode);
-
-             if (refs && refs.length > 0) {
-                 tbody.innerHTML = '';
-                 refs.forEach(r => {
-                     let date = new Date(r.created_at).toLocaleDateString();
-                     tbody.innerHTML += `
-                        <tr class="border-b border-slate-800/50">
-                            <td class="p-2 font-medium text-slate-200">${r.full_name || r.email.split('@')[0]}</td>
-                            <td class="p-2 text-slate-400 font-mono">${date}</td>
-                        </tr>
-                     `;
-                 });
-                 noMsg.classList.add('hidden');
-             } else {
-                 tbody.innerHTML = '';
-                 noMsg.classList.remove('hidden');
-             }
-        }
-
-        // --- PANEL ADMINISTRADOR (APROBACIONES) ---
-        async function loadAdminPanel() {
-            if (!ADMIN_EMAILS.includes(userState.email.toLowerCase())) return;
-
-            document.getElementById('admin-status-indicator').innerHTML = '<span class="text-emerald-400"><i class="fa-solid fa-cloud text-emerald-400 mr-1"></i> Conectado (En vivo)</span>';
-
-            try {
-                // 1. Cargar Depósitos Pendientes
-                const { data: deposits } = await supabaseClient
-                    .from('transactions')
-                    .select('*')
-                    .eq('type', 'deposit')
-                    .eq('status', 'pending')
-                    .order('created_at', { ascending: true });
-
-                const depBody = document.getElementById('admin-deposits-body');
-                const noDepMsg = document.getElementById('admin-no-deps');
-                
-                if (deposits && deposits.length > 0) {
-                    depBody.innerHTML = '';
-                    deposits.forEach(dep => {
-                        depBody.innerHTML += `
-                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
-                                <td class="p-3 font-medium text-slate-300">${dep.user_email}</td>
-                                <td class="p-3 text-emerald-400 font-bold font-mono">$${dep.amount.toFixed(2)}</td>
-                                <td class="p-3 text-cyan-400 font-mono text-[10px] break-all">${dep.tx_hash}</td>
-                                <td class="p-3 text-right space-x-2 whitespace-nowrap">
-                                    <button onclick="handleAdminAction('${dep.id}', 'deposit', 'approve', ${dep.amount}, '${dep.user_email}')" class="bg-emerald-500/20 text-emerald-400 p-1.5 rounded hover:bg-emerald-500 hover:text-slate-900 transition" title="Aprobar"><i class="fa-solid fa-check"></i></button>
-                                    <button onclick="handleAdminAction('${dep.id}', 'deposit', 'reject', ${dep.amount}, '${dep.user_email}')" class="bg-rose-500/20 text-rose-400 p-1.5 rounded hover:bg-rose-500 hover:text-slate-900 transition" title="Rechazar"><i class="fa-solid fa-xmark"></i></button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    noDepMsg.classList.add('hidden');
-                } else {
-                    depBody.innerHTML = '';
-                    noDepMsg.classList.remove('hidden');
-                }
-
-                // 2. Cargar Retiros Pendientes
-                const { data: withdrawals } = await supabaseClient
-                    .from('transactions')
-                    .select('*')
-                    .eq('type', 'withdrawal')
-                    .eq('status', 'pending')
-                    .order('created_at', { ascending: true });
-
-                const witBody = document.getElementById('admin-withdrawals-body');
-                const noWitMsg = document.getElementById('admin-no-wits');
-                
-                if (withdrawals && withdrawals.length > 0) {
-                    witBody.innerHTML = '';
-                    withdrawals.forEach(wit => {
-                        witBody.innerHTML += `
-                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
-                                <td class="p-3 font-medium text-slate-300">${wit.user_email}</td>
-                                <td class="p-3 text-rose-400 font-bold font-mono">$${wit.amount.toFixed(2)}</td>
-                                <td class="p-3 text-cyan-400 font-mono text-[10px] break-all">${wit.wallet_address}</td>
-                                <td class="p-3 text-right space-x-2 whitespace-nowrap">
-                                    <button onclick="handleAdminAction('${wit.id}', 'withdrawal', 'approve', ${wit.amount}, '${wit.user_email}')" class="bg-emerald-500/20 text-emerald-400 p-1.5 rounded hover:bg-emerald-500 hover:text-slate-900 transition" title="Marcar Pagado"><i class="fa-solid fa-check"></i></button>
-                                    <button onclick="handleAdminAction('${wit.id}', 'withdrawal', 'reject', ${wit.amount}, '${wit.user_email}')" class="bg-rose-500/20 text-rose-400 p-1.5 rounded hover:bg-rose-500 hover:text-slate-900 transition" title="Rechazar y Devolver"><i class="fa-solid fa-xmark"></i></button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    noWitMsg.classList.add('hidden');
-                } else {
-                    witBody.innerHTML = '';
-                    noWitMsg.classList.remove('hidden');
-                }
-            } catch(e) {
-                console.error("Admin load error", e);
-            }
-        }
-
-        async function handleAdminAction(txId, type, action, amount, userEmail) {
-            const status = action === 'approve' ? 'approved' : 'rejected';
+            if (!userState.refCode || userState.email === 'invitado@demo.com') return;
+            const { data, error } = await supabaseClient.from('profiles').select('*').eq('referred_by', userState.refCode).order('created_at', { ascending: false });
+            const tbody = document.getElementById('referred-users-list');
             
-            try {
-                // Actualiza el estado de la transacción
-                await supabaseClient.from('transactions').update({ status: status }).eq('id', txId);
-
-                // Si se APROBÓ un DEPÓSITO, suma el dinero al usuario
-                if (action === 'approve' && type === 'deposit') {
-                    const { data: profile } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
-                    if (profile) {
-                        const newBalance = parseFloat(profile.balance || 0) + parseFloat(amount);
-                        await supabaseClient.from('profiles').update({ balance: newBalance }).eq('email', userEmail);
-                    }
-                }
-
-                // Si se RECHAZÓ un RETIRO, devolvemos los fondos a su balance
-                if (action === 'reject' && type === 'withdrawal') {
-                    const { data: profile } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
-                    if (profile) {
-                        const newBalance = parseFloat(profile.balance || 0) + parseFloat(amount);
-                        await supabaseClient.from('profiles').update({ balance: newBalance }).eq('email', userEmail);
-                    }
-                }
-
-                showToast(`Operación ${action === 'approve' ? 'aprobada' : 'rechazada'} con éxito`, 'success');
-                loadAdminPanel(); // Refrescar lista
-
-            } catch(e) {
-                console.error("Error realizando accion admin", e);
-                showToast("Error ejecutando la acción", "error");
+            if (error || !data || data.length === 0) {
+                document.getElementById('no-refs-msg').classList.remove('hidden');
+                if (tbody) tbody.innerHTML = '';
+                return;
             }
+
+            document.getElementById('no-refs-msg').classList.add('hidden');
+            let html = '';
+            data.forEach(user => {
+                let date = 'N/A';
+                if (user.created_at) {
+                    date = new Date(user.created_at).toLocaleDateString('es-AR');
+                }
+                html += `
+                    <tr class="border-b border-slate-800/50 hover:bg-slate-800/20 transition">
+                        <td class="p-2 text-white">${user.full_name || user.email.split('@')[0]} <span class="text-[10px] text-slate-500 block">${user.email}</span></td>
+                        <td class="p-2 text-slate-400 font-mono">${date}</td>
+                    </tr>
+                `;
+            });
+            if (tbody) tbody.innerHTML = html;
         }
 
-        // --- GRAFICO TELEMETRÍA ---
+        let telemetryChartInstance = null;
         function initTelemetryChart() {
             const ctx = document.getElementById('telemetryChart');
-            if(!ctx) return;
+            if (!ctx) return;
+            if (telemetryChartInstance) telemetryChartInstance.destroy();
             
-            new Chart(ctx, {
+            telemetryChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
                     datasets: [{
-                        label: 'Flujo (L/s)',
-                        data: [40, 42, 45, 43, 46, 44, 47],
+                        label: 'Volumen de Extracción (L/s)',
+                        data: [40.2, 41.5, 42.1, 41.8, 42.5, 42.8, 43.1],
                         borderColor: '#00f2fe',
                         backgroundColor: 'rgba(0, 242, 254, 0.1)',
+                        borderWidth: 2,
                         tension: 0.4,
                         fill: true
-                    }, {
-                        label: 'Presión (PSI)',
-                        data: [120, 125, 122, 130, 128, 135, 132],
-                        borderColor: '#10b981',
-                        borderDash: [5, 5],
-                        tension: 0.4
                     }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#94a3b8' } } },
+                    plugins: { legend: { display: false } },
                     scales: {
-                        y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b' } },
-                        x: { grid: { color: '#1e293b' }, ticks: { color: '#64748b' } }
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
                     }
                 }
             });
         }
+
+        function updateDailyCountdownClock() {
+            setInterval(() => {
+                const now = new Date();
+                const tomorrow = new Date(now);
+                tomorrow.setUTCHours(24, 0, 0, 0);
+                const diff = tomorrow - now;
+                
+                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                const elem = document.getElementById('time-to-payout');
+                if (elem) elem.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            }, 1000);
+        }
+
     </script>
 </body>
 </html>
-
-
