@@ -807,6 +807,9 @@
         let adminPollingInterval = null;
         let userSyncInterval = null; 
         let pendingReferralCodeFromUrl = '';
+        
+        // Bloqueo global para evitar peticiones duplicadas de transacciones (Evita el doble-clic rápido)
+        let processingTxs = new Set(); 
 
         function generateUUID() {
             if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
@@ -1501,72 +1504,122 @@
             }
         }
 
-        // SOLUCIÓN AL BUG DE DUPLICADOS: Verificación de estado + Desactivación inmediata
+        // SOLUCIÓN AL BUG DE DUPLICADOS: Bloqueo de Set () y Atomic Update (eq('status', 'pending'))
         async function adminApproveDeposit(btnElement, id, userEmail, amount) {
-            if (btnElement) {
-                btnElement.disabled = true;
-                btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-            }
+            if (processingTxs.has(id)) return;
+            processingTxs.add(id);
 
-            // Validar que realmente esté pendiente ANTES de sumar
-            const { data: txData } = await supabaseClient.from('transactions').select('status').eq('id', id).single();
-            if (!txData || txData.status !== 'pending') {
-                showToast('Esta transacción ya fue procesada anteriormente.', 'warning');
-                return loadAdminPanel();
-            }
+            try {
+                if (btnElement) {
+                    btnElement.disabled = true;
+                    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                }
 
-            const { error: txErr } = await supabaseClient.from('transactions').update({ status: 'approved' }).eq('id', id);
-            if (txErr) return showToast('Error al aprobar TX', 'error');
+                // ATOMIC UPDATE: Asegura que la DB solo realice el update SI su estado actual sigue siendo 'pending'.
+                // Si dos peticiones entran a la vez, la segunda retornará error / 0 filas y evitaremos el doble cargo.
+                const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
+                    .update({ status: 'approved' })
+                    .eq('id', id)
+                    .eq('status', 'pending')
+                    .select();
 
-            const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
-            if (prof) {
-                const newBal = parseFloat(prof.balance || 0) + parseFloat(amount);
-                await supabaseClient.from('profiles').update({ balance: newBal }).eq('email', userEmail);
-                showToast('Depósito aprobado y saldo acreditado', 'success');
-                loadAdminPanel();
+                if (txErr) {
+                    showToast('Error de conexión al aprobar la transacción.', 'error');
+                    loadAdminPanel();
+                    return;
+                }
+
+                // Si no se modificaron filas, la orden ya había sido procesada en otro click/pestaña
+                if (!updatedTx || updatedTx.length === 0) {
+                    showToast('Transacción interceptada: Ya se había procesado.', 'warning');
+                    loadAdminPanel();
+                    return;
+                }
+
+                // Solo si la orden se actualizó atómicamente procedemos a dar el saldo:
+                const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
+                if (prof) {
+                    const newBal = parseFloat(prof.balance || 0) + parseFloat(amount);
+                    await supabaseClient.from('profiles').update({ balance: newBal }).eq('email', userEmail);
+                    showToast('Depósito aprobado y saldo acreditado con éxito.', 'success');
+                    loadAdminPanel();
+                }
+            } finally {
+                processingTxs.delete(id); // Liberamos el candado visual
             }
         }
 
+        // Aplicamos la misma lógica anti doble-clic a los retiros
         async function adminApproveWithdrawal(btnElement, id, userEmail, amount) {
-            if (btnElement) {
-                btnElement.disabled = true;
-                btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-            }
+            if (processingTxs.has(id)) return;
+            processingTxs.add(id);
 
-            // Validar que realmente esté pendiente ANTES de procesar
-            const { data: txData } = await supabaseClient.from('transactions').select('status').eq('id', id).single();
-            if (!txData || txData.status !== 'pending') {
-                showToast('Esta transacción ya fue procesada anteriormente.', 'warning');
-                return loadAdminPanel();
-            }
+            try {
+                if (btnElement) {
+                    btnElement.disabled = true;
+                    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                }
 
-            const { error: txErr } = await supabaseClient.from('transactions').update({ status: 'approved' }).eq('id', id);
-            if (txErr) return showToast('Error al aprobar TX', 'error');
+                const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
+                    .update({ status: 'approved' })
+                    .eq('id', id)
+                    .eq('status', 'pending')
+                    .select();
 
-            const { data: prof } = await supabaseClient.from('profiles').select('total_withdrawn').eq('email', userEmail).single();
-            if (prof) {
-                const newWithdrawn = parseFloat(prof.total_withdrawn || 0) + parseFloat(amount);
-                await supabaseClient.from('profiles').update({ total_withdrawn: newWithdrawn }).eq('email', userEmail);
-                showToast('Retiro marcado como completado', 'success');
-                loadAdminPanel();
+                if (txErr) {
+                    showToast('Error de conexión al procesar.', 'error');
+                    loadAdminPanel();
+                    return;
+                }
+
+                if (!updatedTx || updatedTx.length === 0) {
+                    showToast('Esta orden de retiro ya fue confirmada.', 'warning');
+                    loadAdminPanel();
+                    return;
+                }
+
+                const { data: prof } = await supabaseClient.from('profiles').select('total_withdrawn').eq('email', userEmail).single();
+                if (prof) {
+                    const newWithdrawn = parseFloat(prof.total_withdrawn || 0) + parseFloat(amount);
+                    await supabaseClient.from('profiles').update({ total_withdrawn: newWithdrawn }).eq('email', userEmail);
+                    showToast('Retiro marcado como completado.', 'success');
+                    loadAdminPanel();
+                }
+            } finally {
+                processingTxs.delete(id);
             }
         }
 
+        // Aplicamos la misma lógica al rechazo de peticiones
         async function adminRejectTransaction(btnElement, id, type, amount, userEmail) {
-            if (btnElement) {
-                btnElement.disabled = true;
-                btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-            }
+            if (processingTxs.has(id)) return;
+            processingTxs.add(id);
 
-            const { data: txData } = await supabaseClient.from('transactions').select('status').eq('id', id).single();
-            if (!txData || txData.status !== 'pending') {
-                showToast('Esta transacción ya fue procesada.', 'warning');
-                return loadAdminPanel();
-            }
+            try {
+                if (btnElement) {
+                    btnElement.disabled = true;
+                    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                }
 
-            const { error } = await supabaseClient.from('transactions').update({ status: 'rejected' }).eq('id', id);
-            if (!error) {
-                // Si es un retiro rechazado, DEBEMOS DEVOLVERLE EL SALDO al usuario
+                const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
+                    .update({ status: 'rejected' })
+                    .eq('id', id)
+                    .eq('status', 'pending')
+                    .select();
+
+                if (txErr) {
+                    showToast('Error al rechazar TX.', 'error');
+                    loadAdminPanel();
+                    return;
+                }
+
+                if (!updatedTx || updatedTx.length === 0) {
+                    showToast('Esta transacción ya había sido gestionada.', 'warning');
+                    loadAdminPanel();
+                    return;
+                }
+
+                // Si se rechaza un retiro (y era atómicamente válido), le devolvemos los fondos al usuario
                 if (type === 'withdraw') {
                     const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
                     if (prof) {
@@ -1575,11 +1628,10 @@
                     }
                 }
                 
-                showToast('Transacción rechazada correctamente', 'success');
+                showToast('Transacción rechazada correctamente.', 'success');
                 loadAdminPanel();
-            } else {
-                showToast('Error al rechazar TX', 'error');
-                loadAdminPanel();
+            } finally {
+                processingTxs.delete(id);
             }
         }
 
