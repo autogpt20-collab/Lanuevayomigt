@@ -814,11 +814,6 @@
         let adminPollingInterval = null;
         let userSyncInterval = null; 
         let pendingReferralCodeFromUrl = '';
-        
-        // ==========================================
-        // CERRADURAS (LOCKS) ANTI-DUPLICACIÓN SEVERAS
-        // ==========================================
-        
         let processingTxs = new Set(); 
         let isSubmittingTx = false;
 
@@ -1344,6 +1339,7 @@
                 if (prof.total_yield_earned < 15) return showToast('Requisito incumplido: Mínimo $15 generados.', 'error');
                 if (parseFloat(prof.balance) < amount) return showToast('Saldo insuficiente para este retiro.', 'error');
 
+                // DESCONTAMOS EL SALDO INMEDIATAMENTE AL SOLICITAR
                 const newBalance = parseFloat(prof.balance) - amount;
 
                 const { error: updErr } = await supabaseClient.from('profiles').update({ balance: newBalance }).eq('email', userState.email);
@@ -1444,8 +1440,8 @@
         }
 
         // ==========================================
-        // LÓGICA DE APROBACIONES ESTRICTAS DEL ADMIN 
-        // ¡ACTUALIZADO PARA EVITAR DUPLICACIONES POR TRIGGERS O DOBLE CLIC!
+        // NUEVA LÓGICA DE APROBACIONES ESTRICTAS DEL ADMIN 
+        // ¡El Frontend ya NO hace matemáticas! Solo actualiza el estado.
         // ==========================================
         async function adminApproveDeposit(btnElement, id, userEmail, amount) {
             if (processingTxs.has(id)) return;
@@ -1459,34 +1455,7 @@
                     if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } 
                 }
 
-                // 1. CHEQUEO DE ESTADO ACTUAL Y OBTENCIÓN DE HASH
-                const { data: currentTx, error: ctxErr } = await supabaseClient.from('transactions').select('status, hash').eq('id', id).single();
-                if (ctxErr || !currentTx || currentTx.status !== 'pending') {
-                    showToast('Transacción ya procesada previamente.', 'warning');
-                    return;
-                }
-
-                // 2. PROTECCIÓN ANTIFRAUDE: HASH DUPLICADO EN LA NUBE
-                if (currentTx.hash) {
-                    const { data: duplicateHashes } = await supabaseClient.from('transactions')
-                        .select('id').eq('hash', currentTx.hash).eq('status', 'approved');
-                    
-                    if (duplicateHashes && duplicateHashes.length > 0) {
-                        showToast('¡ALERTA DE FRAUDE! Este Hash ya ha sido aprobado.', 'error');
-                        await supabaseClient.from('transactions').update({ status: 'rejected' }).eq('id', id);
-                        return;
-                    }
-                }
-
-                // 3. LEER EL BALANCE ACTUAL ANTES DE MODIFICAR LA TRANSACCIÓN 
-                // (Esto evita que triggers de backend dupliquen la suma)
-                const { data: prof, error: profErr } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
-                if (profErr || !prof) throw new Error("Fallo crítico al leer perfil del usuario.");
-
-                const preBalance = parseFloat(prof.balance || 0);
-                const targetBalance = preBalance + parseFloat(amount); // Calculamos matemáticamente lo que DEBE quedar
-
-                // 4. CANDADO ATÓMICO (Compare-and-Swap): Aprobar la Tx.
+                // SIMPLEMENTE CAMBIAMOS EL ESTADO A APROBADO (El Trigger SQL hará la suma del balance atómicamente)
                 const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
                     .update({ status: 'approved' })
                     .eq('id', id)
@@ -1498,10 +1467,7 @@
                     return;
                 }
 
-                // 5. ESTABLECER EL BALANCE AL VALOR EXACTO CALCULADO
-                // Al forzar el resultado, evitamos cualquier suma doble que un trigger en DB estuviese provocando.
-                await supabaseClient.from('profiles').update({ balance: targetBalance }).eq('email', userEmail);
-                showToast('Depósito aprobado de manera segura.', 'success');
+                showToast('Depósito aprobado (Balance sincronizado por Supabase)', 'success');
                 
             } catch (err) { 
                 console.error(err); 
@@ -1524,25 +1490,18 @@
                     if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } 
                 }
 
-                // Leer métricas antes
-                const { data: prof } = await supabaseClient.from('profiles').select('total_withdrawn').eq('email', userEmail).single();
-                let targetWithdrawn = null;
-                if (prof) {
-                    targetWithdrawn = parseFloat(prof.total_withdrawn || 0) + parseFloat(amount);
-                }
-
-                // CANDADO ATÓMICO
+                // SIMPLEMENTE CAMBIAMOS EL ESTADO A APROBADO (El Trigger SQL sumará al "total_withdrawn")
                 const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
-                    .update({ status: 'approved' }).eq('id', id).eq('status', 'pending').select();
+                    .update({ status: 'approved' })
+                    .eq('id', id)
+                    .eq('status', 'pending')
+                    .select();
 
                 if (txErr || !updatedTx || updatedTx.length === 0) {
                     showToast('Orden bloqueada: Ya fue confirmada previamente.', 'warning');
                     return;
                 }
 
-                if (targetWithdrawn !== null) {
-                    await supabaseClient.from('profiles').update({ total_withdrawn: targetWithdrawn }).eq('email', userEmail);
-                }
                 showToast('Retiro marcado como completado.', 'success');
             } catch(err) { console.error(err); } 
             finally { loadAdminPanel(); setTimeout(() => { processingTxs.delete(id); }, 2000); }
@@ -1560,30 +1519,19 @@
                     if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } 
                 }
 
-                // Calcular el balance de devolución ANTES de cancelar, por seguridad anti-triggers
-                let targetRefundBalance = null;
-                if (type === 'withdraw') {
-                    const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
-                    if (prof) {
-                        targetRefundBalance = parseFloat(prof.balance || 0) + parseFloat(amount);
-                    }
-                }
-
-                // CANDADO ATÓMICO
+                // SIMPLEMENTE CAMBIAMOS EL ESTADO A RECHAZADO (El Trigger SQL le devolverá el saldo si era un Retiro)
                 const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
-                    .update({ status: 'rejected' }).eq('id', id).eq('status', 'pending').select();
+                    .update({ status: 'rejected' })
+                    .eq('id', id)
+                    .eq('status', 'pending')
+                    .select();
 
                 if (txErr || !updatedTx || updatedTx.length === 0) {
                     showToast('Transacción bloqueada: Ya fue gestionada.', 'warning');
                     return;
                 }
-
-                // Devolver el saldo retenido al usuario si era un retiro usando el monto calculado
-                if (type === 'withdraw' && targetRefundBalance !== null) {
-                    await supabaseClient.from('profiles').update({ balance: targetRefundBalance }).eq('email', userEmail);
-                }
                 
-                showToast('Transacción rechazada (y fondos devueltos si aplica).', 'success');
+                showToast('Transacción rechazada (Base de datos actualizada).', 'success');
             } catch(err) { console.error(err); } 
             finally { loadAdminPanel(); setTimeout(() => { processingTxs.delete(id); }, 2000); }
         }
@@ -1639,7 +1587,6 @@
                 }
             });
             
-            // Lógica de simulación en vivo del gráfico para no dejar el script cortado
             setInterval(() => {
                 if(telemetryChartInstance && document.getElementById('tab-telemetry').classList.contains('hidden') === false) {
                     const newVal = (42 + Math.random() * 1.5).toFixed(1);
