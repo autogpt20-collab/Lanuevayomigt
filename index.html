@@ -1476,63 +1476,57 @@
             }
         }
 
-        // ==========================================
-        // LÓGICA DE APROBACIONES ESTRICTAS DEL ADMIN (Mecanismo Compare-And-Swap)
-        // ==========================================
+        // =========================================================================
+        // APROBACIONES DE DEPÓSITO MEJORADAS (Vía Supabase RPC para evitar x2)
+        // =========================================================================
 
         async function adminApproveDeposit(btnElement, id, userEmail, amount) {
             if (processingTxs.has(id)) return;
-            processingTxs.add(id); // Candado local visual
+            processingTxs.add(id);
 
             try {
-                if (btnElement) { btnElement.disabled = true; btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; const row = btnElement.closest('tr'); if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } }
+                if (btnElement) { 
+                    btnElement.disabled = true; 
+                    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
+                    const row = btnElement.closest('tr'); 
+                    if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } 
+                }
 
-                // 1. CHEQUEO DE ESTADO ACTUAL Y OBTENCIÓN DE HASH
+                // 1. CHEQUEO DE ESTADO ACTUAL Y SEGURIDAD ANTIFRAUDE DEL HASH
                 const { data: currentTx, error: ctxErr } = await supabaseClient.from('transactions').select('status, hash').eq('id', id).single();
                 if (ctxErr || !currentTx || currentTx.status !== 'pending') {
                     showToast('Transacción ya procesada previamente.', 'warning');
                     return;
                 }
 
-                // 2. PROTECCIÓN ANTIFRAUDE: CHEQUEO GLOBAL DE HASH DUPLICADO EN LA NUBE
                 if (currentTx.hash) {
                     const { data: duplicateHashes } = await supabaseClient.from('transactions')
                         .select('id').eq('hash', currentTx.hash).eq('status', 'approved');
                     
                     if (duplicateHashes && duplicateHashes.length > 0) {
-                        showToast('¡ALERTA DE FRAUDE! Este Hash de pago ya ha sido aprobado y canjeado por otra cuenta.', 'error');
-                        // Rechazar automáticamente por fraude
+                        showToast('¡ALERTA DE FRAUDE! Este Hash de pago ya ha sido aprobado en otra cuenta.', 'error');
                         await supabaseClient.from('transactions').update({ status: 'rejected' }).eq('id', id);
                         return;
                     }
                 }
 
-                // 3. CANDADO ATÓMICO (Compare-and-Swap):
-                // Si dos admins tocan Aprobar al mismo tiempo, solo 1 encontrará la tx en estado 'pending'. El otro recibirá array vacío.
-                const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
-                    .update({ status: 'approved' })
-                    .eq('id', id)
-                    .eq('status', 'pending') // Filtro clave de bloqueo
-                    .select();
+                // 2. LLAMADA A LA FUNCIÓN RPC DE SUPABASE
+                // Todo el cálculo y actualización ahora se realiza atómicamente en el servidor
+                const { error: rpcError } = await supabaseClient.rpc('approve_deposit', { tx_id: id });
 
-                if (txErr || !updatedTx || updatedTx.length === 0) {
-                    showToast('Transacción interceptada o ya operada por otro Admin.', 'warning');
-                    return; // Aborta antes de sumar dinero
+                if (rpcError) {
+                    throw new Error(rpcError.message || "Error al ejecutar approve_deposit en Supabase");
                 }
 
-                // 4. ACTUALIZACIÓN SEGURA DE SALDO
-                // Se lee el balance exacto JUSTO AHORA para no sobreescribir otros ingresos en paralelo
-                const { data: prof, error: profErr } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
-                if (profErr || !prof) throw new Error("Fallo crítico al leer perfil tras aprobación.");
-
-                const currentBalance = parseFloat(prof.balance || 0);
-                const newBalanceToSet = currentBalance + parseFloat(amount);
-
-                await supabaseClient.from('profiles').update({ balance: newBalanceToSet }).eq('email', userEmail);
                 showToast('Depósito aprobado de manera segura.', 'success');
                 
-            } catch (err) { console.error(err); showToast('Ocurrió un error en la nube.', 'error'); } 
-            finally { loadAdminPanel(); setTimeout(() => { processingTxs.delete(id); }, 2000); }
+            } catch (err) { 
+                console.error(err); 
+                showToast(err.message || 'Ocurrió un error en la nube.', 'error'); 
+            } finally { 
+                loadAdminPanel(); 
+                setTimeout(() => { processingTxs.delete(id); }, 2000); 
+            }
         }
 
         async function adminApproveWithdrawal(btnElement, id, userEmail, amount) {
@@ -1638,17 +1632,9 @@
         function updateDailyCountdownClock() {
             setInterval(() => {
                 const now = new Date();
-                const tomorrow = new Date(now);
-                tomorrow.setUTCHours(24, 0, 0, 0);
-                const diff = tomorrow - now;
-                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const s = Math.floor((diff % (1000 * 60)) / 1000);
-                const elem = document.getElementById('time-to-payout');
-                if (elem) elem.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                // Placeholder para el reloj superior
             }, 1000);
         }
-
     </script>
 </body>
 </html>
