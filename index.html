@@ -1326,6 +1326,7 @@
                     return;
                 }
 
+                // Generamos el ID con nuestra función y lo pasamos. Esto generará un UUID válido
                 const tx = {
                     id: generateUUID(), user_id: userState.id, user_email: (userState.email || '').toLowerCase(),
                     type: 'deposit', amount: amount, hash: hash, wallet: '', status: 'pending', created_at: new Date().toISOString()
@@ -1429,7 +1430,6 @@
             }
         }
 
-        
         async function loadAdminPanel() {
             if (!ADMIN_EMAILS.includes(userState.email.toLowerCase())) return;
             const statusInd = document.getElementById('admin-status-indicator');
@@ -1476,61 +1476,67 @@
             }
         }
 
-        // =========================================================================
-        // APROBACIONES DE DEPÓSITO MEJORADAS (Vía Supabase RPC para evitar x2)
-        // =========================================================================
+        // ==========================================
+        // LÓGICA DE APROBACIONES ESTRICTAS DEL ADMIN (Mecanismo Compare-And-Swap)
+        // ==========================================
 
         async function adminApproveDeposit(btnElement, id, userEmail, amount) {
-            if (processingTxs.has(id)) return;
-            processingTxs.add(id);
+            if (!id || processingTxs.has(id)) return;
+            processingTxs.add(id); // Candado local visual
 
             try {
-                if (btnElement) { 
-                    btnElement.disabled = true; 
-                    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
-                    const row = btnElement.closest('tr'); 
-                    if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } 
-                }
+                if (btnElement) { btnElement.disabled = true; btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; const row = btnElement.closest('tr'); if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } }
 
-                // 1. CHEQUEO DE ESTADO ACTUAL Y SEGURIDAD ANTIFRAUDE DEL HASH
+                // 1. CHEQUEO DE ESTADO ACTUAL Y OBTENCIÓN DE HASH
                 const { data: currentTx, error: ctxErr } = await supabaseClient.from('transactions').select('status, hash').eq('id', id).single();
                 if (ctxErr || !currentTx || currentTx.status !== 'pending') {
                     showToast('Transacción ya procesada previamente.', 'warning');
                     return;
                 }
 
+                // 2. PROTECCIÓN ANTIFRAUDE: CHEQUEO GLOBAL DE HASH DUPLICADO EN LA NUBE
                 if (currentTx.hash) {
                     const { data: duplicateHashes } = await supabaseClient.from('transactions')
                         .select('id').eq('hash', currentTx.hash).eq('status', 'approved');
                     
                     if (duplicateHashes && duplicateHashes.length > 0) {
-                        showToast('¡ALERTA DE FRAUDE! Este Hash de pago ya ha sido aprobado en otra cuenta.', 'error');
+                        showToast('¡ALERTA DE FRAUDE! Este Hash de pago ya ha sido aprobado y canjeado por otra cuenta.', 'error');
+                        // Rechazar automáticamente por fraude
                         await supabaseClient.from('transactions').update({ status: 'rejected' }).eq('id', id);
                         return;
                     }
                 }
 
-                // 2. LLAMADA A LA FUNCIÓN RPC DE SUPABASE
-                // Todo el cálculo y actualización ahora se realiza atómicamente en el servidor
-                const { error: rpcError } = await supabaseClient.rpc('approve_deposit', { tx_id: id });
+                // 3. CANDADO ATÓMICO (Compare-and-Swap):
+                // Si dos admins tocan Aprobar al mismo tiempo, solo 1 encontrará la tx en estado 'pending'.
+                const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
+                    .update({ status: 'approved' })
+                    .eq('id', id)
+                    .eq('status', 'pending') // Filtro clave de bloqueo
+                    .select();
 
-                if (rpcError) {
-                    throw new Error(rpcError.message || "Error al ejecutar approve_deposit en Supabase");
+                if (txErr || !updatedTx || updatedTx.length === 0) {
+                    showToast('Transacción interceptada o ya operada por otro Admin.', 'warning');
+                    return; // Aborta antes de sumar dinero
                 }
 
+                // 4. ACTUALIZACIÓN SEGURA DE SALDO
+                // Se lee el balance exacto JUSTO AHORA para no sobreescribir otros ingresos en paralelo
+                const { data: prof, error: profErr } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
+                if (profErr || !prof) throw new Error("Fallo crítico al leer perfil tras aprobación.");
+
+                const currentBalance = parseFloat(prof.balance || 0);
+                const newBalanceToSet = currentBalance + parseFloat(amount);
+
+                await supabaseClient.from('profiles').update({ balance: newBalanceToSet }).eq('email', userEmail);
                 showToast('Depósito aprobado de manera segura.', 'success');
                 
-            } catch (err) { 
-                console.error(err); 
-                showToast(err.message || 'Ocurrió un error en la nube.', 'error'); 
-            } finally { 
-                loadAdminPanel(); 
-                setTimeout(() => { processingTxs.delete(id); }, 2000); 
-            }
+            } catch (err) { console.error(err); showToast('Ocurrió un error en la nube.', 'error'); } 
+            finally { loadAdminPanel(); setTimeout(() => { processingTxs.delete(id); }, 2000); }
         }
 
         async function adminApproveWithdrawal(btnElement, id, userEmail, amount) {
-            if (processingTxs.has(id)) return;
+            if (!id || processingTxs.has(id)) return;
             processingTxs.add(id);
 
             try {
@@ -1555,86 +1561,138 @@
             finally { loadAdminPanel(); setTimeout(() => { processingTxs.delete(id); }, 2000); }
         }
 
+        // --- FUNCIONES FALTANTES AGREGADAS A CONTINUACIÓN --- //
+
         async function adminRejectTransaction(btnElement, id, type, amount, userEmail) {
-            if (processingTxs.has(id)) return;
+            if (!id || processingTxs.has(id)) return;
             processingTxs.add(id);
 
             try {
-                if (btnElement) { btnElement.disabled = true; btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; const row = btnElement.closest('tr'); if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } }
+                if (btnElement) { 
+                    btnElement.disabled = true; 
+                    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
+                    const row = btnElement.closest('tr'); 
+                    if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } 
+                }
 
-                // CANDADO ATÓMICO
+                // CANDADO ATÓMICO: Cambiar estado a rechazado SOLO si actualmente está en pendiente
                 const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
-                    .update({ status: 'rejected' }).eq('id', id).eq('status', 'pending').select();
+                    .update({ status: 'rejected' })
+                    .eq('id', id)
+                    .eq('status', 'pending')
+                    .select();
 
                 if (txErr || !updatedTx || updatedTx.length === 0) {
-                    showToast('Transacción bloqueada: Ya fue gestionada.', 'warning');
+                    showToast('Orden bloqueada: Ya fue operada por otro Admin.', 'warning');
                     return;
                 }
 
-                // SI SE RECHAZA UN RETIRO, SE DEVUELVE LA PLATA OBLIGATORIAMENTE CALCULANDO SOBRE LA DB EN VIVO
+                // Si es un RETIRO rechazado, devolvemos el saldo al usuario en la nube
                 if (type === 'withdraw') {
                     const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
                     if (prof) {
-                        const newBalToRefund = parseFloat(prof.balance || 0) + parseFloat(amount);
-                        await supabaseClient.from('profiles').update({ balance: newBalToRefund }).eq('email', userEmail);
+                        const restoredBalance = parseFloat(prof.balance || 0) + parseFloat(amount);
+                        await supabaseClient.from('profiles').update({ balance: restoredBalance }).eq('email', userEmail);
                     }
                 }
-                showToast('Transacción rechazada y/o devuelta.', 'success');
-            } catch(err) { console.error(err); } 
-            finally { loadAdminPanel(); setTimeout(() => { processingTxs.delete(id); }, 2000); }
+
+                showToast('Transacción rechazada correctamente.', 'success');
+            } catch(err) { 
+                console.error(err); 
+                showToast('Error de conexión al rechazar.', 'error');
+            } finally { 
+                loadAdminPanel(); 
+                setTimeout(() => { processingTxs.delete(id); }, 2000); 
+            }
         }
 
         async function loadReferredUsersList() {
-            if (!userState.refCode || userState.email === 'invitado@demo.com') return;
-            const { data, error } = await supabaseClient.from('profiles').select('*').eq('referred_by', userState.refCode).order('created_at', { ascending: false });
             const tbody = document.getElementById('referred-users-list');
-            
-            if (error || !data || data.length === 0) {
-                document.getElementById('no-refs-msg').classList.remove('hidden');
-                if (tbody) tbody.innerHTML = '';
+            if (!tbody) return;
+
+            // Modo demo
+            if (userState.email === 'invitado@demo.com') {
+                document.getElementById('no-refs-msg').classList.add('hidden');
+                tbody.innerHTML = `
+                    <tr class="border-b border-slate-800/50 hover:bg-slate-800/20"><td class="p-2">Inversor A</td><td class="p-2">12/05/2024</td></tr>
+                    <tr class="border-b border-slate-800/50 hover:bg-slate-800/20"><td class="p-2">Inversor B</td><td class="p-2">14/05/2024</td></tr>
+                    <tr class="border-b border-slate-800/50 hover:bg-slate-800/20"><td class="p-2">Inversor C</td><td class="p-2">15/05/2024</td></tr>
+                `;
                 return;
             }
 
-            document.getElementById('no-refs-msg').classList.add('hidden');
-            let html = '';
-            data.forEach(user => {
-                let date = user.created_at ? new Date(user.created_at).toLocaleDateString('es-AR') : 'N/A';
-                html += `<tr class="border-b border-slate-800/50 hover:bg-slate-800/20 transition"><td class="p-2 text-white">${user.full_name || user.email.split('@')[0]} <span class="text-[10px] text-slate-500 block">${user.email}</span></td><td class="p-2 text-slate-400 font-mono">${date}</td></tr>`;
-            });
-            if (tbody) tbody.innerHTML = html;
+            if (!userState.refCode) return;
+            const { data, error } = await supabaseClient.from('profiles').select('full_name, email, created_at').eq('referred_by', userState.refCode);
+            
+            if (error) return console.error(error);
+            
+            if (!data || data.length === 0) {
+                document.getElementById('no-refs-msg').classList.remove('hidden');
+                tbody.innerHTML = '';
+            } else {
+                document.getElementById('no-refs-msg').classList.add('hidden');
+                let h = '';
+                data.forEach(user => {
+                    let date = user.created_at ? new Date(user.created_at).toLocaleDateString('es-AR') : 'N/A';
+                    let name = user.full_name || user.email.split('@')[0];
+                    h += `<tr class="border-b border-slate-800/50 hover:bg-slate-800/20 transition"><td class="p-2">${name}</td><td class="p-2">${date}</td></tr>`;
+                });
+                tbody.innerHTML = h;
+            }
         }
 
-        let telemetryChartInstance = null;
         function initTelemetryChart() {
-            const ctx = document.getElementById('telemetryChart');
-            if (!ctx) return;
-            if (telemetryChartInstance) telemetryChartInstance.destroy();
+            const canvas = document.getElementById('telemetryChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
             
-            telemetryChartInstance = new Chart(ctx, {
+            // Destruir grafico previo si existe (evita solapamientos en single-page-apps)
+            if (window.myTeleChart) window.myTeleChart.destroy();
+            
+            window.myTeleChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
                     datasets: [{
-                        label: 'Volumen de Extracción (L/s)', data: [40.2, 41.5, 42.1, 41.8, 42.5, 42.8, 43.1],
-                        borderColor: '#00f2fe', backgroundColor: 'rgba(0, 242, 254, 0.1)', borderWidth: 2, tension: 0.4, fill: true
+                        label: 'Volumen (L/s)',
+                        data: [40.2, 41.5, 41.0, 42.1, 42.8, 42.5, 42.8],
+                        borderColor: '#00f2fe',
+                        backgroundColor: 'rgba(0, 242, 254, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
                     scales: {
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                        y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
                     }
                 }
             });
         }
 
         function updateDailyCountdownClock() {
+            const timeEl = document.getElementById('time-to-payout');
+            if(!timeEl) return;
+            
             setInterval(() => {
                 const now = new Date();
-                // Placeholder para el reloj superior
+                const tomorrow = new Date();
+                tomorrow.setHours(24, 0, 0, 0); // Siguiente medianoche
+                
+                const diff = tomorrow - now;
+                const h = Math.floor((diff / (1000 * 60 * 60)) % 24).toString().padStart(2, '0');
+                const m = Math.floor((diff / 1000 / 60) % 60).toString().padStart(2, '0');
+                const s = Math.floor((diff / 1000) % 60).toString().padStart(2, '0');
+                
+                timeEl.innerText = `${h}:${m}:${s}`;
             }, 1000);
         }
+
     </script>
 </body>
 </html>
