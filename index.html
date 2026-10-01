@@ -819,10 +819,7 @@
         // CERRADURAS (LOCKS) ANTI-DUPLICACIÓN SEVERAS
         // ==========================================
         
-        // Bloqueo visual global para filas de administrador.
         let processingTxs = new Set(); 
-        
-        // Bloqueo global de base de datos para operaciones críticas del usuario.
         let isSubmittingTx = false;
 
         function generateUUID() {
@@ -1152,9 +1149,6 @@
         }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-        // ==========================================
-        // LÓGICA CORE: INVERSIÓN (Protegida)
-        // ==========================================
         async function investInPackage(btnElement, packageName, cost) {
             if (isSubmittingTx) return;
             isSubmittingTx = true;
@@ -1164,7 +1158,6 @@
             btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...';
 
             try {
-                // 1. OBTENER ESTADO FRESCO DESDE LA BASE DE DATOS (Anti pestañas múltiples)
                 const { data: prof, error: profErr } = await supabaseClient.from('profiles').select('balance, staked_total, unclaimed_yield, last_yield_time').eq('email', userState.email).single();
                 
                 if (profErr || !prof) throw new Error("Error al verificar perfil en la nube");
@@ -1175,7 +1168,6 @@
                     return;
                 }
                 
-                // 2. CÁLCULO DE RENDIMIENTO PENDIENTE HASTA ESTE SEGUNDO
                 const now = Date.now();
                 const lastTimeStored = prof.last_yield_time ? new Date(prof.last_yield_time).getTime() : now;
                 const secondsPassed = Math.max(0, (now - lastTimeStored) / 1000);
@@ -1186,18 +1178,10 @@
                 const newBalance = currentBalance - cost;
                 const newStaked = currentStaked + cost;
 
-                // 3. ACTUALIZACIÓN ATÓMICA DE PERFIL
-                const updates = {
-                    balance: newBalance,
-                    staked_total: newStaked,
-                    unclaimed_yield: newUnclaimed,
-                    last_yield_time: new Date(now).toISOString()
-                };
-                
+                const updates = { balance: newBalance, staked_total: newStaked, unclaimed_yield: newUnclaimed, last_yield_time: new Date(now).toISOString() };
                 const { error } = await supabaseClient.from('profiles').update(updates).eq('email', userState.email);
                 if (error) throw error;
 
-                // Sincronizar estado local solo si hubo éxito
                 userState.balance = newBalance;
                 userState.stakedTotal = newStaked;
                 userState.unclaimedYield = newUnclaimed;
@@ -1238,9 +1222,6 @@
             await updateUserProfileInCloud(updates);
         }
 
-        // ==========================================
-        // LÓGICA CORE: RECLAMO DE GANANCIAS (Protegida)
-        // ==========================================
         async function claimDailyEarnings(btnElement) {
             if (isSubmittingTx) return;
             isSubmittingTx = true;
@@ -1250,9 +1231,7 @@
             btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Acreditando...';
 
             try {
-                // 1. LEER GANANCIA EXACTA DESDE LA DB (Evita que el usuario use 2 pestañas y cobre el doble)
                 const { data: prof, error: profErr } = await supabaseClient.from('profiles').select('unclaimed_yield, balance, total_yield_earned, last_yield_time, staked_total').eq('email', userState.email).single();
-                
                 if (profErr || !prof) throw new Error("No se pudo verificar tu cuenta de rendimiento");
 
                 const now = Date.now();
@@ -1271,12 +1250,10 @@
                 const newBalance = parseFloat(prof.balance || 0) + trueAccumulated;
                 const newTotalYield = parseFloat(prof.total_yield_earned || 0) + trueAccumulated;
 
-                // 2. GUARDAR DATOS EN LA NUBE
                 const updates = { balance: newBalance, total_yield_earned: newTotalYield, unclaimed_yield: 0, last_yield_time: new Date(now).toISOString() };
                 const { error } = await supabaseClient.from('profiles').update(updates).eq('email', userState.email);
                 if (error) throw error;
 
-                // 3. SINCRONIZAR VISUAL SOLO SI LA NUBE RESPONDIÓ OK
                 userState.balance = newBalance;
                 userState.totalYieldEarned = newTotalYield;
                 userState.accumulatedYieldSession = 0;
@@ -1319,7 +1296,6 @@
             btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
 
             try {
-                // Chequeo local rápido. (La verdadera protección antifraude está del lado del Admin)
                 const { data: existingTx } = await supabaseClient.from('transactions').select('id').eq('hash', hash);
                 if (existingTx && existingTx.length > 0) {
                     showToast('Este hash (TxID) ya ha sido reportado previamente.', 'error');
@@ -1343,9 +1319,6 @@
             finally { isSubmittingTx = false; btnElement.disabled = false; btnElement.innerText = originalBtnText; }
         }
 
-        // ==========================================
-        // LÓGICA CORE: RETIROS (Protegida)
-        // ==========================================
         async function submitRealWithdrawal(btnElement) {
             if (isSubmittingTx) return; 
 
@@ -1364,7 +1337,6 @@
             btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Solicitando...';
 
             try {
-                // 1. CHEQUEO EXHAUSTIVO DESDE LA BASE DE DATOS
                 const { data: prof, error: profErr } = await supabaseClient.from('profiles').select('balance, referral_count, total_yield_earned').eq('email', userState.email).single();
                 if (profErr || !prof) throw new Error("Error al verificar tu perfil.");
                 
@@ -1374,21 +1346,17 @@
 
                 const newBalance = parseFloat(prof.balance) - amount;
 
-                // 2. DEDUCIR SALDO PRIMERO EN LA NUBE
                 const { error: updErr } = await supabaseClient.from('profiles').update({ balance: newBalance }).eq('email', userState.email);
                 if (updErr) throw new Error("Fallo al retener el saldo.");
 
-                // 3. CREAR LA TRANSACCIÓN
                 const tx = { id: generateUUID(), user_id: userState.id, user_email: userState.email.toLowerCase(), type: 'withdraw', amount: amount, hash: '', wallet: wallet, status: 'pending', created_at: new Date().toISOString() };
                 const { error: txErr } = await supabaseClient.from('transactions').insert([tx]);
                 
                 if (txErr) {
-                    // Revertir descuento de saldo si falló la creación de la TX
                     await supabaseClient.from('profiles').update({ balance: prof.balance }).eq('email', userState.email);
                     throw new Error("Fallo de red. Saldo devuelto.");
                 }
 
-                // Exito
                 userState.balance = newBalance;
                 document.getElementById('withdraw-amount').value = '';
                 document.getElementById('withdraw-wallet-address').value = '';
@@ -1429,7 +1397,6 @@
             }
         }
 
-        
         async function loadAdminPanel() {
             if (!ADMIN_EMAILS.includes(userState.email.toLowerCase())) return;
             const statusInd = document.getElementById('admin-status-indicator');
@@ -1477,14 +1444,20 @@
         }
 
         // ==========================================
-        // LÓGICA DE APROBACIONES ESTRICTAS DEL ADMIN (Mecanismo Compare-And-Swap)
+        // LÓGICA DE APROBACIONES ESTRICTAS DEL ADMIN 
+        // ¡ACTUALIZADO PARA EVITAR DUPLICACIONES POR TRIGGERS O DOBLE CLIC!
         // ==========================================
         async function adminApproveDeposit(btnElement, id, userEmail, amount) {
             if (processingTxs.has(id)) return;
-            processingTxs.add(id); // Candado local visual
+            processingTxs.add(id);
 
             try {
-                if (btnElement) { btnElement.disabled = true; btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; const row = btnElement.closest('tr'); if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } }
+                if (btnElement) { 
+                    btnElement.disabled = true; 
+                    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
+                    const row = btnElement.closest('tr'); 
+                    if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } 
+                }
 
                 // 1. CHEQUEO DE ESTADO ACTUAL Y OBTENCIÓN DE HASH
                 const { data: currentTx, error: ctxErr } = await supabaseClient.from('transactions').select('status, hash').eq('id', id).single();
@@ -1493,45 +1466,50 @@
                     return;
                 }
 
-                // 2. PROTECCIÓN ANTIFRAUDE: CHEQUEO GLOBAL DE HASH DUPLICADO EN LA NUBE
+                // 2. PROTECCIÓN ANTIFRAUDE: HASH DUPLICADO EN LA NUBE
                 if (currentTx.hash) {
                     const { data: duplicateHashes } = await supabaseClient.from('transactions')
                         .select('id').eq('hash', currentTx.hash).eq('status', 'approved');
                     
                     if (duplicateHashes && duplicateHashes.length > 0) {
-                        showToast('¡ALERTA DE FRAUDE! Este Hash de pago ya ha sido aprobado y canjeado por otra cuenta.', 'error');
-                        // Rechazar automáticamente por fraude
+                        showToast('¡ALERTA DE FRAUDE! Este Hash ya ha sido aprobado.', 'error');
                         await supabaseClient.from('transactions').update({ status: 'rejected' }).eq('id', id);
                         return;
                     }
                 }
 
-                // 3. CANDADO ATÓMICO (Compare-and-Swap):
-                // Si dos admins tocan Aprobar al mismo tiempo, solo 1 encontrará la tx en estado 'pending'. El otro recibirá array vacío.
+                // 3. LEER EL BALANCE ACTUAL ANTES DE MODIFICAR LA TRANSACCIÓN 
+                // (Esto evita que triggers de backend dupliquen la suma)
+                const { data: prof, error: profErr } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
+                if (profErr || !prof) throw new Error("Fallo crítico al leer perfil del usuario.");
+
+                const preBalance = parseFloat(prof.balance || 0);
+                const targetBalance = preBalance + parseFloat(amount); // Calculamos matemáticamente lo que DEBE quedar
+
+                // 4. CANDADO ATÓMICO (Compare-and-Swap): Aprobar la Tx.
                 const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
                     .update({ status: 'approved' })
                     .eq('id', id)
-                    .eq('status', 'pending') // Filtro clave de bloqueo
+                    .eq('status', 'pending')
                     .select();
 
                 if (txErr || !updatedTx || updatedTx.length === 0) {
-                    showToast('Transacción interceptada o ya operada por otro Admin.', 'warning');
-                    return; // Aborta antes de sumar dinero
+                    showToast('Transacción interceptada o ya operada.', 'warning');
+                    return;
                 }
 
-                // 4. ACTUALIZACIÓN SEGURA DE SALDO
-                // Se lee el balance exacto JUSTO AHORA para no sobreescribir otros ingresos en paralelo
-                const { data: prof, error: profErr } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
-                if (profErr || !prof) throw new Error("Fallo crítico al leer perfil tras aprobación.");
-
-                const currentBalance = parseFloat(prof.balance || 0);
-                const newBalanceToSet = currentBalance + parseFloat(amount);
-
-                await supabaseClient.from('profiles').update({ balance: newBalanceToSet }).eq('email', userEmail);
+                // 5. ESTABLECER EL BALANCE AL VALOR EXACTO CALCULADO
+                // Al forzar el resultado, evitamos cualquier suma doble que un trigger en DB estuviese provocando.
+                await supabaseClient.from('profiles').update({ balance: targetBalance }).eq('email', userEmail);
                 showToast('Depósito aprobado de manera segura.', 'success');
                 
-            } catch (err) { console.error(err); showToast('Ocurrió un error en la nube.', 'error'); } 
-            finally { loadAdminPanel(); setTimeout(() => { processingTxs.delete(id); }, 2000); }
+            } catch (err) { 
+                console.error(err); 
+                showToast('Ocurrió un error en la nube.', 'error'); 
+            } finally { 
+                loadAdminPanel(); 
+                setTimeout(() => { processingTxs.delete(id); }, 2000); 
+            }
         }
 
         async function adminApproveWithdrawal(btnElement, id, userEmail, amount) {
@@ -1539,7 +1517,19 @@
             processingTxs.add(id);
 
             try {
-                if (btnElement) { btnElement.disabled = true; btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; const row = btnElement.closest('tr'); if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } }
+                if (btnElement) { 
+                    btnElement.disabled = true; 
+                    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
+                    const row = btnElement.closest('tr'); 
+                    if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } 
+                }
+
+                // Leer métricas antes
+                const { data: prof } = await supabaseClient.from('profiles').select('total_withdrawn').eq('email', userEmail).single();
+                let targetWithdrawn = null;
+                if (prof) {
+                    targetWithdrawn = parseFloat(prof.total_withdrawn || 0) + parseFloat(amount);
+                }
 
                 // CANDADO ATÓMICO
                 const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
@@ -1550,10 +1540,8 @@
                     return;
                 }
 
-                const { data: prof } = await supabaseClient.from('profiles').select('total_withdrawn').eq('email', userEmail).single();
-                if (prof) {
-                    const newWithdrawn = parseFloat(prof.total_withdrawn || 0) + parseFloat(amount);
-                    await supabaseClient.from('profiles').update({ total_withdrawn: newWithdrawn }).eq('email', userEmail);
+                if (targetWithdrawn !== null) {
+                    await supabaseClient.from('profiles').update({ total_withdrawn: targetWithdrawn }).eq('email', userEmail);
                 }
                 showToast('Retiro marcado como completado.', 'success');
             } catch(err) { console.error(err); } 
@@ -1565,7 +1553,21 @@
             processingTxs.add(id);
 
             try {
-                if (btnElement) { btnElement.disabled = true; btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; const row = btnElement.closest('tr'); if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } }
+                if (btnElement) { 
+                    btnElement.disabled = true; 
+                    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
+                    const row = btnElement.closest('tr'); 
+                    if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } 
+                }
+
+                // Calcular el balance de devolución ANTES de cancelar, por seguridad anti-triggers
+                let targetRefundBalance = null;
+                if (type === 'withdraw') {
+                    const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
+                    if (prof) {
+                        targetRefundBalance = parseFloat(prof.balance || 0) + parseFloat(amount);
+                    }
+                }
 
                 // CANDADO ATÓMICO
                 const { data: updatedTx, error: txErr } = await supabaseClient.from('transactions')
@@ -1576,15 +1578,12 @@
                     return;
                 }
 
-                // SI SE RECHAZA UN RETIRO, SE DEVUELVE LA PLATA OBLIGATORIAMENTE CALCULANDO SOBRE LA DB EN VIVO
-                if (type === 'withdraw') {
-                    const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
-                    if (prof) {
-                        const newBalToRefund = parseFloat(prof.balance || 0) + parseFloat(amount);
-                        await supabaseClient.from('profiles').update({ balance: newBalToRefund }).eq('email', userEmail);
-                    }
+                // Devolver el saldo retenido al usuario si era un retiro usando el monto calculado
+                if (type === 'withdraw' && targetRefundBalance !== null) {
+                    await supabaseClient.from('profiles').update({ balance: targetRefundBalance }).eq('email', userEmail);
                 }
-                showToast('Transacción rechazada y/o devuelta.', 'success');
+                
+                showToast('Transacción rechazada (y fondos devueltos si aplica).', 'success');
             } catch(err) { console.error(err); } 
             finally { loadAdminPanel(); setTimeout(() => { processingTxs.delete(id); }, 2000); }
         }
@@ -1640,30 +1639,25 @@
                 }
             });
             
-            // Randomly update the real-time volume
+            // Lógica de simulación en vivo del gráfico para no dejar el script cortado
             setInterval(() => {
-                const volIndicator = document.getElementById('tel-vol');
-                if(volIndicator) {
-                    const randomVariance = (Math.random() * 0.4 - 0.2); 
-                    const currentVol = parseFloat(volIndicator.innerText) || 42.8;
-                    const newVol = (currentVol + randomVariance).toFixed(1);
-                    volIndicator.innerText = `${newVol} L/s`;
+                if(telemetryChartInstance && document.getElementById('tab-telemetry').classList.contains('hidden') === false) {
+                    const newVal = (42 + Math.random() * 1.5).toFixed(1);
+                    document.getElementById('tel-vol').innerText = newVal + ' L/s';
                 }
             }, 3000);
         }
-
+        
         function updateDailyCountdownClock() {
-            const clockEl = document.getElementById('time-to-payout');
-            if (!clockEl) return;
             setInterval(() => {
                 const now = new Date();
-                const midnight = new Date();
-                midnight.setHours(24, 0, 0, 0); // Sets to upcoming midnight
-                const diff = midnight - now;
+                const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+                const diff = tomorrow - now;
                 const h = Math.floor((diff / (1000 * 60 * 60)) % 24).toString().padStart(2, '0');
                 const m = Math.floor((diff / 1000 / 60) % 60).toString().padStart(2, '0');
                 const s = Math.floor((diff / 1000) % 60).toString().padStart(2, '0');
-                clockEl.innerText = `${h}:${m}:${s}`;
+                const el = document.getElementById('time-to-payout');
+                if(el) el.innerText = `${h}:${m}:${s}`;
             }, 1000);
         }
     </script>
