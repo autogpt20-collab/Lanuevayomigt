@@ -814,18 +814,7 @@
         let adminPollingInterval = null;
         let userSyncInterval = null; 
         let pendingReferralCodeFromUrl = '';
-        
-        // CERRADURAS (LOCKS) ANTI-DUPLICACIÓN
-        let processingTxs = new Set(); 
         let isSubmittingTx = false;
-
-        function generateUUID() {
-            if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
-        }
 
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -907,7 +896,37 @@
             }, 3000);
         }
 
-        // ====== MODIFICADO: HANDLE REGISTER CON UPDATE DE REFERIDO ======
+        // ================= FUNCIÓN DE LOGIN =================
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const pass = document.getElementById('login-password').value;
+
+            setButtonLoading('login-btn', true, 'Ingresar a la Plataforma', 'fa-arrow-right-to-bracket');
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: pass,
+                });
+
+                if (error) {
+                    setButtonLoading('login-btn', false, 'Ingresar a la Plataforma', 'fa-arrow-right-to-bracket');
+                    return showToast('Credenciales incorrectas.', 'error');
+                }
+
+                if (data && data.user) {
+                    userState.id = data.user.id;
+                    showToast('Inicio de sesión exitoso', 'success');
+                    await loadUserProfile(email);
+                }
+            } catch (error) {
+                setButtonLoading('login-btn', false, 'Ingresar a la Plataforma', 'fa-arrow-right-to-bracket');
+                showToast('Error de red al iniciar sesión.', 'error');
+            }
+        }
+
+        // ================= FUNCIÓN DE REGISTRO =================
         async function handleRegister(e) {
             e.preventDefault();
             const fname = document.getElementById('reg-fullname').value.trim();
@@ -932,7 +951,7 @@
                     
                     const myRefCode = generateRefCode();
                     const newProfile = {
-                        id: data.user.id, // <-- Vinculamos ID con tabla Auth explícitamente
+                        id: data.user.id,
                         email: email, full_name: fname, balance: 0.00, staked_total: 0.00,
                         total_withdrawn: 0.00, total_yield_earned: 0.00, ref_code: myRefCode,
                         referred_by: pendingReferralCodeFromUrl || null, referral_count: 0,
@@ -947,7 +966,6 @@
                         return;
                     }
 
-                    // --- INTENTO DE INCREMENTAR EL CONTADOR DEL INVITADOR DE FORMA DIRECTA ---
                     if (pendingReferralCodeFromUrl && !profileError) {
                         try {
                             const { data: inviter } = await supabaseClient
@@ -958,15 +976,10 @@
                                 
                             if (inviter) {
                                 const newCount = parseInt(inviter.referral_count || 0) + 1;
-                                await supabaseClient.from('profiles')
-                                    .update({ referral_count: newCount })
-                                    .eq('email', inviter.email);
+                                await supabaseClient.from('profiles').update({ referral_count: newCount }).eq('email', inviter.email);
                             }
-                        } catch(err) {
-                            console.warn("No se pudo actualizar directo al invitador por reglas RLS.");
-                        }
+                        } catch(err) { console.warn("RLS restriction on referral count"); }
                     }
-                    // ------------------------------------------------------------------------
 
                     showToast('¡Cuenta creada correctamente! Iniciando sesión...', 'success');
                     await loadUserProfile(email);
@@ -975,6 +988,261 @@
                 setButtonLoading('reg-btn', false, 'Crear Cuenta Gratis', 'fa-user-plus');
                 showToast('Error de red al registrarse.', 'error');
             }
+        }
+
+        // ================= PERFIL Y NAVEGACIÓN =================
+        async function loadUserProfile(email) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('email', email)
+                    .single();
+
+                if (data) {
+                    userState = { 
+                        id: data.id, email: data.email, fullName: data.full_name, 
+                        balance: parseFloat(data.balance || 0), 
+                        stakedTotal: parseFloat(data.staked_total || 0),
+                        totalWithdrawn: parseFloat(data.total_withdrawn || 0),
+                        totalYieldEarned: parseFloat(data.total_yield_earned || 0),
+                        refCode: data.ref_code, referredBy: data.referred_by,
+                        referralCount: parseInt(data.referral_count || 0),
+                        unclaimedYield: parseFloat(data.unclaimed_yield || 0),
+                        lastYieldTime: data.last_yield_time
+                    };
+                    userState.accumulatedYieldSession = userState.unclaimedYield;
+                } else {
+                    userState.email = email;
+                    userState.fullName = email.split('@')[0];
+                }
+            } catch(e) {
+                userState.email = email;
+                userState.fullName = email.split('@')[0];
+            }
+
+            document.getElementById('auth-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            document.getElementById('dashboard-view').classList.add('flex');
+            
+            switchTab('dashboard');
+            updateDashboardUI();
+            startYieldGeneration();
+            
+            if (ADMIN_EMAILS.includes(email.toLowerCase())) {
+                document.getElementById('nav-admin').classList.remove('hidden');
+                document.getElementById('nav-admin-mobile').classList.remove('hidden');
+                document.getElementById('nav-admin-mobile').classList.add('flex');
+            }
+        }
+
+        function enterDemoMode() {
+            userState = {
+                id: 'demo-123', email: 'demo@litiox.io', fullName: 'Usuario Demo', balance: 150.00,
+                stakedTotal: 100.00, totalWithdrawn: 0.00, totalYieldEarned: 15.50,
+                refCode: 'DEMO-LITIO', referredBy: '', referralCount: 3, 
+                accumulatedYieldSession: 1.25, unclaimedYield: 1.25, lastYieldTime: new Date().toISOString()
+            };
+            
+            document.getElementById('auth-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            document.getElementById('dashboard-view').classList.add('flex');
+            
+            showToast('Modo Invitado (Demo) Iniciado', 'success');
+            switchTab('dashboard');
+            updateDashboardUI();
+            startYieldGeneration();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-cyan-400', 'bg-slate-800/80', 'active');
+                btn.classList.add('text-slate-400');
+            });
+            
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if(activeNav && !activeNav.classList.contains('hidden')) {
+                activeNav.classList.remove('text-slate-400');
+                activeNav.classList.add('text-cyan-400', 'bg-slate-800/80', 'active');
+            }
+            
+            document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+                btn.classList.remove('text-cyan-400');
+                btn.classList.add('text-slate-400');
+            });
+        }
+
+        async function handleLogout() {
+            await supabaseClient.auth.signOut();
+            clearInterval(yieldInterval);
+            window.location.reload();
+        }
+
+        // ================= LÓGICA PRINCIPAL (YIELD, UI) =================
+        function updateDashboardUI() {
+            document.getElementById('user-welcome-label').innerText = `Hola, ${userState.fullName || userState.email.split('@')[0]}`;
+            document.getElementById('header-balance-display').innerText = `$${parseFloat(userState.balance).toFixed(2)}`;
+            document.getElementById('metric-balance').innerText = `$${parseFloat(userState.balance).toFixed(2)}`;
+            document.getElementById('metric-staked').innerText = `$${parseFloat(userState.stakedTotal).toFixed(2)}`;
+            document.getElementById('hero-staked-amount').innerText = `$${parseFloat(userState.stakedTotal).toFixed(2)}`;
+            document.getElementById('metric-yield-earned').innerText = `$${parseFloat(userState.totalYieldEarned).toFixed(2)}`;
+            document.getElementById('metric-withdrawn').innerText = `$${parseFloat(userState.totalWithdrawn).toFixed(2)}`;
+            
+            document.getElementById('req-ref-badge').innerText = `${userState.referralCount} / 3`;
+            document.getElementById('req-ref-bar').style.width = `${Math.min((userState.referralCount / 3) * 100, 100)}%`;
+            
+            document.getElementById('req-yield-badge').innerText = `$${parseFloat(userState.totalYieldEarned).toFixed(2)} / $15`;
+            document.getElementById('req-yield-bar').style.width = `${Math.min((parseFloat(userState.totalYieldEarned) / 15) * 100, 100)}%`;
+            
+            document.getElementById('user-ref-link-input').value = `https://litiox.io/?ref=${userState.refCode}`;
+            document.getElementById('ref-count-display').innerText = `${userState.referralCount} / 3`;
+            
+            if (userState.referralCount >= 3) {
+                document.getElementById('ref-status-text').innerText = "¡Requisito de referidos cumplido!";
+                document.getElementById('ref-status-text').classList.replace('text-slate-500', 'text-emerald-400');
+            }
+        }
+
+        function startYieldGeneration() {
+            if (yieldInterval) clearInterval(yieldInterval);
+            
+            yieldInterval = setInterval(() => {
+                if (userState.stakedTotal > 0) {
+                    const yieldPerSec = (userState.stakedTotal * 0.0166) / 86400;
+                    userState.accumulatedYieldSession += yieldPerSec;
+                }
+                document.getElementById('live-accumulated-yield').innerText = `$${userState.accumulatedYieldSession.toFixed(6)}`;
+            }, 1000);
+        }
+
+        function claimDailyEarnings(btn) {
+            if (userState.accumulatedYieldSession <= 0) return showToast('No hay ganancias para acreditar', 'error');
+            
+            userState.balance += userState.accumulatedYieldSession;
+            userState.totalYieldEarned += userState.accumulatedYieldSession;
+            userState.accumulatedYieldSession = 0;
+            
+            showToast('Ganancias acreditadas al saldo', 'success');
+            updateDashboardUI();
+            saveCurrentYieldToCloud();
+            
+            const card = document.getElementById('card-metric-balance');
+            card.classList.add('bg-emerald-500/20');
+            setTimeout(() => card.classList.remove('bg-emerald-500/20'), 500);
+        }
+
+        async function saveCurrentYieldToCloud() {
+            if (!userState.id || userState.id.startsWith('demo')) return;
+            try {
+                await supabaseClient.from('profiles').update({
+                    balance: userState.balance,
+                    unclaimed_yield: userState.accumulatedYieldSession,
+                    total_yield_earned: userState.totalYieldEarned
+                }).eq('id', userState.id);
+            } catch(e) { console.log('Sincronización en segundo plano omitida'); }
+        }
+
+        function investInPackage(btn, name, price) {
+            if (userState.balance < price) {
+                return showToast('Saldo insuficiente. Deposita USDT primero.', 'error');
+            }
+            userState.balance -= price;
+            userState.stakedTotal += price;
+            showToast(`¡Inversión en ${name} exitosa!`, 'success');
+            
+            updateDashboardUI();
+            saveCurrentYieldToCloud();
+            
+            // Actualizar backend para planes
+            if (!userState.id.startsWith('demo')) {
+                supabaseClient.from('profiles').update({
+                    balance: userState.balance,
+                    staked_total: userState.stakedTotal
+                }).eq('id', userState.id).then(()=>{});
+            }
+            
+            switchTab('dashboard');
+        }
+
+        // ================= MODALES Y ACCIONES =================
+        function openDepositModal() { document.getElementById('deposit-modal').classList.remove('hidden'); }
+        function openWithdrawModal() { 
+            document.getElementById('withdraw-available-balance').innerText = `$${parseFloat(userState.balance).toFixed(2)}`;
+            document.getElementById('modal-req-ref').innerText = `${userState.referralCount} / 3`;
+            document.getElementById('modal-req-yield').innerText = `$${parseFloat(userState.totalYieldEarned).toFixed(2)} / $15`;
+            document.getElementById('withdraw-modal').classList.remove('hidden'); 
+        }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function copyText(text) {
+            navigator.clipboard.writeText(text);
+            showToast('Copiado al portapapeles');
+        }
+        function copyReferralLink() { copyText(document.getElementById('user-ref-link-input').value); }
+        function handleForgotPassword(e) { e.preventDefault(); showToast('Instrucciones enviadas', 'success'); toggleAuthMode('login'); }
+        function submitRealDeposit(btn) { showToast('Depósito notificado y en revisión', 'success'); closeModal('deposit-modal'); }
+        function submitRealWithdrawal(btn) { 
+            if (userState.referralCount < 3 || userState.totalYieldEarned < 15) {
+                return showToast('No cumples los requisitos de referidos o ganancias.', 'error');
+            }
+            const amount = document.getElementById('withdraw-amount').value;
+            if (amount < 25) return showToast('El retiro mínimo es de $25 USDT', 'error');
+            if (amount > userState.balance) return showToast('Saldo insuficiente', 'error');
+            
+            userState.balance -= amount;
+            updateDashboardUI();
+            showToast('Solicitud enviada a revisión', 'success'); 
+            closeModal('withdraw-modal'); 
+        }
+
+        function loadAdminPanel() { showToast('Panel Admin recargado', 'success'); }
+
+        // ================= GRÁFICOS Y RELOJES =================
+        function initTelemetryChart() {
+            const ctx = document.getElementById('telemetryChart');
+            if (!ctx) return;
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    datasets: [{
+                        label: 'Presión A-14 (PSI)',
+                        data: [120, 125, 122, 130, 128, 135, 132],
+                        borderColor: '#00f2fe',
+                        backgroundColor: 'rgba(0, 242, 254, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        function updateDailyCountdownClock() {
+            const clock = document.getElementById('time-to-payout');
+            if (!clock) return;
+            setInterval(() => {
+                const now = new Date();
+                const tomorrow = new Date(now);
+                tomorrow.setHours(24, 0, 0, 0);
+                const diff = tomorrow - now;
+                const h = Math.floor((diff % 86400000) / 3600000).toString().padStart(2, '0');
+                const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+                const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+                clock.innerText = `${h}:${m}:${s}`;
+            }, 1000);
         }
     </script>
 </body>
