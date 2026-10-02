@@ -221,7 +221,7 @@
                 <span>CAPACIDAD EXTRACTIVA: <span class="text-cyan-400 font-medium">18,450 Ton/Año</span></span>
             </div>
             <div class="hidden md:flex items-center space-x-4 text-xs">
-                <span class="text-slate-300"><i class="fa-solid fa-clock mr-1"></i> HORA ACTUAL: <span id="time-to-payout" class="font-mono text-cyan-400">00:00:00</span></span>
+                <span class="text-slate-300"><i class="fa-solid fa-clock mr-1"></i> PAGO DIARIO: <span id="time-to-payout" class="font-mono text-cyan-400">00:00:00</span></span>
             </div>
         </div>
 
@@ -816,8 +816,8 @@
         let pendingReferralCodeFromUrl = '';
         let telemetryChart = null;
         
-        // CERRADURAS (LOCKS) ANTI-DUPLICACIÓN (MÁS ROBUSTAS PARA EL ADMIN)
-        let processingTxs = new Set(); // Guarda los IDs de transacciones en proceso para evitar doble click
+        // CERRADURAS (LOCKS) ANTI-DUPLICACIÓN
+        let processingTxs = new Set(); 
         let isSubmittingTx = false;
 
         function generateUUID() {
@@ -1479,381 +1479,336 @@
                     if (noTxMsg) noTxMsg.classList.remove('hidden');
                     return;
                 }
-                
+
                 if (noTxMsg) noTxMsg.classList.add('hidden');
-                
+
                 historyBody.innerHTML = data.map(tx => {
-                    const date = new Date(tx.created_at).toLocaleDateString();
-                    const color = tx.type === 'deposit' ? 'text-emerald-400' : 'text-rose-400';
-                    const typeLabel = tx.type === 'deposit' ? 'Depósito' : 'Retiro';
+                    const dateStr = tx.created_at ? new Date(tx.created_at).toLocaleDateString('es-ES') : 'Hoy';
+                    const isDeposit = tx.type === 'deposit';
+                    const typeBadge = isDeposit ? '<span class="text-emerald-400 font-bold uppercase">Depósito</span>' : '<span class="text-rose-400 font-bold uppercase">Retiro</span>';
                     
-                    let statusHtml = '';
-                    if(tx.status === 'pending') statusHtml = '<span class="bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded text-[10px] font-bold">Pendiente</span>';
-                    else if(tx.status === 'approved') statusHtml = '<span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-[10px] font-bold">Aprobado</span>';
-                    else statusHtml = '<span class="bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded text-[10px] font-bold">Rechazado</span>';
+                    let statusBadge = '<span class="bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded text-[10px] font-bold">Pendiente</span>';
+                    if (tx.status === 'approved') statusBadge = '<span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-[10px] font-bold">Aprobado</span>';
+                    if (tx.status === 'rejected') statusBadge = '<span class="bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded text-[10px] font-bold font-mono">Rechazado</span>';
 
                     return `
-                        <tr>
-                            <td class="p-2 text-slate-400 font-mono">${date}</td>
-                            <td class="p-2 font-bold ${color} uppercase">${typeLabel}</td>
-                            <td class="p-2 font-mono font-bold">$${parseFloat(tx.amount).toFixed(2)}</td>
-                            <td class="p-2">${statusHtml}</td>
+                        <tr class="hover:bg-slate-800/40 transition">
+                            <td class="p-2 text-slate-400 font-mono">${dateStr}</td>
+                            <td class="p-2">${typeBadge}</td>
+                            <td class="p-2 font-mono font-bold text-white">$${parseFloat(tx.amount).toFixed(2)}</td>
+                            <td class="p-2">${statusBadge}</td>
                         </tr>
                     `;
                 }).join('');
-            } catch (err) {
-                console.error("Error cargando transacciones", err);
-            }
-        }
-
-        // ==========================================
-        // FUNCIONES ADMIN MEJORADAS Y SEGURAS (FIX DOBLE CLIC)
-        // ==========================================
-        async function loadAdminPanel() {
-            if (!ADMIN_EMAILS.some(a => userState.email.toLowerCase() === a.toLowerCase())) return;
-
-            const ind = document.getElementById('admin-status-indicator');
-            if (ind) ind.innerHTML = '<span class="text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Conectando...</span>';
-
-            try {
-                // Fetch Pending Deposits
-                const { data: deposits, error: depErr } = await supabaseClient
-                    .from('transactions')
-                    .select('*')
-                    .eq('type', 'deposit')
-                    .eq('status', 'pending')
-                    .order('created_at', { ascending: true });
-
-                const depBody = document.getElementById('admin-deposits-body');
-                const noDeps = document.getElementById('admin-no-deps');
-                
-                if (depErr) throw depErr;
-
-                if (!deposits || deposits.length === 0) {
-                    depBody.innerHTML = '';
-                    noDeps.classList.remove('hidden');
-                } else {
-                    noDeps.classList.add('hidden');
-                    depBody.innerHTML = deposits.map(tx => `
-                        <tr class="hover:bg-slate-800/30 transition border-b border-slate-800/50 group" id="row-${tx.id}">
-                            <td class="p-3 text-[10px] text-slate-300">${tx.user_email}</td>
-                            <td class="p-3 font-mono font-bold text-emerald-400 text-xs">$${tx.amount}</td>
-                            <td class="p-3 font-mono text-[9px] text-slate-500 break-all max-w-[100px]">${tx.hash}</td>
-                            <td class="p-3 text-right">
-                                <div class="flex items-center justify-end space-x-2">
-                                    <button onclick="approveDeposit(this, '${tx.id}', '${tx.user_email}', ${tx.amount})" class="bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white px-2 py-1 rounded text-[10px] font-bold transition">Aprobar</button>
-                                    <button onclick="rejectTransaction(this, '${tx.id}')" class="bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white px-2 py-1 rounded text-[10px] font-bold transition">Rechazar</button>
-                                </div>
-                            </td>
-                        </tr>
-                    `).join('');
-                }
-
-                // Fetch Pending Withdrawals
-                const { data: withdrawals, error: withErr } = await supabaseClient
-                    .from('transactions')
-                    .select('*')
-                    .eq('type', 'withdrawal')
-                    .eq('status', 'pending')
-                    .order('created_at', { ascending: true });
-
-                const withBody = document.getElementById('admin-withdrawals-body');
-                const noWiths = document.getElementById('admin-no-wits');
-                
-                if (withErr) throw withErr;
-
-                if (!withdrawals || withdrawals.length === 0) {
-                    withBody.innerHTML = '';
-                    noWiths.classList.remove('hidden');
-                } else {
-                    noWiths.classList.add('hidden');
-                    withBody.innerHTML = withdrawals.map(tx => `
-                        <tr class="hover:bg-slate-800/30 transition border-b border-slate-800/50 group" id="row-${tx.id}">
-                            <td class="p-3 text-[10px] text-slate-300">${tx.user_email}</td>
-                            <td class="p-3 font-mono font-bold text-rose-400 text-xs">$${tx.amount}</td>
-                            <td class="p-3 font-mono text-[9px] text-slate-500 break-all max-w-[100px]">${tx.wallet}</td>
-                            <td class="p-3 text-right">
-                                <div class="flex items-center justify-end space-x-2">
-                                    <button onclick="approveWithdrawal(this, '${tx.id}')" class="bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white px-2 py-1 rounded text-[10px] font-bold transition">Enviado</button>
-                                    <button onclick="rejectWithdrawal(this, '${tx.id}', '${tx.user_email}', ${tx.amount})" class="bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white px-2 py-1 rounded text-[10px] font-bold transition">Rechazar</button>
-                                </div>
-                            </td>
-                        </tr>
-                    `).join('');
-                }
-                
-                if (ind) ind.innerHTML = '<span class="text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i> Nube Sincronizada</span>';
-            } catch (err) {
-                if (ind) ind.innerHTML = '<span class="text-rose-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Error de Red</span>';
-            }
-        }
-
-        // 🟢 FIX: APROBAR DEPÓSITO CON DOBLE VERIFICACIÓN Y BORRADO INMEDIATO
-        async function approveDeposit(btnElement, txId, userEmail, amount) {
-            // 1. Candado local para evitar doble clic rápido
-            if (processingTxs.has(txId)) return;
-            processingTxs.add(txId);
-
-            const originalHTML = btnElement.innerHTML;
-            btnElement.disabled = true;
-            btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-
-            try {
-                // 2. Candado en BD (Verificar que la transacción NO haya sido aprobada por otro lado)
-                const { data: txData, error: txCheckErr } = await supabaseClient
-                    .from('transactions')
-                    .select('status')
-                    .eq('id', txId)
-                    .single();
-
-                if (txCheckErr || !txData) throw new Error("Error al verificar transacción");
-                
-                if (txData.status !== 'pending') {
-                    showToast("Esta transacción ya fue procesada anteriormente.", "warning");
-                    removeRowVisual(txId, 'admin-no-deps', 'admin-deposits-body');
-                    return; // Abortamos para no duplicar crédito
-                }
-
-                // 3. Obtener balance del usuario
-                const { data: prof, error: profErr } = await supabaseClient
-                    .from('profiles')
-                    .select('balance')
-                    .eq('email', userEmail)
-                    .single();
-
-                if (profErr || !prof) throw new Error("No se encontró el perfil del usuario");
-
-                const newBalance = parseFloat(prof.balance || 0) + parseFloat(amount);
-
-                // 4. Actualizar balance
-                const { error: updateProfErr } = await supabaseClient
-                    .from('profiles')
-                    .update({ balance: newBalance })
-                    .eq('email', userEmail);
-                if (updateProfErr) throw updateProfErr;
-
-                // 5. Marcar como aprobada
-                const { error: updateTxErr } = await supabaseClient
-                    .from('transactions')
-                    .update({ status: 'approved' })
-                    .eq('id', txId);
-                if (updateTxErr) console.warn("Balance actualizado pero estado de TX falló", updateTxErr);
-
-                showToast(`Se acreditaron $${amount} a ${userEmail}`, 'success');
-                
-                // 6. Eliminar la fila visualmente al instante para evitar confusión visual
-                removeRowVisual(txId, 'admin-no-deps', 'admin-deposits-body');
-
-            } catch (err) {
-                showToast(err.message, 'error');
-                btnElement.disabled = false;
-                btnElement.innerHTML = originalHTML;
-            } finally {
-                processingTxs.delete(txId); // Liberamos el candado local
-            }
-        }
-
-        async function rejectTransaction(btnElement, txId) {
-            if (processingTxs.has(txId)) return;
-            processingTxs.add(txId);
-            
-            const originalHTML = btnElement.innerHTML;
-            btnElement.disabled = true;
-            btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-
-            try {
-                const { error } = await supabaseClient.from('transactions').update({ status: 'rejected' }).eq('id', txId);
-                if (error) throw error;
-                showToast(`Transacción rechazada`, 'success');
-                removeRowVisual(txId, 'admin-no-deps', 'admin-deposits-body');
-            } catch (err) {
-                showToast("Error al rechazar", 'error');
-                btnElement.disabled = false;
-                btnElement.innerHTML = originalHTML;
-            } finally {
-                processingTxs.delete(txId);
-            }
-        }
-
-        async function approveWithdrawal(btnElement, txId) {
-            if (processingTxs.has(txId)) return;
-            processingTxs.add(txId);
-
-            const originalHTML = btnElement.innerHTML;
-            btnElement.disabled = true;
-            btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-
-            try {
-                const { error } = await supabaseClient.from('transactions').update({ status: 'approved' }).eq('id', txId);
-                if (error) throw error;
-                showToast(`Retiro marcado como enviado`, 'success');
-                removeRowVisual(txId, 'admin-no-wits', 'admin-withdrawals-body');
-            } catch (err) {
-                showToast("Error al aprobar", 'error');
-                btnElement.disabled = false;
-                btnElement.innerHTML = originalHTML;
-            } finally {
-                processingTxs.delete(txId);
-            }
-        }
-
-        async function rejectWithdrawal(btnElement, txId, userEmail, amount) {
-            if (processingTxs.has(txId)) return;
-            processingTxs.add(txId);
-
-            const originalHTML = btnElement.innerHTML;
-            btnElement.disabled = true;
-            btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-
-            try {
-                const { data: txData } = await supabaseClient.from('transactions').select('status').eq('id', txId).single();
-                if (txData && txData.status !== 'pending') {
-                    showToast("Este retiro ya fue procesado", "warning");
-                    removeRowVisual(txId, 'admin-no-wits', 'admin-withdrawals-body');
-                    return;
-                }
-
-                // Devolver el dinero al balance
-                const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
-                if (prof) {
-                    const newBalance = parseFloat(prof.balance || 0) + parseFloat(amount);
-                    await supabaseClient.from('profiles').update({ balance: newBalance }).eq('email', userEmail);
-                }
-
-                const { error } = await supabaseClient.from('transactions').update({ status: 'rejected' }).eq('id', txId);
-                if (error) throw error;
-
-                showToast(`Retiro rechazado. Dinero devuelto al usuario.`, 'success');
-                removeRowVisual(txId, 'admin-no-wits', 'admin-withdrawals-body');
-            } catch (err) {
-                showToast("Error al rechazar", 'error');
-                btnElement.disabled = false;
-                btnElement.innerHTML = originalHTML;
-            } finally {
-                processingTxs.delete(txId);
-            }
-        }
-        
-        // Función auxiliar para eliminar la fila HTML de inmediato
-        function removeRowVisual(txId, noDataId, bodyId) {
-            const row = document.getElementById(`row-${txId}`);
-            if (row) row.remove();
-            
-            const tbody = document.getElementById(bodyId);
-            if (tbody && tbody.children.length === 0) {
-                document.getElementById(noDataId).classList.remove('hidden');
+            } catch (e) {
+                console.error("Error cargando transacciones del usuario:", e);
             }
         }
 
         async function loadReferredUsersList() {
-            if (!userState.refCode || userState.email === 'invitado@demo.com') return;
-            
             const listBody = document.getElementById('referred-users-list');
-            const noMsg = document.getElementById('no-refs-msg');
-            
+            const noRefsMsg = document.getElementById('no-refs-msg');
             if (!listBody) return;
-            listBody.innerHTML = '<tr><td colspan="2" class="p-4 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin"></i> Buscando invitados...</td></tr>';
+
+            if (userState.email === 'invitado@demo.com') {
+                listBody.innerHTML = `
+                    <tr>
+                        <td class="p-2 font-medium text-white">Usuario Demo 1</td>
+                        <td class="p-2 text-slate-400 font-mono">2026-03-15</td>
+                    </tr>
+                    <tr>
+                        <td class="p-2 font-medium text-white">Usuario Demo 2</td>
+                        <td class="p-2 text-slate-400 font-mono">2026-03-18</td>
+                    </tr>
+                    <tr>
+                        <td class="p-2 font-medium text-white">Usuario Demo 3</td>
+                        <td class="p-2 text-slate-400 font-mono">2026-03-20</td>
+                    </tr>
+                `;
+                if (noRefsMsg) noRefsMsg.classList.add('hidden');
+                return;
+            }
 
             try {
-                // Busca perfiles cuyo referred_by coincida con tu código, id o email
-                const orFilter = `referred_by.eq.${userState.refCode},referred_by.eq.${userState.id},referred_by.eq.${userState.email}`;
-                
+                const orFilter = [];
+                if (userState.refCode) orFilter.push(`referred_by.eq.${userState.refCode}`);
+                if (userState.id) orFilter.push(`referred_by.eq.${userState.id}`);
+                if (userState.email) orFilter.push(`referred_by.eq.${userState.email}`);
+
                 const { data, error } = await supabaseClient
                     .from('profiles')
-                    .select('full_name, email, created_at')
-                    .or(orFilter)
-                    .order('created_at', { ascending: false });
-                
-                if (error) throw error;
+                    .select('full_name, email, created_at, updated_at')
+                    .or(orFilter.join(','));
+
+                if (error) {
+                    console.error("Error cargando referidos:", error);
+                    if (noRefsMsg) noRefsMsg.classList.remove('hidden');
+                    return;
+                }
 
                 if (!data || data.length === 0) {
                     listBody.innerHTML = '';
-                    noMsg.classList.remove('hidden');
+                    if (noRefsMsg) noRefsMsg.classList.remove('hidden');
                     userState.referralCount = 0;
-                } else {
-                    noMsg.classList.add('hidden');
-                    userState.referralCount = data.length;
-                    listBody.innerHTML = data.map(ref => {
-                        const date = new Date(ref.created_at).toLocaleDateString();
-                        const nameToDisplay = ref.full_name || ref.email.split('@')[0];
-                        return `
-                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition">
-                                <td class="p-3 font-semibold text-cyan-400 text-xs">${nameToDisplay}</td>
-                                <td class="p-3 text-slate-400 font-mono text-xs">${date}</td>
-                            </tr>
-                        `;
-                    }).join('');
+                    updateDashboardUI();
+                    return;
                 }
-                updateDashboardUI(); // Refresca el conteo en el panel
-            } catch (err) {
-                listBody.innerHTML = '';
-                noMsg.classList.remove('hidden');
-                console.error("Error al cargar referidos:", err);
+
+                if (noRefsMsg) noRefsMsg.classList.add('hidden');
+                userState.referralCount = data.length;
+                updateDashboardUI();
+
+                listBody.innerHTML = data.map(ref => {
+                    const dateStr = ref.created_at ? new Date(ref.created_at).toLocaleDateString('es-ES') : 'Reciente';
+                    const name = ref.full_name || ref.email.split('@')[0];
+                    return `
+                        <tr class="hover:bg-slate-800/40 transition">
+                            <td class="p-2 font-medium text-white">${name} <span class="text-[10px] text-slate-500">(${ref.email})</span></td>
+                            <td class="p-2 text-slate-400 font-mono text-[11px]">${dateStr}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (e) {
+                console.error("Error obteniendo invitados:", e);
+            }
+        }
+
+        async function loadAdminPanel() {
+            const depBody = document.getElementById('admin-deposits-body');
+            const witBody = document.getElementById('admin-withdrawals-body');
+            const noDeps = document.getElementById('admin-no-deps');
+            const noWits = document.getElementById('admin-no-wits');
+            const statusIndicator = document.getElementById('admin-status-indicator');
+
+            if (statusIndicator) {
+                statusIndicator.innerHTML = '<span class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1"></i> Conectado y Sincronizado</span>';
+            }
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('transactions')
+                    .select('*')
+                    .eq('status', 'pending')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                const deposits = (data || []).filter(t => t.type === 'deposit');
+                const withdrawals = (data || []).filter(t => t.type === 'withdrawal');
+
+                if (deposits.length === 0) {
+                    depBody.innerHTML = '';
+                    if (noDeps) noDeps.classList.remove('hidden');
+                } else {
+                    if (noDeps) noDeps.classList.add('hidden');
+                    depBody.innerHTML = deposits.map(d => `
+                        <tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                            <td class="p-3 font-medium text-white">${d.user_email}</td>
+                            <td class="p-3 font-mono text-emerald-400 font-bold">$${parseFloat(d.amount).toFixed(2)}</td>
+                            <td class="p-3 font-mono text-[10px] text-slate-400 truncate max-w-[120px]" title="${d.hash}">${d.hash}</td>
+                            <td class="p-3 text-right space-x-1">
+                                <button onclick="approveDeposit('${d.id}', '${d.user_email}', ${d.amount})" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-2.5 py-1 rounded text-[10px] font-bold transition">
+                                    Aprobar
+                                </button>
+                                <button onclick="rejectTransaction('${d.id}')" class="bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/40 px-2.5 py-1 rounded text-[10px] font-bold transition">
+                                    Rechazar
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+
+                if (withdrawals.length === 0) {
+                    witBody.innerHTML = '';
+                    if (noWits) noWits.classList.remove('hidden');
+                } else {
+                    if (noWits) noWits.classList.add('hidden');
+                    witBody.innerHTML = withdrawals.map(w => `
+                        <tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                            <td class="p-3 font-medium text-white">${w.user_email}</td>
+                            <td class="p-3 font-mono text-amber-400 font-bold">$${parseFloat(w.amount).toFixed(2)}</td>
+                            <td class="p-3 font-mono text-[10px] text-slate-400 truncate max-w-[120px]" title="${w.wallet}">${w.wallet}</td>
+                            <td class="p-3 text-right space-x-1">
+                                <button onclick="approveWithdrawal('${w.id}')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-2.5 py-1 rounded text-[10px] font-bold transition">
+                                    Aprobar
+                                </button>
+                                <button onclick="rejectTransaction('${w.id}', 'withdrawal', '${w.user_email}', ${w.amount})" class="bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/40 px-2.5 py-1 rounded text-[10px] font-bold transition">
+                                    Rechazar
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error("Error cargando panel admin:", e);
+                if (statusIndicator) {
+                    statusIndicator.innerHTML = '<span class="text-rose-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Error al sincronizar</span>';
+                }
+            }
+        }
+
+        async function approveDeposit(txId, userEmail, amount) {
+            if (processingTxs.has(txId)) return;
+            processingTxs.add(txId);
+
+            try {
+                const { error: txErr } = await supabaseClient
+                    .from('transactions')
+                    .update({ status: 'approved' })
+                    .eq('id', txId);
+
+                if (txErr) throw txErr;
+
+                const { data: prof, error: profErr } = await supabaseClient
+                    .from('profiles')
+                    .select('balance')
+                    .eq('email', userEmail.toLowerCase().trim())
+                    .single();
+
+                if (profErr || !prof) throw new Error("No se encontró el perfil del usuario para acreditar.");
+
+                const newBalance = parseFloat(prof.balance || 0) + parseFloat(amount);
+
+                const { error: updateErr } = await supabaseClient
+                    .from('profiles')
+                    .update({ balance: newBalance })
+                    .eq('email', userEmail.toLowerCase().trim());
+
+                if (updateErr) throw updateErr;
+
+                showToast(`Depósito de $${amount} USDT aprobado para ${userEmail}`, 'success');
+                
+                if (userEmail.toLowerCase().trim() === userState.email.toLowerCase().trim()) {
+                    userState.balance = newBalance;
+                    updateDashboardUI();
+                }
+
+                loadAdminPanel();
+            } catch (e) {
+                showToast(`Error al aprobar depósito: ${e.message}`, 'error');
+            } finally {
+                processingTxs.delete(txId);
+            }
+        }
+
+        async function approveWithdrawal(txId) {
+            if (processingTxs.has(txId)) return;
+            processingTxs.add(txId);
+
+            try {
+                const { error } = await supabaseClient
+                    .from('transactions')
+                    .update({ status: 'approved' })
+                    .eq('id', txId);
+
+                if (error) throw error;
+
+                showToast('Solicitud de retiro aprobada.', 'success');
+                loadAdminPanel();
+            } catch (e) {
+                showToast(`Error al aprobar retiro: ${e.message}`, 'error');
+            } finally {
+                processingTxs.delete(txId);
+            }
+        }
+
+        async function rejectTransaction(txId, type = 'deposit', userEmail = '', amount = 0) {
+            if (processingTxs.has(txId)) return;
+            processingTxs.add(txId);
+
+            try {
+                const { error } = await supabaseClient
+                    .from('transactions')
+                    .update({ status: 'rejected' })
+                    .eq('id', txId);
+
+                if (error) throw error;
+
+                if (type === 'withdrawal' && userEmail && amount > 0) {
+                    const { data: prof } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail.toLowerCase().trim()).single();
+                    if (prof) {
+                        const refundedBalance = parseFloat(prof.balance || 0) + parseFloat(amount);
+                        await supabaseClient.from('profiles').update({ balance: refundedBalance }).eq('email', userEmail.toLowerCase().trim());
+                        
+                        if (userEmail.toLowerCase().trim() === userState.email.toLowerCase().trim()) {
+                            userState.balance = refundedBalance;
+                            updateDashboardUI();
+                        }
+                    }
+                }
+
+                showToast('Transacción rechazada.', 'warning');
+                loadAdminPanel();
+            } catch (e) {
+                showToast(`Error al rechazar: ${e.message}`, 'error');
+            } finally {
+                processingTxs.delete(txId);
             }
         }
 
         function initTelemetryChart() {
             const ctx = document.getElementById('telemetryChart');
-            if(!ctx) return;
-            
-            Chart.defaults.color = '#94a3b8';
-            Chart.defaults.font.family = 'Inter';
+            if (!ctx) return;
+
+            const hours = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'];
+            const pressureData = [12.4, 14.1, 15.2, 13.8, 16.5, 17.0, 16.8];
+            const volumeData = [35.2, 38.0, 42.8, 40.1, 45.3, 48.0, 47.2];
+
+            if (telemetryChart) telemetryChart.destroy();
 
             telemetryChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', 'Ahora'],
-                    datasets: [{
-                        label: 'Volumen (L/s)',
-                        data: [40.2, 41.5, 39.8, 42.1, 41.8, 42.5, 42.8],
-                        borderColor: '#00f2fe',
-                        backgroundColor: 'rgba(0, 242, 254, 0.1)',
-                        borderWidth: 2,
-                        tension: 0.4,
-                        fill: true,
-                        pointBackgroundColor: '#10b981',
-                        pointBorderColor: '#0f172a',
-                        pointRadius: 4
-                    }]
+                    labels: hours,
+                    datasets: [
+                        {
+                            label: 'Volumen (L/s)',
+                            data: volumeData,
+                            borderColor: '#00f2fe',
+                            backgroundColor: 'rgba(0, 242, 254, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Presión (Bar)',
+                            data: pressureData,
+                            borderColor: '#10b981',
+                            backgroundColor: 'transparent',
+                            borderDash: [5, 5],
+                            tension: 0.4
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false }
+                        legend: {
+                            labels: { color: '#94a3b8' }
+                        }
                     },
                     scales: {
-                        y: {
-                            beginAtZero: false,
-                            grid: { color: 'rgba(30, 41, 59, 0.5)' }
-                        },
-                        x: {
-                            grid: { display: false }
-                        }
+                        x: { grid: { color: 'rgba(30, 41, 59, 0.5)' }, ticks: { color: '#64748b' } },
+                        y: { grid: { color: 'rgba(30, 41, 59, 0.5)' }, ticks: { color: '#64748b' } }
                     }
                 }
             });
-
-            // Simular actualizaciones en vivo
-            setInterval(() => {
-                const el = document.getElementById('tel-vol');
-                if(el) {
-                    const randomFlux = (Math.random() * 0.4 - 0.2); // Variación entre -0.2 y 0.2
-                    const currentVal = parseFloat(el.innerText);
-                    const newVal = Math.max(40, Math.min(45, currentVal + randomFlux));
-                    el.innerText = newVal.toFixed(1) + ' L/s';
-                }
-            }, 3500);
         }
 
         function updateDailyCountdownClock() {
+            const timerElem = document.getElementById('time-to-payout');
+            if(!timerElem) return;
             setInterval(() => {
                 const now = new Date();
-                const hours = now.getHours().toString().padStart(2, '0');
-                const mins = now.getMinutes().toString().padStart(2, '0');
-                const secs = now.getSeconds().toString().padStart(2, '0');
-                const el = document.getElementById('time-to-payout');
-                if (el) el.innerText = `${hours}:${mins}:${secs}`;
+                const tomorrow = new Date(now);
+                tomorrow.setHours(24, 0, 0, 0);
+                const diff = tomorrow - now;
+                
+                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                timerElem.innerText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
             }, 1000);
         }
     </script>
