@@ -545,7 +545,10 @@
                 </div>
 
                 <div class="glass-card p-5 rounded-2xl border border-slate-800 max-w-3xl mx-auto mt-6">
-                    <h3 class="text-sm font-bold text-white mb-4"><i class="fa-solid fa-list-ul text-cyan-400 mr-2"></i> Mis Invitados Registrados</h3>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-list-ul text-cyan-400 mr-2"></i> Mis Invitados Registrados</h3>
+                        <button onclick="loadReferredUsers()" class="text-xs text-cyan-400 hover:underline"><i class="fa-solid fa-rotate-right mr-1"></i> Actualizar</button>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs">
                             <thead>
@@ -558,7 +561,7 @@
                                 <!-- Carga vía JS -->
                             </tbody>
                         </table>
-                        <div id="no-refs-msg" class="text-center text-slate-500 text-xs py-4 hidden">Aún no tienes invitados registrados.</div>
+                        <div id="no-refs-msg" class="text-center text-slate-500 text-xs py-6 hidden">Aún no tienes invitados registrados.</div>
                     </div>
                 </div>
             </div>
@@ -787,21 +790,15 @@
 
     <!-- MAIN JAVASCRIPT LOGIC -->
     <script>
-        // CONFIGURACIÓN DE DOMINIO BASE PARA ENLACES DE REFERIDOS
-        // Si tienes tu propio dominio (ej. https://midominio.com), puedes modificar la variable CUSTOM_DOMAIN aquí abajo:
         const CUSTOM_DOMAIN = 'https://litiox.io';
 
         function getBaseUrl() {
             try {
                 const origin = window.location.origin;
                 const href = window.location.href;
-                
-                // Si la app está en un iFrame, sandbox, entorno local sin origen o vista previa de editor
                 if (!origin || origin === 'null' || origin.startsWith('file:') || href.includes('about:') || href.includes('blob:')) {
                     return CUSTOM_DOMAIN;
                 }
-                
-                // De lo contrario, extrae la URL pública actual limpia sin parámetros ni fragmentos
                 return href.split('?')[0].split('#')[0].replace(/\/$/, '');
             } catch (e) {
                 return CUSTOM_DOMAIN;
@@ -832,16 +829,13 @@
         };
 
         let yieldInterval = null;
-        let adminPollingInterval = null;
-        let userSyncInterval = null; 
         let pendingReferralCodeFromUrl = '';
-        let isSubmittingTx = false;
 
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const refParam = urlParams.get('ref');
             if (refParam) {
-                pendingReferralCodeFromUrl = refParam.toUpperCase();
+                pendingReferralCodeFromUrl = refParam.trim().toUpperCase();
                 document.getElementById('referral-banner-notice').classList.remove('hidden');
                 toggleAuthMode('register');
             }
@@ -860,7 +854,7 @@
                     userState.id = session.user.id;
                     await loadUserProfile(session.user.email);
                 }
-            } catch (e) { console.warn("No active session found or error checking session", e); }
+            } catch (e) { console.warn("No active session found", e); }
         }
 
         function toggleAuthMode(mode) {
@@ -947,7 +941,7 @@
             }
         }
 
-        // ================= FUNCIÓN DE REGISTRO =================
+        // ================= FUNCIÓN DE REGISTRO CON VÍNCULO DE REFERIDO =================
         async function handleRegister(e) {
             e.preventDefault();
             const fname = document.getElementById('reg-fullname').value.trim();
@@ -969,8 +963,8 @@
 
                 if (data && data.user) {
                     userState.id = data.user.id;
-                    
                     const myRefCode = generateRefCode();
+                    
                     const newProfile = {
                         id: data.user.id,
                         email: email, full_name: fname, balance: 0.00, staked_total: 0.00,
@@ -981,28 +975,23 @@
 
                     const { error: profileError } = await supabaseClient.from('profiles').insert([newProfile]);
                     
-                    if (profileError && profileError.code === '23505') {
-                        showToast("Iniciando sesión con tu cuenta...", "success");
-                        await loadUserProfile(email);
-                        return;
-                    }
-
+                    // Incrementar el contador del invitador si existe
                     if (pendingReferralCodeFromUrl && !profileError) {
                         try {
                             const { data: inviter } = await supabaseClient
                                 .from('profiles')
-                                .select('referral_count, email')
+                                .select('id, referral_count, email')
                                 .eq('ref_code', pendingReferralCodeFromUrl)
                                 .single();
                                 
                             if (inviter) {
                                 const newCount = parseInt(inviter.referral_count || 0) + 1;
-                                await supabaseClient.from('profiles').update({ referral_count: newCount }).eq('email', inviter.email);
+                                await supabaseClient.from('profiles').update({ referral_count: newCount }).eq('id', inviter.id);
                             }
-                        } catch(err) { console.warn("RLS restriction on referral count"); }
+                        } catch(err) { console.warn("Sincronización de referidos en progreso", err); }
                     }
 
-                    showToast('¡Cuenta creada correctamente! Iniciando sesión...', 'success');
+                    showToast('¡Cuenta creada correctamente!', 'success');
                     await loadUserProfile(email);
                 }
             } catch (error) {
@@ -1014,7 +1003,7 @@
         // ================= PERFIL Y NAVEGACIÓN =================
         async function loadUserProfile(email) {
             try {
-                const { data, error } = await supabaseClient
+                const { data } = await supabaseClient
                     .from('profiles')
                     .select('*')
                     .eq('email', email)
@@ -1027,7 +1016,8 @@
                         stakedTotal: parseFloat(data.staked_total || 0),
                         totalWithdrawn: parseFloat(data.total_withdrawn || 0),
                         totalYieldEarned: parseFloat(data.total_yield_earned || 0),
-                        refCode: data.ref_code, referredBy: data.referred_by,
+                        refCode: data.ref_code || generateRefCode(), 
+                        referredBy: data.referred_by,
                         referralCount: parseInt(data.referral_count || 0),
                         unclaimedYield: parseFloat(data.unclaimed_yield || 0),
                         lastYieldTime: data.last_yield_time
@@ -1049,6 +1039,7 @@
             switchTab('dashboard');
             updateDashboardUI();
             startYieldGeneration();
+            loadReferredUsers();
             
             if (ADMIN_EMAILS.includes(email.toLowerCase())) {
                 document.getElementById('nav-admin').classList.remove('hidden');
@@ -1094,12 +1085,58 @@
                 btn.classList.remove('text-cyan-400');
                 btn.classList.add('text-slate-400');
             });
+
+            if (tabId === 'referrals') {
+                loadReferredUsers();
+            }
         }
 
         async function handleLogout() {
             await supabaseClient.auth.signOut();
             clearInterval(yieldInterval);
             window.location.reload();
+        }
+
+        // ================= CÓDIGO PARA CARGAR REFERIDOS EN TIEMPO REAL =================
+        async function loadReferredUsers() {
+            if (!userState.refCode || userState.id.startsWith('demo')) return;
+            try {
+                const { data, error } = await supabaseClient
+                    .from('profiles')
+                    .select('full_name, email, created_at')
+                    .eq('referred_by', userState.refCode);
+                
+                const tbody = document.getElementById('referred-users-list');
+                const noRefsMsg = document.getElementById('no-refs-msg');
+                
+                if (error || !data || data.length === 0) {
+                    if (tbody) tbody.innerHTML = '';
+                    if (noRefsMsg) noRefsMsg.classList.remove('hidden');
+                    return;
+                }
+
+                if (noRefsMsg) noRefsMsg.classList.add('hidden');
+                if (tbody) {
+                    tbody.innerHTML = data.map(u => {
+                        const dateStr = u.created_at ? new Date(u.created_at).toLocaleDateString('es-ES') : 'Reciente';
+                        const displayName = u.full_name || u.email;
+                        return `
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-900/40 transition">
+                                <td class="p-3 text-white font-medium flex items-center space-x-2">
+                                    <i class="fa-solid fa-user-circle text-cyan-400 text-sm"></i>
+                                    <span>${displayName}</span>
+                                </td>
+                                <td class="p-3 text-slate-400 font-mono text-xs">${dateStr}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                userState.referralCount = data.length;
+                updateDashboardUI();
+            } catch (err) {
+                console.error("Error al cargar lista de referidos:", err);
+            }
         }
 
         // ================= LÓGICA PRINCIPAL (YIELD, UI) =================
@@ -1118,14 +1155,13 @@
             document.getElementById('req-yield-badge').innerText = `$${parseFloat(userState.totalYieldEarned).toFixed(2)} / $15`;
             document.getElementById('req-yield-bar').style.width = `${Math.min((parseFloat(userState.totalYieldEarned) / 15) * 100, 100)}%`;
             
-            // Generar enlace limpio usando el detector de URL/Dominio
             document.getElementById('user-ref-link-input').value = `${getBaseUrl()}/?ref=${userState.refCode}`;
-            
             document.getElementById('ref-count-display').innerText = `${userState.referralCount} / 3`;
             
             if (userState.referralCount >= 3) {
-                document.getElementById('ref-status-text').innerText = "¡Requisito de referidos cumplido!";
-                document.getElementById('ref-status-text').classList.replace('text-slate-500', 'text-emerald-400');
+                const statusTxt = document.getElementById('ref-status-text');
+                statusTxt.innerText = "¡Requisito de referidos cumplido!";
+                statusTxt.className = "text-[10px] text-emerald-400 font-semibold mt-1";
             }
         }
 
@@ -1179,7 +1215,6 @@
             updateDashboardUI();
             saveCurrentYieldToCloud();
             
-            // Actualizar backend para planes
             if (!userState.id.startsWith('demo')) {
                 supabaseClient.from('profiles').update({
                     balance: userState.balance,
