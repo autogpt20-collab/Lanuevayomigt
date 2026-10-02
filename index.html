@@ -691,7 +691,7 @@
                                     <tr class="text-slate-400 border-b border-slate-800 uppercase text-[10px]">
                                         <th class="p-3">Usuario</th>
                                         <th class="p-3">Monto</th>
-                                        <th class="p-3">Billetera</th>
+                                        <th class="p-3">Billetera Destino (USDT)</th>
                                         <th class="p-3 text-right">Acción</th>
                                     </tr>
                                 </thead>
@@ -699,9 +699,9 @@
                                     <!-- Carga dinámicamente -->
                                 </tbody>
                             </table>
-                            <div id="admin-no-wits" class="text-center text-slate-500 text-xs py-6 hidden">
+                            <div id="admin-no-withs" class="text-center text-slate-500 text-xs py-6 hidden">
                                 <i class="fa-solid fa-circle-check text-slate-600 text-2xl mb-2 block"></i>
-                                No hay solicitudes de retiro pendientes.
+                                No hay retiros solicitados.
                             </div>
                         </div>
                     </div>
@@ -711,235 +711,105 @@
         </main>
     </div>
 
-    <!-- MODAL: DEPOSITAR -->
-    <div id="deposit-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-slate-800 space-y-4 relative">
-            <button onclick="closeModal('deposit-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <div class="text-center mb-4">
-                <h3 class="font-black text-white text-lg">Depositar USDT</h3>
-                <p class="text-[10px] bg-slate-800 inline-block px-2 py-0.5 rounded text-amber-400 font-mono mt-1">Red BNB Smart Chain (BEP-20)</p>
-            </div>
-            
-            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 text-center">
-                <p class="text-xs text-slate-400 mb-2">Envía tus fondos a la dirección oficial:</p>
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=0xf23130692008d8b470b963ac67be6453085e31c5&color=00f2fe&bgcolor=0f172a" class="mx-auto rounded-lg mb-3 border border-cyan-500/30 p-1" alt="QR">
-                <div class="flex items-center space-x-2 bg-slate-950 p-2 rounded-lg">
-                    <input type="text" readonly value="0xf23130692008d8b470b963ac67be6453085e31c5" class="bg-transparent text-cyan-400 text-[10px] w-full outline-none font-mono text-center">
-                    <button onclick="copyText('0xf23130692008d8b470b963ac67be6453085e31c5')" class="text-slate-400 hover:text-white px-2"><i class="fa-solid fa-copy"></i></button>
-                </div>
-            </div>
-
-            <div class="space-y-3">
-                <div>
-                    <label class="text-[10px] text-slate-400">Monto Enviado (USDT)</label>
-                    <input type="number" id="real-deposit-amount" placeholder="Ej: 500" class="w-full bg-slate-900 border border-slate-700 text-white text-sm rounded-xl p-3 font-mono mt-1">
-                </div>
-                <div>
-                    <label class="text-[10px] text-slate-400">Hash de la Transacción (TxID)</label>
-                    <input type="text" id="real-deposit-hash" placeholder="Pega el Hash de blockchain aquí..." class="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-xl p-3 font-mono mt-1">
-                </div>
-                <button onclick="submitRealDeposit(this)" class="w-full glow-button text-slate-950 font-black py-3 rounded-xl text-xs mt-2 transition-all">Notificar Pago</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: RETIRAR -->
-    <div id="withdraw-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-slate-800 space-y-4 relative">
-            <button onclick="closeModal('withdraw-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <div class="text-center mb-2">
-                <h3 class="font-black text-white text-lg">Solicitar Retiro de USDT</h3>
-                <p class="text-[10px] text-slate-400 mt-0.5">Retiros procesados en USDT (BEP-20)</p>
-            </div>
-
-            <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 space-y-2 text-[11px]">
-                <div class="flex justify-between items-center text-slate-300">
-                    <span><i class="fa-solid fa-users text-cyan-400 mr-1"></i> Referidos Obligatorios (mín. 3):</span>
-                    <span id="modal-req-ref" class="font-bold text-amber-400">0 / 3</span>
-                </div>
-                <div class="flex justify-between items-center text-slate-300">
-                    <span><i class="fa-solid fa-coins text-emerald-400 mr-1"></i> Ganancia Mínima ($15 USDT):</span>
-                    <span id="modal-req-yield" class="font-bold text-amber-400">$0.00 / $15</span>
-                </div>
-            </div>
-
-            <div class="flex justify-between items-center bg-slate-900 p-3 rounded-xl border border-slate-700">
-                <span class="text-xs text-slate-400">Saldo Disponible:</span>
-                <span class="text-sm font-bold text-emerald-400 font-mono" id="withdraw-available-balance">$0.00</span>
-            </div>
-
-            <div class="space-y-3">
-                <div>
-                    <label class="text-[10px] text-slate-400">Tu Billetera USDT (BEP-20)</label>
-                    <input type="text" id="withdraw-wallet-address" placeholder="0x..." class="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-xl p-3 font-mono mt-1">
-                </div>
-                <div>
-                    <label class="text-[10px] text-slate-400">Monto a Retirar (Mínimo $25 USDT)</label>
-                    <input type="number" id="withdraw-amount" placeholder="Ej: 50" class="w-full bg-slate-900 border border-slate-700 text-white text-sm rounded-xl p-3 font-mono mt-1">
-                </div>
-                <button onclick="submitRealWithdrawal(this)" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl text-xs mt-2 transition-all">Solicitar Retiro</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- TOAST CONTAINER -->
-    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none flex flex-col items-end"></div>
-
-    <!-- MAIN JAVASCRIPT LOGIC -->
     <script>
-        // CONFIGURACIÓN DE SUPABASE
-        const SUPABASE_URL = 'https://bmbfjsxgwxfjuphvhvya.supabase.co';
+        // SUPABASE CONFIGURATION
+        const SUPABASE_URL = 'https://bmbfjsxgwxfjuphvhvya.supabase.co'; 
         const SUPABASE_ANON_KEY = 'sb_publishable_0XRTTJKzV38S0-4AlDwmcw_wkfihwB-';
-        let supabaseClient = null;
-
-        if (window.supabase) {
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        } else {
-            console.error("Error crítico: No se pudo cargar la librería de Supabase.");
-        }
-
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // ADMIN CONFIG
         const ADMIN_EMAILS = ['matiasmpv24@gmail.com', 'matiasjalil26@gmail.com'];
+        const SUPABASE_ADMIN_FEE_WALLET = 'TDVqQ2z3rR7qN43kZqGqYtYwRzYvKmV1rP';
 
-        // Estado Global del Usuario
-        let userState = { 
-            id: '', 
-            email: '', fullName: '', balance: 0.00, stakedTotal: 0.00, totalWithdrawn: 0.00,
-            totalYieldEarned: 0.00, refCode: '', referredBy: '', referralCount: 0, 
-            accumulatedYieldSession: 0.00,
-            unclaimedYield: 0.00,
-            lastYieldTime: null
+        // USER STATE
+        let userState = {
+            id: null, email: null, balance: 0.00, stakedTotal: 0.00,
+            yieldEarned: 0.00, withdrawn: 0.00, lastYieldTime: Date.now(),
+            unclaimedYield: 0.00, refCode: null, isGuest: false, referralCount: 0
         };
-
+        const YIELD_RATE_PER_DAY = 0.0166;
         let yieldInterval = null;
-        let adminPollingInterval = null;
-        let userSyncInterval = null; 
-        let pendingReferralCodeFromUrl = '';
-        
-        // CERRADURAS (LOCKS) ANTI-DUPLICACIÓN
-        let processingTxs = new Set(); 
-        let isSubmittingTx = false;
+        let pendingReferralCodeFromUrl = null;
 
-        function generateUUID() {
-            if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
-        }
+        document.addEventListener('DOMContentLoaded', async () => {
+            checkUrlForReferral();
+            const { data: { session }, error } = await supabaseClient.auth.getSession();
+            if (session && session.user) {
+                userState.id = session.user.id;
+                await loadUserProfile(session.user.email);
+            }
+        });
 
-        window.onload = function() {
+        function checkUrlForReferral() {
             const urlParams = new URLSearchParams(window.location.search);
-            const refParam = urlParams.get('ref');
-            if (refParam) {
-                pendingReferralCodeFromUrl = refParam.toUpperCase();
-                document.getElementById('referral-banner-notice').classList.remove('hidden');
+            const ref = urlParams.get('ref');
+            if(ref) {
+                pendingReferralCodeFromUrl = ref;
                 toggleAuthMode('register');
-            }
-            initTelemetryChart();
-            checkSession();
-            updateDailyCountdownClock();
-        };
-
-        setInterval(saveCurrentYieldToCloud, 15000);
-        window.addEventListener('beforeunload', () => { saveCurrentYieldToCloud(); });
-        
-        async function checkSession() {
-            try {
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                if (session && session.user) {
-                    userState.id = session.user.id;
-                    await loadUserProfile(session.user.email);
-                }
-            } catch (e) { console.warn("No active session found or error checking session", e); }
-        }
-
-        function toggleAuthMode(mode) {
-            const forms = ['login', 'register', 'forgot'];
-            forms.forEach(f => document.getElementById(`${f}-form`).classList.add('hidden'));
-            document.getElementById('auth-tabs').classList.remove('hidden');
-            
-            if (mode === 'login' || mode === 'register') {
-                document.getElementById(`${mode}-form`).classList.remove('hidden');
-                document.getElementById(`tab-${mode}-btn`).className = 'flex-1 py-2.5 rounded-lg text-cyan-400 bg-slate-800 transition';
-                const other = mode === 'login' ? 'register' : 'login';
-                document.getElementById(`tab-${other}-btn`).className = 'flex-1 py-2.5 rounded-lg text-slate-400 hover:text-white transition';
-            } else if (mode === 'forgot') {
-                document.getElementById('forgot-form').classList.remove('hidden');
-                document.getElementById('auth-tabs').classList.add('hidden');
-            }
-        }
-
-        function generateRefCode() { return 'LITIO-' + Math.random().toString(36).substring(2, 7).toUpperCase(); }
-
-        function setButtonLoading(btnId, isLoading, defaultText, defaultIcon) {
-            const btnText = document.getElementById(`${btnId}-text`);
-            const btnIcon = document.getElementById(`${btnId}-icon`);
-            const btn = document.getElementById(`${btnId}-submit`);
-            
-            if (!btnText || !btnIcon || !btn) return;
-            
-            if (isLoading) {
-                btn.disabled = true;
-                btn.classList.add('opacity-70', 'cursor-not-allowed');
-                btnText.innerText = 'Procesando...';
-                btnIcon.className = 'fa-solid fa-spinner fa-spin';
-            } else {
-                btn.disabled = false;
-                btn.classList.remove('opacity-70', 'cursor-not-allowed');
-                btnText.innerText = defaultText;
-                btnIcon.className = `fa-solid ${defaultIcon}`;
+                document.getElementById('referral-banner-notice').classList.remove('hidden');
             }
         }
 
         function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            const color = type === 'success' ? 'bg-emerald-500' : (type === 'error' ? 'bg-rose-500' : 'bg-amber-500');
-            const icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-circle-xmark' : 'fa-triangle-exclamation');
+            const colorClass = type === 'success' ? 'bg-emerald-500' : (type === 'error' ? 'bg-rose-500' : 'bg-cyan-500');
+            const icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-circle-xmark' : 'fa-info-circle');
             
-            toast.className = `${color} text-white px-4 py-3 rounded-xl shadow-lg text-xs font-bold flex items-center space-x-2 toast-enter pointer-events-auto`;
-            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
-            
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.classList.replace('toast-enter', 'toast-leave');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            toast.className = `fixed top-4 right-4 z-50 flex items-center space-x-3 text-slate-950 px-4 py-3 rounded-xl shadow-2xl font-bold text-xs toast-enter ${colorClass}`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-lg"></i><span>${message}</span>`;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.classList.replace('toast-enter', 'toast-leave'); setTimeout(() => toast.remove(), 300); }, 3000);
         }
 
-        function copyText(text) { navigator.clipboard.writeText(text).then(() => showToast('¡Copiado al portapapeles!', 'success')); }
-        function copyReferralLink() { copyText(document.getElementById('user-ref-link-input').value); }
+        function toggleAuthMode(mode) {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('forgot-form').classList.add('hidden');
+            document.getElementById('tab-login-btn').className = 'flex-1 py-2.5 rounded-lg text-slate-400 hover:text-white transition';
+            document.getElementById('tab-register-btn').className = 'flex-1 py-2.5 rounded-lg text-slate-400 hover:text-white transition';
 
-        async function updateUserProfileInCloud(updates) {
-            if (userState.email === 'invitado@demo.com') return { data: true, error: null };
-            return await supabaseClient.from('profiles').update(updates).eq('email', userState.email);
+            if(mode === 'login') {
+                document.getElementById('login-form').classList.remove('hidden');
+                document.getElementById('tab-login-btn').className = 'flex-1 py-2.5 rounded-lg text-cyan-400 bg-slate-800 transition shadow-sm';
+            } else if(mode === 'register') {
+                document.getElementById('register-form').classList.remove('hidden');
+                document.getElementById('tab-register-btn').className = 'flex-1 py-2.5 rounded-lg text-emerald-400 bg-slate-800 transition shadow-sm';
+            } else {
+                document.getElementById('forgot-form').classList.remove('hidden');
+            }
         }
 
+        function generateRefCode() { return Math.random().toString(36).substring(2, 10).toUpperCase(); }
+
+        // --- AUTH FUNCIONES ---
         async function handleLogin(e) {
             e.preventDefault();
-            const email = document.getElementById('login-email').value.toLowerCase().trim();
+            const btn = document.getElementById('login-btn-submit');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; btn.disabled = true;
+            
+            const email = document.getElementById('login-email').value.trim();
             const pass = document.getElementById('login-password').value;
-
-            setButtonLoading('login-btn', true, 'Ingresar a la Plataforma', 'fa-arrow-right-to-bracket');
-
-            try {
-                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
-                if (error) showToast("Error al iniciar sesión. Revisa tus credenciales.", "error");
-                else if (data && data.user) {
-                    userState.id = data.user.id;
-                    await loadUserProfile(email);
-                }
-            } catch (err) { showToast("Ocurrió un error inesperado al conectar.", "error"); } 
-            finally { setButtonLoading('login-btn', false, 'Ingresar a la Plataforma', 'fa-arrow-right-to-bracket'); }
+            
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+            if (error) {
+                showToast(error.message, "error");
+                btn.innerHTML = '<span>Ingresar a la Plataforma</span><i class="fa-solid fa-arrow-right-to-bracket"></i>';
+                btn.disabled = false;
+            } else {
+                userState.id = data.user.id;
+                await loadUserProfile(email);
+            }
         }
 
         async function handleRegister(e) {
             e.preventDefault();
-            const email = document.getElementById('reg-email').value.toLowerCase().trim();
-            const pass = document.getElementById('reg-password').value;
-            const fname = document.getElementById('reg-fullname').value;
+            const btn = document.getElementById('reg-btn-submit');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; btn.disabled = true;
 
-            setButtonLoading('reg-btn', true, 'Crear Cuenta Gratis', 'fa-user-plus');
+            const fname = document.getElementById('reg-fullname').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const pass = document.getElementById('reg-password').value;
 
             try {
                 const { data, error } = await supabaseClient.auth.signUp({ email, password: pass });
@@ -948,468 +818,363 @@
                 
                 if (data && data.user) {
                     userState.id = data.user.id;
-                    
                     const myRefCode = generateRefCode();
-                    const newProfile = {
-                        email: email, full_name: fname, balance: 0.00, staked_total: 0.00,
-                        total_withdrawn: 0.00, total_yield_earned: 0.00, ref_code: myRefCode,
-                        referred_by: pendingReferralCodeFromUrl || null, referral_count: 0,
-                        unclaimed_yield: 0.00, last_yield_time: new Date().toISOString()
+                    
+                    const profileUpdates = {
+                        full_name: fname, 
+                        ref_code: myRefCode,
+                        referred_by: pendingReferralCodeFromUrl || null,
+                        last_yield_time: new Date().toISOString()
                     };
 
-                    const { error: profileError } = await supabaseClient.from('profiles').insert([newProfile]);
-                    if (profileError && profileError.code === '23505') {
-                        showToast("Iniciando sesión con tu cuenta...", "success");
-                        await loadUserProfile(email);
-                        return;
+                    const { error: profileError } = await supabaseClient
+                        .from('profiles')
+                        .update(profileUpdates)
+                        .eq('id', userState.id);
+                        
+                    if (profileError) {
+                        console.error('Error al actualizar perfil tras registro:', profileError);
                     }
 
                     showToast('¡Cuenta creada correctamente! Iniciando sesión...', 'success');
                     await loadUserProfile(email);
                 }
-            } catch (err) { showToast("Ocurrió un error inesperado durante el registro.", "error"); } 
-            finally { setButtonLoading('reg-btn', false, 'Crear Cuenta Gratis', 'fa-user-plus'); }
+            } catch (err) {
+                showToast("Error de conexión.", "error");
+                console.error(err);
+            } finally {
+                btn.innerHTML = '<span>Crear Cuenta Gratis</span><i class="fa-solid fa-user-plus"></i>';
+                btn.disabled = false;
+            }
         }
 
         async function handleForgotPassword(e) {
             e.preventDefault();
             const email = document.getElementById('forgot-email').value;
-            const btn = e.target.querySelector('button[type="submit"]');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...'; btn.disabled = true;
-
-            try {
-                const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
-                if (error) throw error;
-                showToast('Si el correo existe, enviamos las instrucciones.', 'success');
-                setTimeout(() => toggleAuthMode('login'), 2000);
-            } catch (err) { showToast(err.message, 'error'); } 
-            finally { btn.innerHTML = originalText; btn.disabled = false; }
+            const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+            if (error) showToast(error.message, "error");
+            else { showToast("Revisa tu correo para recuperar la contraseña.", "success"); toggleAuthMode('login'); }
         }
 
-        function enterDemoMode() {
-            userState.id = 'demo-user-id'; userState.email = 'invitado@demo.com'; userState.fullName = 'Usuario Demo';
-            userState.balance = 1500; userState.stakedTotal = 500; userState.totalWithdrawn = 0; userState.totalYieldEarned = 25.00;
-            userState.refCode = 'DEMO-1234'; userState.referralCount = 3; userState.unclaimedYield = 0; userState.lastYieldTime = Date.now();
-            completeLogin(userState.email);
-            showToast('Estás navegando en MODO DEMO.', 'warning');
+        async function handleLogout() {
+            await saveCurrentYieldToCloud();
+            await supabaseClient.auth.signOut();
+            location.reload();
         }
 
+        async function enterDemoMode() {
+            userState.isGuest = true;
+            userState.email = "demo@litiox.io";
+            userState.balance = 50.00;
+            userState.stakedTotal = 0.00;
+            userState.refCode = "DEMO123";
+            userState.referralCount = 0;
+            showToast('Conectado en Modo Demo (Local)', 'success');
+            switchToDashboard();
+        }
+
+        // --- CARGA DE DATOS ---
         async function loadUserProfile(email) {
-            const cleanEmail = email.toLowerCase().trim();
+            const cleanEmail = email.toLowerCase();
             const { data, error } = await supabaseClient.from('profiles').select('*').eq('email', cleanEmail).single();
             
-            if (data) {
-                const prevBalance = userState.balance;
+            if (error) {
+                console.error("Error al cargar perfil", error);
+            } else {
                 userState.email = cleanEmail;
-                userState.balance = parseFloat(data.balance || 0);
-                userState.stakedTotal = parseFloat(data.staked_total || 0);
-                userState.totalWithdrawn = parseFloat(data.total_withdrawn || 0);
-                userState.totalYieldEarned = parseFloat(data.total_yield_earned || 0);
+                userState.balance = parseFloat(data.balance) || 0;
+                userState.stakedTotal = parseFloat(data.staked_total) || 0;
+                userState.yieldEarned = parseFloat(data.total_yield_earned) || 0;
+                userState.withdrawn = parseFloat(data.total_withdrawn) || 0;
+                userState.unclaimedYield = parseFloat(data.unclaimed_yield) || 0;
                 userState.refCode = data.ref_code;
-                userState.referredBy = data.referred_by || '';
-                userState.fullName = data.full_name || cleanEmail.split('@')[0];
-                userState.unclaimedYield = parseFloat(data.unclaimed_yield || 0);
-
-                // CONTEO EN TIEMPO REAL DE REFERIDOS PARA ASEGURAR REFLEJO FIEL
-                if (data.ref_code) {
-                    const { data: refList, error: refErr } = await supabaseClient
-                        .from('profiles')
-                        .select('email')
-                        .eq('referred_by', data.ref_code);
-                    
-                    if (!refErr && refList) {
-                        userState.referralCount = Math.max(refList.length, parseInt(data.referral_count || 0));
-                    } else {
-                        userState.referralCount = parseInt(data.referral_count || 0);
-                    }
-                } else {
-                    userState.referralCount = parseInt(data.referral_count || 0);
-                }
+                userState.referralCount = parseInt(data.referral_count) || 0;
                 
                 const lastTimeStored = data.last_yield_time ? new Date(data.last_yield_time).getTime() : Date.now();
-                const now = Date.now();
-                const secondsPassed = Math.max(0, (now - lastTimeStored) / 1000);
-                const offlineYield = userState.stakedTotal > 0 ? (userState.stakedTotal * (0.0166 / 86400) * secondsPassed) : 0;
+                userState.lastYieldTime = lastTimeStored;
                 
-                userState.accumulatedYieldSession = userState.unclaimedYield + offlineYield;
-                userState.lastYieldTime = now;
-
-                if(prevBalance !== userState.balance && prevBalance > 0 && document.getElementById('dashboard-view').classList.contains('flex')) {
-                    document.getElementById('card-metric-balance').classList.add('bg-emerald-900/40', 'border-emerald-500/50');
-                    setTimeout(() => { document.getElementById('card-metric-balance').classList.remove('bg-emerald-900/40', 'border-emerald-500/50'); }, 2000);
-                }
-                
-                if(document.getElementById('auth-view').classList.contains('hidden') === false) completeLogin(cleanEmail);
-            } else {
-                if (userState.id) {
-                     const newProfile = {
-                        email: cleanEmail, full_name: cleanEmail.split('@')[0], balance: 0, staked_total: 0,
-                        total_withdrawn: 0, total_yield_earned: 0, ref_code: generateRefCode(), referral_count: 0,
-                        unclaimed_yield: 0.00, last_yield_time: new Date().toISOString()
-                     };
-                     await supabaseClient.from('profiles').insert([newProfile]);
-                     const { data: retryData } = await supabaseClient.from('profiles').select('*').eq('email', cleanEmail).single();
-                     if (retryData) { loadUserProfile(cleanEmail); return; }
-                }
-                showToast("Fallo al cargar el perfil. Vuelve a ingresar.", "error"); handleLogout();
+                if(userState.stakedTotal > 0) calculateOfflineYield(lastTimeStored);
+                switchToDashboard();
             }
         }
 
-        async function syncUserDataBackground() {
-            if (!userState.email || userState.email === 'invitado@demo.com') return;
-            await loadUserProfile(userState.email);
-            updateDashboardUI();
-            if(!document.getElementById('tab-dashboard').classList.contains('hidden')) loadUserTransactions();
+        function calculateOfflineYield(lastTimeMs) {
+            const now = Date.now();
+            const diffMs = now - lastTimeMs;
+            if(diffMs <= 0) return;
+            const daysOffline = diffMs / (1000 * 60 * 60 * 24);
+            const generatedOffline = userState.stakedTotal * YIELD_RATE_PER_DAY * daysOffline;
+            userState.unclaimedYield += generatedOffline;
+            userState.lastYieldTime = now;
         }
 
-        function completeLogin(email) {
+        function switchToDashboard() {
             document.getElementById('auth-view').classList.add('hidden');
-            document.getElementById('dashboard-view').classList.replace('hidden', 'flex');
-            document.getElementById('user-welcome-label').innerText = `Usuario: ${userState.fullName}`;
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            document.getElementById('dashboard-view').classList.add('flex');
             
-            const isAdmin = ADMIN_EMAILS.some(a => email.toLowerCase() === a.toLowerCase());
-            if (isAdmin) {
+            if (ADMIN_EMAILS.includes(userState.email.toLowerCase())) {
                 document.getElementById('nav-admin').classList.remove('hidden');
                 document.getElementById('nav-admin-mobile').classList.remove('hidden');
-                showToast('Modo Administrador Activado', 'warning');
+                document.getElementById('nav-admin-mobile').classList.add('flex');
             }
 
-            const currentOrigin = window.location.origin + window.location.pathname;
-            document.getElementById('user-ref-link-input').value = `${currentOrigin}?ref=${userState.refCode}`;
-
-            updateDashboardUI();
-            loadUserTransactions();
-            startLiveYieldGenerator();
-
-            if(userSyncInterval) clearInterval(userSyncInterval);
-            if(userState.email !== 'invitado@demo.com') userSyncInterval = setInterval(syncUserDataBackground, 5000);
-        }
-
-        function handleLogout() {
-            saveCurrentYieldToCloud();
-            if(yieldInterval) clearInterval(yieldInterval);
-            if(adminPollingInterval) clearInterval(adminPollingInterval);
-            if(userSyncInterval) clearInterval(userSyncInterval);
-            if (supabaseClient) supabaseClient.auth.signOut();
-            document.getElementById('dashboard-view').classList.replace('flex', 'hidden');
-            document.getElementById('auth-view').classList.remove('hidden');
-            document.getElementById('nav-admin').classList.add('hidden');
-            document.getElementById('nav-admin-mobile').classList.add('hidden');
-            document.getElementById('login-email').value = ''; document.getElementById('login-password').value = '';
-            switchTab('dashboard');
-            userState.id = ''; userState.email = '';
+            document.getElementById('user-welcome-label').innerText = `Usuario: ${userState.email}`;
+            document.getElementById('user-ref-link-input').value = `https://litiox.io/?ref=${userState.refCode}`;
+            
+            updateUI();
+            startYieldGenerator();
+            if(!userState.isGuest) {
+                loadTransactionHistory();
+                loadReferredUsersList();
+            }
+            initTelemetryChart();
+            updateDailyCountdownClock();
         }
 
         function switchTab(tabId) {
-            if (adminPollingInterval) { clearInterval(adminPollingInterval); adminPollingInterval = null; }
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn, .mobile-nav-btn').forEach(el => el.classList.remove('text-cyan-400', 'bg-slate-800/80'));
             
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('text-cyan-400', 'bg-slate-800/80', 'active');
-                if(!btn.id.includes('admin')) btn.classList.add('text-slate-400');
-            });
-            const activeBtn = document.getElementById(`nav-${tabId}`);
-            if(activeBtn && tabId !== 'admin') {
-                activeBtn.classList.remove('text-slate-400');
-                activeBtn.classList.add('text-cyan-400', 'bg-slate-800/80', 'active');
-            }
-
-            if(tabId === 'admin') { loadAdminPanel(); adminPollingInterval = setInterval(loadAdminPanel, 4000); }
-            else if (tabId === 'referrals') loadReferredUsersList();
-        }
-
-        function updateDashboardUI() {
-            document.getElementById('header-balance-display').innerText = `$${userState.balance.toFixed(2)}`;
-            document.getElementById('metric-balance').innerText = `$${userState.balance.toFixed(2)}`;
-            document.getElementById('metric-staked').innerText = `$${userState.stakedTotal.toFixed(2)}`;
-            document.getElementById('hero-staked-amount').innerText = `$${userState.stakedTotal.toFixed(2)}`;
-            document.getElementById('metric-withdrawn').innerText = `$${userState.totalWithdrawn.toFixed(2)}`;
-            document.getElementById('metric-yield-earned').innerText = `$${userState.totalYieldEarned.toFixed(2)}`;
-
-            document.getElementById('req-ref-badge').innerText = `${userState.referralCount} / 3`;
-            const refPct = Math.min((userState.referralCount / 3) * 100, 100);
-            document.getElementById('req-ref-bar').style.width = `${refPct}%`;
-
-            document.getElementById('req-yield-badge').innerText = `$${userState.totalYieldEarned.toFixed(2)} / $15`;
-            const yieldPct = Math.min((userState.totalYieldEarned / 15) * 100, 100);
-            document.getElementById('req-yield-bar').style.width = `${yieldPct}%`;
-
-            document.getElementById('modal-req-ref').innerText = `${userState.referralCount} / 3`;
-            document.getElementById('modal-req-yield').innerText = `$${userState.totalYieldEarned.toFixed(2)} / $15`;
-
-            document.getElementById('ref-count-display').innerText = `${userState.referralCount} / 3`;
-            document.getElementById('ref-earnings-display').innerText = `$${(userState.totalYieldEarned * 0.003).toFixed(2)} USDT`;
-            if (userState.referralCount >= 3) {
-                document.getElementById('ref-status-text').innerText = '¡Requisito de referidos CUMPLIDO!';
-                document.getElementById('ref-status-text').className = 'text-[10px] text-emerald-400 font-bold mt-1';
-            }
-        }
-
-        function openDepositModal() { document.getElementById('deposit-modal').classList.remove('hidden'); }
-        function openWithdrawModal() { 
-            document.getElementById('withdraw-available-balance').innerText = `$${userState.balance.toFixed(2)}`;
-            document.getElementById('withdraw-modal').classList.remove('hidden'); 
-        }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-        async function investInPackage(btnElement, packageName, cost) {
-            if (isSubmittingTx) return;
-            isSubmittingTx = true;
+            const dtBtn = document.getElementById(`nav-${tabId}`);
+            if(dtBtn) dtBtn.classList.add('text-cyan-400', 'bg-slate-800/80');
             
-            const originalText = btnElement.innerText;
-            btnElement.disabled = true;
-            btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...';
-
-            try {
-                const { data: prof, error: profErr } = await supabaseClient.from('profiles').select('balance, staked_total, unclaimed_yield, last_yield_time').eq('email', userState.email).single();
-                
-                if (profErr || !prof) throw new Error("Error al verificar perfil en la nube");
-                
-                const currentBalance = parseFloat(prof.balance || 0);
-                if (currentBalance < cost) {
-                    showToast(`Saldo insuficiente. Tienes $${currentBalance.toFixed(2)} USDT reales.`, 'error');
-                    return;
-                }
-                
-                const now = Date.now();
-                const lastTimeStored = prof.last_yield_time ? new Date(prof.last_yield_time).getTime() : now;
-                const secondsPassed = Math.max(0, (now - lastTimeStored) / 1000);
-                const currentStaked = parseFloat(prof.staked_total || 0);
-                const offlineYield = currentStaked > 0 ? (currentStaked * (0.0166 / 86400) * secondsPassed) : 0;
-                
-                const newUnclaimed = parseFloat(prof.unclaimed_yield || 0) + offlineYield;
-                const newBalance = currentBalance - cost;
-                const newStaked = currentStaked + cost;
-
-                const updates = {
-                    balance: newBalance,
-                    staked_total: newStaked,
-                    unclaimed_yield: newUnclaimed,
-                    last_yield_time: new Date(now).toISOString()
-                };
-                
-                const { error } = await supabaseClient.from('profiles').update(updates).eq('email', userState.email);
-                if (error) throw error;
-
-                userState.balance = newBalance;
-                userState.stakedTotal = newStaked;
-                userState.unclaimedYield = newUnclaimed;
-                userState.lastYieldTime = now;
-                userState.accumulatedYieldSession = newUnclaimed;
-
-                updateDashboardUI();
-                showToast(`¡Activaste el plan ${packageName} con éxito!`, 'success');
-                switchTab('dashboard');
-            } catch (err) {
-                showToast(err.message || 'Error de conexión al procesar la inversión.', 'error');
-            } finally {
-                isSubmittingTx = false;
-                btnElement.disabled = false;
-                btnElement.innerText = originalText;
-            }
+            if(tabId === 'admin') loadAdminPanel();
         }
 
-        function startLiveYieldGenerator() {
+        // --- YIELD GENERATOR CORE ---
+        function startYieldGenerator() {
             if (yieldInterval) clearInterval(yieldInterval);
+            if (userState.stakedTotal <= 0) return;
+
+            const yieldPerSec = (userState.stakedTotal * YIELD_RATE_PER_DAY) / 86400;
+            
             yieldInterval = setInterval(() => {
                 const now = Date.now();
-                if (userState.stakedTotal > 0 && userState.lastYieldTime) {
-                    const secondsPassed = Math.max(0, (now - userState.lastYieldTime) / 1000);
-                    const yieldEarned = userState.stakedTotal * (0.0166 / 86400) * secondsPassed;
-                    userState.accumulatedYieldSession += yieldEarned;
-                    
-                    const yieldElem = document.getElementById('live-accumulated-yield');
-                    if (yieldElem) yieldElem.innerText = `$${userState.accumulatedYieldSession.toFixed(6)}`;
-                }
+                const diffSecs = (now - userState.lastYieldTime) / 1000;
                 userState.lastYieldTime = now;
+                
+                if(diffSecs > 0 && diffSecs < 10) {
+                    userState.unclaimedYield += (yieldPerSec * diffSecs);
+                    document.getElementById('live-accumulated-yield').innerText = `$${userState.unclaimedYield.toFixed(6)}`;
+                }
             }, 1000);
         }
 
-        async function saveCurrentYieldToCloud() {
-            if (!userState.email || userState.email === 'invitado@demo.com' || userState.stakedTotal <= 0) return;
-            const updates = { unclaimed_yield: userState.accumulatedYieldSession, last_yield_time: new Date(userState.lastYieldTime || Date.now()).toISOString() };
-            await updateUserProfileInCloud(updates);
-        }
-
-        async function claimDailyEarnings(btnElement) {
-            if (isSubmittingTx) return;
-            isSubmittingTx = true;
+        async function claimDailyEarnings(btn) {
+            if (userState.unclaimedYield <= 0.001) {
+                showToast('Mínimo reclamable: $0.001 USDT', 'error'); return;
+            }
+            const amountToClaim = userState.unclaimedYield;
+            userState.balance += amountToClaim;
+            userState.yieldEarned += amountToClaim;
+            userState.unclaimedYield = 0;
             
-            const originalText = btnElement.innerHTML;
-            btnElement.disabled = true;
-            btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Acreditando...';
-
-            try {
-                const { data: prof, error: profErr } = await supabaseClient.from('profiles').select('unclaimed_yield, balance, total_yield_earned, last_yield_time, staked_total').eq('email', userState.email).single();
-                
-                if (profErr || !prof) throw new Error("No se pudo verificar tu cuenta de rendimiento");
-
-                const now = Date.now();
-                const lastTimeStored = prof.last_yield_time ? new Date(prof.last_yield_time).getTime() : now;
-                const secondsPassed = Math.max(0, (now - lastTimeStored) / 1000);
-                const currentStaked = parseFloat(prof.staked_total || 0);
-                const offlineYield = currentStaked > 0 ? (currentStaked * (0.0166 / 86400) * secondsPassed) : 0;
-                
-                const trueAccumulated = parseFloat(prof.unclaimed_yield || 0) + offlineYield;
-
-                if (trueAccumulated <= 0.000001) {
-                    showToast('Aún no has generado suficientes ganancias.', 'error');
-                    return;
-                }
-
-                const newBalance = parseFloat(prof.balance || 0) + trueAccumulated;
-                const newTotalYield = parseFloat(prof.total_yield_earned || 0) + trueAccumulated;
-
-                const updates = { balance: newBalance, total_yield_earned: newTotalYield, unclaimed_yield: 0, last_yield_time: new Date(now).toISOString() };
-                const { error } = await supabaseClient.from('profiles').update(updates).eq('email', userState.email);
-                if (error) throw error;
-
-                userState.balance = newBalance;
-                userState.totalYieldEarned = newTotalYield;
-                userState.accumulatedYieldSession = 0;
-                userState.unclaimedYield = 0;
-                userState.lastYieldTime = now;
-                
-                const yieldElem = document.getElementById('live-accumulated-yield');
-                if (yieldElem) yieldElem.innerText = `$0.000000`;
-                
-                updateDashboardUI();
-                showToast(`¡+$${trueAccumulated.toFixed(4)} USDT acreditados a tu saldo!`, 'success');
-
-            } catch (err) {
-                showToast('Hubo un problema de conexión al acreditar.', 'error');
-            } finally {
-                isSubmittingTx = false;
-                btnElement.disabled = false;
-                btnElement.innerHTML = originalText;
+            updateUI();
+            showToast(`+$${amountToClaim.toFixed(4)} USDT acreditados a tu saldo principal.`, 'success');
+            
+            if(!userState.isGuest) {
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sincronizando...';
+                await saveCurrentYieldToCloud();
+                btn.innerHTML = '<i class="fa-solid fa-hand-holding-dollar"></i><span>Acreditar al Saldo Disponible</span>';
             }
         }
 
-        async function submitRealDeposit(btnElement) {
-            if (isSubmittingTx) return;
-            const amountInput = document.getElementById('real-deposit-amount').value;
-            const hash = document.getElementById('real-deposit-hash').value.trim();
-
-            if (!amountInput) return showToast('Ingresa un monto válido', 'error');
-            const amount = parseFloat(amountInput);
-
-            if (isNaN(amount) || amount < 10) return showToast('El mínimo de depósito es $10 USDT', 'error');
-            if (!hash || hash.length < 10) return showToast('Ingresa un Hash válido', 'error');
-
-            if (userState.email === 'invitado@demo.com') {
-                showToast('Modo Demo: Depósito simulado en revisión.', 'success'); closeModal('deposit-modal'); return;
-            }
-
-            isSubmittingTx = true;
-            const originalBtnText = btnElement.innerText;
-            btnElement.disabled = true;
-            btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
-
-            try {
-                const { data: existingTx } = await supabaseClient.from('transactions').select('id').eq('hash', hash);
-                if (existingTx && existingTx.length > 0) {
-                    showToast('Este hash (TxID) ya ha sido reportado previamente.', 'error');
-                    return;
-                }
-
-                const tx = {
-                    id: generateUUID(), user_id: userState.id, user_email: (userState.email || '').toLowerCase(),
-                    type: 'deposit', amount: amount, hash: hash, wallet: '', status: 'pending', created_at: new Date().toISOString()
-                };
-                
-                const { error } = await supabaseClient.from('transactions').insert([tx]);
-                if (error) throw error;
-
-                document.getElementById('real-deposit-amount').value = '';
-                document.getElementById('real-deposit-hash').value = '';
-                closeModal('deposit-modal');
-                showToast('Depósito enviado a revisión.', 'success');
-                loadUserTransactions();
-            } catch(e) { showToast(`Error al procesar: ${e.message}`, 'error'); } 
-            finally { isSubmittingTx = false; btnElement.disabled = false; btnElement.innerText = originalBtnText; }
+        async function saveCurrentYieldToCloud() {
+            if (userState.isGuest) return;
+            const updates = {
+                balance: parseFloat(userState.balance.toFixed(4)),
+                total_yield_earned: parseFloat(userState.yieldEarned.toFixed(4)),
+                unclaimed_yield: parseFloat(userState.unclaimedYield.toFixed(6)),
+                last_yield_time: new Date(userState.lastYieldTime || Date.now()).toISOString()
+            };
+            await supabaseClient.from('profiles').update(updates).eq('email', userState.email);
         }
 
-        async function submitRealWithdrawal(btnElement) {
-            if (isSubmittingTx) return; 
+        function updateUI() {
+            const formatUSDT = (num) => `$${parseFloat(num).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            
+            document.getElementById('header-balance-display').innerText = formatUSDT(userState.balance);
+            document.getElementById('metric-balance').innerText = formatUSDT(userState.balance);
+            document.getElementById('metric-staked').innerText = formatUSDT(userState.stakedTotal);
+            document.getElementById('hero-staked-amount').innerText = formatUSDT(userState.stakedTotal);
+            document.getElementById('metric-yield-earned').innerText = formatUSDT(userState.yieldEarned);
+            document.getElementById('metric-withdrawn').innerText = formatUSDT(userState.withdrawn);
+            document.getElementById('live-accumulated-yield').innerText = `$${userState.unclaimedYield.toFixed(6)}`;
+            
+            document.getElementById('ref-count-display').innerText = `${userState.referralCount} / 3`;
+            const reqRefBar = document.getElementById('req-ref-bar');
+            if(reqRefBar) {
+                let w = (userState.referralCount / 3) * 100;
+                reqRefBar.style.width = `${Math.min(w, 100)}%`;
+                if(w >= 100) reqRefBar.classList.replace('bg-cyan-400', 'bg-emerald-400');
+            }
+            document.getElementById('req-ref-badge').innerText = `${userState.referralCount} / 3`;
+            if(userState.referralCount >= 3) {
+                document.getElementById('req-ref-badge').classList.replace('bg-amber-500/20', 'bg-emerald-500/20');
+                document.getElementById('req-ref-badge').classList.replace('text-amber-400', 'text-emerald-400');
+                document.getElementById('ref-status-text').innerText = "Requisito de referidos cumplido";
+                document.getElementById('ref-status-text').classList.replace('text-slate-500', 'text-emerald-400');
+            }
 
-            const amountInput = document.getElementById('withdraw-amount').value;
-            const wallet = document.getElementById('withdraw-wallet-address').value.trim();
-            const amount = parseFloat(amountInput);
-
-            if (!amountInput || isNaN(amount) || amount < 25) return showToast('El monto mínimo es $25 USDT', 'error');
-            if (!wallet || wallet.length < 20) return showToast('Billetera inválida', 'error');
-
-            if (userState.email === 'invitado@demo.com') { showToast('Modo Demo: Retiro simulado.', 'success'); closeModal('withdraw-modal'); return; }
-
-            isSubmittingTx = true;
-            const originalBtnText = btnElement.innerText;
-            btnElement.disabled = true;
-            btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Solicitando...';
-
-            try {
-                const { data: prof, error: profErr } = await supabaseClient.from('profiles').select('balance, referral_count, total_yield_earned').eq('email', userState.email).single();
-                if (profErr || !prof) throw new Error("Error al verificar tu perfil.");
-
-                // Verificación estricta de referidos
-                if (prof.referral_count < 3) return showToast('Requisito incumplido: Necesitas al menos 3 referidos.', 'error');
-                if (prof.total_yield_earned < 15) return showToast('Requisito incumplido: Mínimo $15 generados.', 'error');
-                if (parseFloat(prof.balance) < amount) return showToast('Saldo insuficiente para este retiro.', 'error');
-
-                const newBalance = parseFloat(prof.balance) - amount;
-
-                const { error: updErr } = await supabaseClient.from('profiles').update({ balance: newBalance }).eq('email', userState.email);
-                if (updErr) throw new Error("Fallo al retener el saldo.");
-
-                const tx = { id: generateUUID(), user_id: userState.id, user_email: userState.email.toLowerCase(), type: 'withdraw', amount: amount, hash: '', wallet: wallet, status: 'pending', created_at: new Date().toISOString() };
-                const { error: txErr } = await supabaseClient.from('transactions').insert([tx]);
-                
-                if (txErr) {
-                    await supabaseClient.from('profiles').update({ balance: prof.balance }).eq('email', userState.email);
-                    throw new Error("Fallo de red. Saldo devuelto.");
+            const reqYieldBar = document.getElementById('req-yield-bar');
+            if(reqYieldBar) {
+                let yw = (userState.yieldEarned / 15) * 100;
+                reqYieldBar.style.width = `${Math.min(yw, 100)}%`;
+            }
+            const yb = document.getElementById('req-yield-badge');
+            if(yb) {
+                yb.innerText = `$${userState.yieldEarned.toFixed(2)} / $15`;
+                if(userState.yieldEarned >= 15) {
+                    yb.classList.replace('bg-amber-500/20', 'bg-emerald-500/20');
+                    yb.classList.replace('text-amber-400', 'text-emerald-400');
                 }
-
-                userState.balance = newBalance;
-                document.getElementById('withdraw-amount').value = '';
-                document.getElementById('withdraw-wallet-address').value = '';
-                closeModal('withdraw-modal');
-                updateDashboardUI();
-                showToast('Retiro enviado. Fondos en retención.', 'success');
-                loadUserTransactions();
-            } catch(err) {
-                showToast(err.message, 'error');
-            } finally {
-                isSubmittingTx = false;
-                btnElement.disabled = false;
-                btnElement.innerText = originalBtnText;
             }
         }
 
-        async function loadUserTransactions() {
-            if(userState.email === 'invitado@demo.com') return;
+        // --- PAQUETES DE INVERSIÓN ---
+        async function investInPackage(btn, packageName, price) {
+            if (userState.balance < price) {
+                showToast(`Saldo insuficiente. Necesitas $${price} USDT`, 'error');
+                const c = document.getElementById('card-metric-balance');
+                c.classList.add('border', 'border-rose-500'); setTimeout(()=>c.classList.remove('border','border-rose-500'), 1500);
+                return;
+            }
+            
+            const confirmed = confirm(`¿Confirmas inversión de $${price} USDT en ${packageName}? Se descontarán de tu saldo disponible.`);
+            if(!confirmed) return;
+            
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; btn.disabled = true;
+            
+            userState.balance -= price;
+            userState.stakedTotal += price;
+            userState.lastYieldTime = Date.now();
+            updateUI();
+            startYieldGenerator();
+            showToast(`¡Contrato activado! Generando USDT en vivo...`, 'success');
+            
+            if(!userState.isGuest) {
+                await supabaseClient.from('profiles').update({ balance: userState.balance, staked_total: userState.stakedTotal, last_yield_time: new Date().toISOString() }).eq('email', userState.email);
+            }
+            
+            btn.innerText = `Invertir $${price} USDT`; btn.disabled = false;
+        }
+
+        function copyReferralLink() {
+            const input = document.getElementById('user-ref-link-input');
+            navigator.clipboard.writeText(input.value);
+            showToast('Enlace de referido copiado al portapapeles', 'success');
+        }
+
+        // --- RETIROS ---
+        async function openWithdrawModal() {
+            if (userState.referralCount < 3) return showToast('Requisito faltante: Debes invitar a 3 usuarios.', 'error');
+            if (userState.yieldEarned < 15) return showToast('Requisito faltante: Debes acumular $15 USDT de ganancia.', 'error');
+            
+            const amountStr = prompt(`Saldo Disponible: $${userState.balance.toFixed(2)}\nMonto a retirar (Mínimo $25):`);
+            if(!amountStr) return;
+            const amount = parseFloat(amountStr);
+            
+            if(isNaN(amount) || amount < 25) return showToast('El monto mínimo de retiro es $25 USDT', 'error');
+            if(amount > userState.balance) return showToast('Saldo insuficiente', 'error');
+            
+            const wallet = prompt('Ingresa tu dirección USDT (Red Tron TRC-20 o BEP-20):');
+            if(!wallet || wallet.length < 20) return showToast('Dirección de billetera inválida', 'error');
+            
+            userState.balance -= amount;
+            userState.withdrawn += amount;
+            updateUI();
+            
+            if(!userState.isGuest) {
+                await supabaseClient.from('profiles').update({ balance: userState.balance, total_withdrawn: userState.withdrawn }).eq('email', userState.email);
+                await supabaseClient.from('transactions').insert([{ user_id: userState.id, user_email: userState.email, type: 'withdraw', amount: amount, wallet: wallet, status: 'pending' }]);
+                loadTransactionHistory();
+            }
+            showToast(`Retiro de $${amount} USDT solicitado con éxito. En revisión por red.`, 'success');
+        }
+
+        // --- DEPÓSITOS ---
+        async function openDepositModal() {
+            const amountStr = prompt('¿Cuántos USDT (Tether) deseas depositar en la plataforma? (Mín. $10)');
+            if(!amountStr) return;
+            const amount = parseFloat(amountStr);
+            if(isNaN(amount) || amount < 10) return showToast('Mínimo de depósito es $10 USDT', 'error');
+            
+            const network = prompt('Selecciona la red de envío:\n1. Tron (TRC-20)\n2. Binance Smart Chain (BEP-20)\nEscribe 1 o 2:');
+            let walletStr = SUPABASE_ADMIN_FEE_WALLET;
+            if(network === '2') walletStr = '0xYourBinanceAddressHere (Contactar Soporte)';
+            
+            alert(`ATENCIÓN: Transfiere exactamente $${amount} USDT a la siguiente dirección:\n\n${walletStr}\n\nGuarda el Hash (TXID) de la transacción para el siguiente paso.`);
+            
+            const hash = prompt('Ingresa el Hash de la transacción (TXID) emitido por tu exchange/billetera:');
+            if(!hash || hash.length < 10) return showToast('Hash inválido. Operación cancelada.', 'error');
+            
+            if(!userState.isGuest) {
+                const { error } = await supabaseClient.from('transactions').insert([{ user_id: userState.id, user_email: userState.email, type: 'deposit', amount: amount, hash: hash, status: 'pending' }]);
+                if(error) { console.error(error); return showToast('Error al procesar depósito.', 'error'); }
+                loadTransactionHistory();
+            }
+            showToast('Depósito registrado. Acreditación pendiente (2-15 min aprox.)', 'success');
+        }
+
+        async function loadTransactionHistory() {
+            if (userState.isGuest) return;
             const tbody = document.getElementById('user-tx-history');
-            const { data, error } = await supabaseClient.from('transactions').select('*').eq('user_email', userState.email.toLowerCase()).order('created_at', { ascending: false });
+            const { data, error } = await supabaseClient.from('transactions').select('*').eq('user_email', userState.email).order('created_at', { ascending: false }).limit(10);
+            
+            if (error) return console.error(error);
+            if (!data || data.length === 0) { document.getElementById('no-tx-msg').classList.remove('hidden'); tbody.innerHTML = ''; }
+            else {
+                document.getElementById('no-tx-msg').classList.add('hidden');
+                let h = '';
+                data.forEach(tx => {
+                    const date = new Date(tx.created_at).toLocaleDateString('es-AR') + ' ' + new Date(tx.created_at).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
+                    const color = tx.type === 'deposit' ? 'text-emerald-400' : 'text-rose-400';
+                    const stColor = tx.status === 'approved' ? 'text-emerald-400' : (tx.status === 'rejected' ? 'text-rose-500' : 'text-amber-400');
+                    const stTxt = tx.status === 'approved' ? 'Completado' : (tx.status === 'rejected' ? 'Rechazado' : 'Pendiente');
+                    const typeTxt = tx.type === 'deposit' ? 'Depósito' : 'Retiro';
+                    
+                    h += `<tr class="border-b border-slate-800/50 hover:bg-slate-800/20 transition">
+                            <td class="p-2">${date}</td>
+                            <td class="p-2 font-bold ${color}">${typeTxt}</td>
+                            <td class="p-2 font-mono text-white">$${parseFloat(tx.amount).toFixed(2)}</td>
+                            <td class="p-2 font-semibold ${stColor}">${stTxt}</td>
+                          </tr>`;
+                });
+                tbody.innerHTML = h;
+            }
+        }
+
+        async function loadReferredUsersList() {
+            if (!userState.refCode || userState.isGuest) return;
+            const tbody = document.getElementById('referred-users-list');
+            const { data, error } = await supabaseClient.from('profiles')
+                .select('email, full_name, created_at')
+                .eq('referred_by', userState.refCode)
+                .order('created_at', { ascending: false });
 
             if (error) return console.error(error);
 
-            let newHtml = '';
-            if(!data || data.length === 0) {
-                document.getElementById('no-tx-msg').classList.remove('hidden');
+            if (!data || data.length === 0) {
+                document.getElementById('no-refs-msg').classList.remove('hidden');
                 tbody.innerHTML = '';
             } else {
-                document.getElementById('no-tx-msg').classList.add('hidden');
-                data.forEach(tx => {
-                    const statusColor = tx.status === 'approved' ? 'text-emerald-400' : (tx.status === 'rejected' ? 'text-rose-400' : 'text-amber-400');
-                    const statusText = tx.status === 'approved' ? 'Aprobado' : (tx.status === 'rejected' ? 'Rechazado' : 'Pendiente');
-                    const typeText = tx.type === 'deposit' ? 'Depósito' : 'Retiro';
-                    let displayDate = tx.created_at ? new Date(tx.created_at).toLocaleDateString('es-AR') + ' ' + new Date(tx.created_at).toLocaleTimeString('es-AR', {hour: '2-digit', minute: '2-digit'}) : 'N/A';
-                    newHtml += `<tr class="border-b border-slate-800/50 hover:bg-slate-800/20 transition"><td class="p-2">${displayDate}</td><td class="p-2">${typeText}</td><td class="p-2 font-mono">$${tx.amount.toFixed(2)}</td><td class="p-2 font-semibold ${statusColor}">${statusText}</td></tr>`;
+                document.getElementById('no-refs-msg').classList.add('hidden');
+                let html = '';
+                data.forEach(u => {
+                    const date = new Date(u.created_at).toLocaleDateString('es-AR');
+                    const name = u.full_name || u.email.split('@')[0];
+                    html += `<tr class="border-b border-slate-800/50 hover:bg-slate-800/20 transition">
+                        <td class="p-2 text-cyan-400 font-medium">${name} <br><span class="text-[10px] text-slate-500 font-normal">${u.email}</span></td>
+                        <td class="p-2">${date}</td>
+                    </tr>`;
                 });
-                tbody.innerHTML = newHtml;
+                tbody.innerHTML = html;
             }
         }
 
+        // --- ADMIN PANEL ---
         async function loadAdminPanel() {
             if (!ADMIN_EMAILS.includes(userState.email.toLowerCase())) return;
             const statusInd = document.getElementById('admin-status-indicator');
@@ -1417,236 +1182,80 @@
 
             const { data, error } = await supabaseClient.from('transactions').select('*').eq('status', 'pending');
             if (error) return console.error("Admin load error", error);
+            
+            const tbodyD = document.getElementById('admin-deposits-body');
+            const tbodyW = document.getElementById('admin-withdrawals-body');
+            let hD = '', hW = '';
+            let cD = 0, cW = 0;
 
-            const depsBody = document.getElementById('admin-deposits-body');
-            const witsBody = document.getElementById('admin-withdrawals-body');
-            const deps = data.filter(t => t.type === 'deposit');
-            const wits = data.filter(t => t.type === 'withdraw');
-
-            if (deps.length === 0) { document.getElementById('admin-no-deps').classList.remove('hidden'); depsBody.innerHTML = ''; } 
-            else {
-                document.getElementById('admin-no-deps').classList.add('hidden');
-                let h = '';
-                deps.forEach(t => {
-                    const isDisabled = processingTxs.has(t.id) ? 'pointer-events: none; opacity: 0.4;' : '';
-                    h += `<tr id="tr-${t.id}" style="${isDisabled}">
-                        <td class="p-3">${t.user_email}</td><td class="p-3 font-mono text-emerald-400">$${t.amount.toFixed(2)}</td><td class="p-3 font-mono text-[10px] break-all max-w-[100px]">${t.hash}</td>
-                        <td class="p-3 text-right whitespace-nowrap">
-                            <button onclick="adminApproveDeposit(this, '${t.id}', '${t.user_email}', ${t.amount})" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 px-2 py-1 rounded transition mr-1 disabled:opacity-50" title="Aprobar"><i class="fa-solid fa-check"></i></button>
-                            <button onclick="adminRejectTransaction(this, '${t.id}', '${t.type}', ${t.amount}, '${t.user_email}')" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-slate-950 px-2 py-1 rounded transition disabled:opacity-50" title="Rechazar"><i class="fa-solid fa-xmark"></i></button>
-                        </td></tr>`;
+            if(data) {
+                data.forEach(tx => {
+                    if (tx.type === 'deposit') { cD++; hD += adminTxRow(tx); }
+                    else if (tx.type === 'withdraw') { cW++; hW += adminTxRow(tx); }
                 });
-                depsBody.innerHTML = h;
             }
-
-            if (wits.length === 0) { document.getElementById('admin-no-wits').classList.remove('hidden'); witsBody.innerHTML = ''; } 
-            else {
-                document.getElementById('admin-no-wits').classList.add('hidden');
-                let h = '';
-                wits.forEach(t => {
-                    const isDisabled = processingTxs.has(t.id) ? 'pointer-events: none; opacity: 0.4;' : '';
-                    h += `<tr id="tr-${t.id}" style="${isDisabled}">
-                        <td class="p-3">${t.user_email}</td><td class="p-3 font-mono text-amber-400">$${t.amount.toFixed(2)}</td><td class="p-3 font-mono text-[10px] break-all max-w-[100px]">${t.wallet}</td>
-                        <td class="p-3 text-right whitespace-nowrap">
-                            <button onclick="adminApproveWithdrawal(this, '${t.id}', '${t.user_email}', ${t.amount})" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 px-2 py-1 rounded transition mr-1 disabled:opacity-50" title="Aprobar"><i class="fa-solid fa-check"></i></button>
-                            <button onclick="adminRejectTransaction(this, '${t.id}', '${t.type}', ${t.amount}, '${t.user_email}')" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-slate-950 px-2 py-1 rounded transition disabled:opacity-50" title="Rechazar"><i class="fa-solid fa-xmark"></i></button>
-                        </td></tr>`;
-                });
-                witsBody.innerHTML = h;
-            }
+            
+            tbodyD.innerHTML = hD; tbodyW.innerHTML = hW;
+            document.getElementById('admin-no-deps').classList.toggle('hidden', cD > 0);
+            document.getElementById('admin-no-withs').classList.toggle('hidden', cW > 0);
         }
 
-        async function adminApproveDeposit(btnElement, id, userEmail, amount) {
-            if (processingTxs.has(id)) return;
-            processingTxs.add(id);
+        function adminTxRow(tx) {
+            const extra = tx.type === 'deposit' 
+                ? `<span class="block text-[9px] text-cyan-400 break-all max-w-[150px]"><i class="fa-solid fa-hashtag"></i> ${tx.hash || 'N/A'}</span>` 
+                : `<span class="block text-[9px] text-emerald-400 break-all max-w-[150px]"><i class="fa-solid fa-wallet"></i> ${tx.wallet || 'N/A'}</span>`;
+            
+            const btnApprove = `<button onclick="adminApproveTx('${tx.id}', '${tx.type}', '${tx.user_email}', ${tx.amount})" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white px-2 py-1 rounded shadow transition"><i class="fa-solid fa-check"></i></button>`;
+            const btnReject = `<button onclick="adminRejectTx('${tx.id}')" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white px-2 py-1 rounded shadow transition ml-1"><i class="fa-solid fa-xmark"></i></button>`;
 
-            try {
-                if (btnElement) { 
-                    btnElement.disabled = true; 
-                    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
-                    const row = btnElement.closest('tr'); 
-                    if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } 
-                }
+            return `<tr class="border-b border-slate-800/50 hover:bg-slate-800/30">
+                <td class="p-3 text-[10px] text-slate-300">${tx.user_email}</td>
+                <td class="p-3 font-mono font-bold text-white">$${tx.amount}</td>
+                <td class="p-3">${extra}</td>
+                <td class="p-3 text-right whitespace-nowrap">${btnApprove}${btnReject}</td>
+            </tr>`;
+        }
 
-                const { data: currentTx, error: ctxErr } = await supabaseClient.from('transactions').select('status, hash').eq('id', id).single();
-                if (ctxErr || !currentTx || currentTx.status !== 'pending') {
-                    showToast('Transacción ya procesada previamente.', 'warning');
-                    return;
-                }
+        async function adminApproveTx(id, type, userEmail, amount) {
+            if (!confirm(`¿Aprobar ${type} de $${amount} para ${userEmail}?`)) return;
+            
+            const { error: updTxErr } = await supabaseClient.from('transactions').update({ status: 'approved' }).eq('id', id);
+            if (updTxErr) return showToast("Error al actualizar la transacción", "error");
 
-                if (currentTx.hash) {
-                    const { data: duplicateHashes } = await supabaseClient.from('transactions')
-                        .select('id').eq('hash', currentTx.hash).eq('status', 'approved');
-                    
-                    if (duplicateHashes && duplicateHashes.length > 0) {
-                        showToast('ALERTA DE FRAUDE: Este Hash ya fue utilizado en otra transacción.', 'error');
-                        await supabaseClient.from('transactions').update({ status: 'rejected' }).eq('id', id);
-                        processingTxs.delete(id);
-                        loadAdminPanel();
-                        return;
-                    }
-                }
-
-                const { error: updTxErr, data: updatedTx } = await supabaseClient
-                    .from('transactions')
-                    .update({ status: 'approved' })
-                    .eq('id', id)
-                    .eq('status', 'pending')
-                    .select(); 
-
-                if (updTxErr || !updatedTx || updatedTx.length === 0) {
-                    showToast('Error de concurrencia: La transacción fue modificada por otro proceso.', 'error');
-                    return;
-                }
-
+            if (type === 'deposit') {
                 const { data: prof, error: profErr } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
-                
-                if (prof && !profErr) {
-                    const newBalance = parseFloat(prof.balance || 0) + parseFloat(amount);
+                if (!profErr && prof) {
+                    const newBalance = parseFloat(prof.balance) + parseFloat(amount);
                     await supabaseClient.from('profiles').update({ balance: newBalance }).eq('email', userEmail);
-                    showToast(`Depósito de $${amount} aprobado para ${userEmail}`, 'success');
-                } else {
-                    showToast('Transacción aprobada, pero hubo un error al sumar el saldo al usuario.', 'error');
                 }
-
-                loadAdminPanel();
-            } catch (error) {
-                showToast('Ocurrió un error al procesar el depósito.', 'error');
-                console.error(error);
-            } finally {
-                processingTxs.delete(id);
             }
+            showToast(`Operación aprobada con éxito.`, "success");
+            loadAdminPanel();
         }
 
-        async function adminApproveWithdrawal(btnElement, id, userEmail, amount) {
-            if (processingTxs.has(id)) return;
-            processingTxs.add(id);
-
-            try {
-                if (btnElement) { 
-                    btnElement.disabled = true; 
-                    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
-                    const row = btnElement.closest('tr'); 
-                    if (row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } 
-                }
-
-                const { data: currentTx, error: ctxErr } = await supabaseClient.from('transactions').select('status').eq('id', id).single();
-                if (ctxErr || !currentTx || currentTx.status !== 'pending') {
-                    showToast('La transacción de retiro ya no está pendiente.', 'warning');
-                    return;
-                }
-
-                const { error: updTxErr, data: updatedTx } = await supabaseClient
-                    .from('transactions')
-                    .update({ status: 'approved' })
-                    .eq('id', id)
-                    .eq('status', 'pending')
-                    .select();
-
-                if (updTxErr || !updatedTx || updatedTx.length === 0) {
-                    showToast('Error: No se pudo cambiar el estado del retiro.', 'error');
-                    return;
-                }
-
-                showToast(`Retiro de $${amount} procesado con éxito para ${userEmail}`, 'success');
-                loadAdminPanel();
-            } catch (error) {
-                showToast('Error al aprobar el retiro.', 'error');
-                console.error(error);
-            } finally {
-                processingTxs.delete(id);
-            }
+        async function adminRejectTx(id) {
+            if (!confirm(`¿Rechazar esta transacción?`)) return;
+            await supabaseClient.from('transactions').update({ status: 'rejected' }).eq('id', id);
+            showToast(`Transacción rechazada.`, "success");
+            loadAdminPanel();
         }
 
-        async function adminRejectTransaction(btnElement, id, type, amount, userEmail) {
-            if (processingTxs.has(id)) return;
-            processingTxs.add(id);
-
-            try {
-                if (btnElement) { 
-                    btnElement.disabled = true; 
-                    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
-                    const row = btnElement.closest('tr'); 
-                    if(row) { row.style.pointerEvents = 'none'; row.style.opacity = '0.4'; } 
-                }
-
-                const { data: currentTx, error: ctxErr } = await supabaseClient.from('transactions').select('status').eq('id', id).single();
-                if (ctxErr || !currentTx || currentTx.status !== 'pending') {
-                    showToast('Transacción no pendiente.', 'warning');
-                    return;
-                }
-
-                const { error: updTxErr, data: updatedTx } = await supabaseClient
-                    .from('transactions')
-                    .update({ status: 'rejected' })
-                    .eq('id', id)
-                    .eq('status', 'pending')
-                    .select();
-
-                if (updTxErr || !updatedTx || updatedTx.length === 0) {
-                    showToast('Fallo al rechazar la transacción.', 'error');
-                    return;
-                }
-
-                if (type === 'withdraw') {
-                    const { data: prof, error: profErr } = await supabaseClient.from('profiles').select('balance').eq('email', userEmail).single();
-                    if (prof && !profErr) {
-                        const newBalance = parseFloat(prof.balance || 0) + parseFloat(amount);
-                        await supabaseClient.from('profiles').update({ balance: newBalance }).eq('email', userEmail);
-                    }
-                }
-
-                showToast(`El ${type === 'deposit' ? 'Depósito' : 'Retiro'} ha sido rechazado.`, 'success');
-                loadAdminPanel();
-            } catch (error) {
-                showToast('Ocurrió un error al intentar rechazar.', 'error');
-                console.error(error);
-            } finally {
-                processingTxs.delete(id);
-            }
-        }
-
-        async function loadReferredUsersList() {
-            if (!userState.refCode) return;
-            const tbody = document.getElementById('referred-users-list');
-            
-            try {
-                const { data, error } = await supabaseClient
-                    .from('profiles')
-                    .select('full_name, email, created_at')
-                    .eq('referred_by', userState.refCode);
-                
-                if (error || !data || data.length === 0) {
-                    document.getElementById('no-refs-msg').classList.remove('hidden');
-                    tbody.innerHTML = '';
-                } else {
-                    document.getElementById('no-refs-msg').classList.add('hidden');
-                    let h = '';
-                    data.forEach(user => {
-                        const date = user.created_at ? new Date(user.created_at).toLocaleDateString('es-AR') : 'N/A';
-                        const name = user.full_name || user.email.split('@')[0];
-                        h += `<tr class="border-b border-slate-800/50 hover:bg-slate-800/20 transition"><td class="p-2">${name}</td><td class="p-2">${date}</td></tr>`;
-                    });
-                    tbody.innerHTML = h;
-                }
-            } catch (error) {
-                console.error("Error cargando referidos:", error);
-            }
-        }
-
+        // --- Gráfico de Telemetría ---
+        let telemetryChartInstance = null;
         function initTelemetryChart() {
-            const ctxElement = document.getElementById('telemetryChart');
-            if (!ctxElement) return;
+            const ctx = document.getElementById('telemetryChart');
+            if (!ctx) return;
             
-            new Chart(ctxElement, {
+            telemetryChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', 'Ahora'],
                     datasets: [{
-                        label: 'Volumen (Litros/segundo)',
-                        data: [40, 42.1, 41.5, 43, 42.8, 43.5, 44.2],
+                        label: 'Volumen Extraído (L/s)',
+                        data: [40.2, 41.5, 42.1, 40.8, 41.9, 42.5, 42.8],
                         borderColor: '#00f2fe',
                         backgroundColor: 'rgba(0, 242, 254, 0.1)',
+                        borderWidth: 2,
                         fill: true,
                         tension: 0.4
                     }]
@@ -1656,25 +1265,35 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
-                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } }
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
+                        x: { grid: { display: false }, ticks: { color: '#64748b' } }
                     }
                 }
             });
+            
+            setInterval(() => {
+                if(!telemetryChartInstance) return;
+                const data = telemetryChartInstance.data.datasets[0].data;
+                const newVal = 42 + (Math.random() * 2 - 1);
+                data.shift();
+                data.push(newVal);
+                telemetryChartInstance.update('none');
+                const volLabel = document.getElementById('tel-vol');
+                if(volLabel) volLabel.innerText = newVal.toFixed(1) + ' L/s';
+            }, 5000);
         }
 
         function updateDailyCountdownClock() {
-            const timerElem = document.getElementById('time-to-payout');
-            if (!timerElem) return;
+            const el = document.getElementById('time-to-payout');
+            if(!el) return;
             setInterval(() => {
                 const now = new Date();
-                const nextPayout = new Date();
-                nextPayout.setHours(24, 0, 0, 0);
-                const diff = nextPayout - now;
-                const hours = Math.floor((diff / (1000 * 60 * 60)) % 24).toString().padStart(2, '0');
-                const minutes = Math.floor((diff / (1000 * 60)) % 60).toString().padStart(2, '0');
-                const seconds = Math.floor((diff / 1000) % 60).toString().padStart(2, '0');
-                timerElem.innerText = `${hours}:${minutes}:${seconds}`;
+                const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+                const diff = endOfDay - now;
+                const hrs = String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, '0');
+                const mins = String(Math.floor((diff / 1000 / 60) % 60)).padStart(2, '0');
+                const secs = String(Math.floor((diff / 1000) % 60)).padStart(2, '0');
+                el.innerText = `${hrs}:${mins}:${secs}`;
             }, 1000);
         }
     </script>
