@@ -787,6 +787,27 @@
 
     <!-- MAIN JAVASCRIPT LOGIC -->
     <script>
+        // CONFIGURACIÓN DE DOMINIO BASE PARA ENLACES DE REFERIDOS
+        // Si tienes tu propio dominio (ej. https://midominio.com), puedes modificar la variable CUSTOM_DOMAIN aquí abajo:
+        const CUSTOM_DOMAIN = 'https://litiox.io';
+
+        function getBaseUrl() {
+            try {
+                const origin = window.location.origin;
+                const href = window.location.href;
+                
+                // Si la app está en un iFrame, sandbox, entorno local sin origen o vista previa de editor
+                if (!origin || origin === 'null' || origin.startsWith('file:') || href.includes('about:') || href.includes('blob:')) {
+                    return CUSTOM_DOMAIN;
+                }
+                
+                // De lo contrario, extrae la URL pública actual limpia sin parámetros ni fragmentos
+                return href.split('?')[0].split('#')[0].replace(/\/$/, '');
+            } catch (e) {
+                return CUSTOM_DOMAIN;
+            }
+        }
+
         // CONFIGURACIÓN DE SUPABASE
         const SUPABASE_URL = 'https://bmbfjsxgwxfjuphvhvya.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_0XRTTJKzV38S0-4AlDwmcw_wkfihwB-';
@@ -1097,7 +1118,8 @@
             document.getElementById('req-yield-badge').innerText = `$${parseFloat(userState.totalYieldEarned).toFixed(2)} / $15`;
             document.getElementById('req-yield-bar').style.width = `${Math.min((parseFloat(userState.totalYieldEarned) / 15) * 100, 100)}%`;
             
-            document.getElementById('user-ref-link-input').value = `${window.location.origin}/?ref=${userState.refCode}`;
+            // Generar enlace limpio usando el detector de URL/Dominio
+            document.getElementById('user-ref-link-input').value = `${getBaseUrl()}/?ref=${userState.refCode}`;
             
             document.getElementById('ref-count-display').innerText = `${userState.referralCount} / 3`;
             
