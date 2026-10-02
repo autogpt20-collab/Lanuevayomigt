@@ -521,11 +521,22 @@
                 </div>
 
                 <div class="glass-card p-6 rounded-2xl border border-cyan-500/30 max-w-2xl mx-auto space-y-4 text-center">
-                    <span class="text-xs font-bold uppercase text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full">Tu Enlace Personal de Referido</span>
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                        <span class="text-xs font-bold uppercase text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full">Tu Enlace Personal de Referido</span>
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="text-slate-400">Código Único:</span>
+                            <span id="user-ref-code-display" class="font-mono font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded select-all">Cargando...</span>
+                            <button onclick="copyReferralCode()" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-2 py-1 rounded text-[11px] font-bold transition flex items-center space-x-1" title="Copiar solo el código">
+                                <i class="fa-solid fa-copy"></i>
+                                <span>Copiar Código</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="flex items-center space-x-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800 mt-2">
                         <input type="text" readonly id="user-ref-link-input" value="Cargando enlace..." class="bg-transparent text-cyan-300 font-mono text-xs w-full outline-none px-2 select-all">
-                        <button onclick="copyReferralLink()" class="glow-button px-4 py-2 rounded-lg text-xs font-bold text-slate-950 whitespace-nowrap">
-                            <i class="fa-solid fa-copy mr-1"></i> Copiar Link
+                        <button onclick="copyReferralLink()" class="glow-button px-4 py-2 rounded-lg text-xs font-bold text-slate-950 whitespace-nowrap flex items-center space-x-1">
+                            <i class="fa-solid fa-copy mr-1"></i> <span>Copiar Link</span>
                         </button>
                     </div>
                     <p class="text-[11px] text-slate-400">Requisito para retirar: Tener al menos <strong>3 referidos registrados</strong> con tu enlace.</p>
@@ -734,9 +745,10 @@
 
         // OBTENER URL DINÁMICA DE LA PÁGINA PARA ENLACES DE REFERIDO
         function getRealReferralUrl(refCode) {
-            const currentOrigin = window.location.origin;
-            const currentPath = window.location.pathname;
-            return `${currentOrigin}${currentPath}?ref=${refCode}`;
+            if (!refCode) return 'Cargando enlace...';
+            // Extrae la URL base limpia eliminando cualquier parametro ?ref= previo o ancla #
+            const cleanUrl = window.location.href.split('?')[0].split('#')[0];
+            return `${cleanUrl}?ref=${refCode}`;
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -929,8 +941,16 @@
                 userState.yieldEarned = parseFloat(data.total_yield_earned) || 0;
                 userState.withdrawn = parseFloat(data.total_withdrawn) || 0;
                 userState.unclaimedYield = parseFloat(data.unclaimed_yield) || 0;
-                userState.refCode = data.ref_code || generateRefCode();
                 userState.referralCount = parseInt(data.referral_count) || 0;
+
+                // Asegurar que el código de referido esté permanentemente en Supabase
+                if (!data.ref_code) {
+                    const persistentRefCode = generateRefCode();
+                    userState.refCode = persistentRefCode;
+                    await supabaseClient.from('profiles').update({ ref_code: persistentRefCode }).eq('id', data.id);
+                } else {
+                    userState.refCode = data.ref_code;
+                }
                 
                 const lastTimeStored = data.last_yield_time ? new Date(data.last_yield_time).getTime() : Date.now();
                 userState.lastYieldTime = lastTimeStored;
@@ -965,8 +985,11 @@
 
             document.getElementById('user-welcome-label').innerText = `Usuario: ${userState.email}`;
             
-            // Asigna la URL real de la página
-            document.getElementById('user-ref-link-input').value = getRealReferralUrl(userState.refCode);
+            // Asigna la URL limpia y actualiza las referencias visuales
+            const refInput = document.getElementById('user-ref-link-input');
+            if (refInput) refInput.value = getRealReferralUrl(userState.refCode);
+            const refCodeDisplay = document.getElementById('user-ref-code-display');
+            if (refCodeDisplay) refCodeDisplay.innerText = userState.refCode || 'N/A';
             
             updateUI();
             startYieldGenerator();
@@ -1109,8 +1132,34 @@
 
         function copyReferralLink() {
             const input = document.getElementById('user-ref-link-input');
-            navigator.clipboard.writeText(input.value);
-            showToast('Enlace de referido copiado al portapapeles', 'success');
+            input.select();
+            input.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                showToast('Enlace de referido copiado al portapapeles', 'success');
+            } catch (err) {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(input.value);
+                    showToast('Enlace de referido copiado al portapapeles', 'success');
+                } else {
+                    showToast('Selecciona y copia el enlace manualmente', 'info');
+                }
+            }
+        }
+
+        function copyReferralCode() {
+            if (!userState.refCode) return;
+            const tempInput = document.createElement('input');
+            tempInput.value = userState.refCode;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            try {
+                document.execCommand('copy');
+                showToast(`Código [${userState.refCode}] copiado`, 'success');
+            } catch (e) {
+                showToast(`Tu código es: ${userState.refCode}`, 'info');
+            }
+            document.body.removeChild(tempInput);
         }
 
         // --- RETIROS ---
