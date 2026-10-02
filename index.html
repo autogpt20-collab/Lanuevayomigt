@@ -523,7 +523,7 @@
                 <div class="glass-card p-6 rounded-2xl border border-cyan-500/30 max-w-2xl mx-auto space-y-4 text-center">
                     <span class="text-xs font-bold uppercase text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full">Tu Enlace Personal de Referido</span>
                     <div class="flex items-center space-x-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800 mt-2">
-                        <input type="text" readonly id="user-ref-link-input" value="https://litiox.io/?ref=CARGANDO" class="bg-transparent text-cyan-300 font-mono text-xs w-full outline-none px-2">
+                        <input type="text" readonly id="user-ref-link-input" value="Generando enlace..." class="bg-transparent text-cyan-300 font-mono text-xs w-full outline-none px-2">
                         <button onclick="copyReferralLink()" class="glow-button px-4 py-2 rounded-lg text-xs font-bold text-slate-950 whitespace-nowrap">
                             <i class="fa-solid fa-copy mr-1"></i> Copiar Link
                         </button>
@@ -1097,7 +1097,8 @@
             document.getElementById('req-yield-badge').innerText = `$${parseFloat(userState.totalYieldEarned).toFixed(2)} / $15`;
             document.getElementById('req-yield-bar').style.width = `${Math.min((parseFloat(userState.totalYieldEarned) / 15) * 100, 100)}%`;
             
-            document.getElementById('user-ref-link-input').value = `https://litiox.io/?ref=${userState.refCode}`;
+            document.getElementById('user-ref-link-input').value = `${window.location.origin}/?ref=${userState.refCode}`;
+            
             document.getElementById('ref-count-display').innerText = `${userState.referralCount} / 3`;
             
             if (userState.referralCount >= 3) {
